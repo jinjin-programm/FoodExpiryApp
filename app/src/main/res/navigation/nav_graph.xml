@@ -7,7 +7,11 @@
     <fragment
         android:id="@+id/navigation_inventory"
         android:name="com.example.foodexpiryapp.presentation.ui.inventory.InventoryFragment"
-        android:label="Inventory" />
+        android:label="Inventory">
+        <action
+            android:id="@+id/action_inventory_to_scan"
+            app:destination="@id/navigation_scan" />
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_shopping"
@@ -28,5 +32,10 @@
         android:id="@+id/navigation_profile"
         android:name="com.example.foodexpiryapp.presentation.ui.profile.ProfileFragment"
         android:label="Profile" />
+
+    <fragment
+        android:id="@+id/navigation_scan"
+        android:name="com.example.foodexpiryapp.presentation.ui.scan.ScanFragment"
+        android:label="Scan Item" />
 
 </navigation>

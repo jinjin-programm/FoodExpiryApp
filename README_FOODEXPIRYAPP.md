@@ -75,7 +75,7 @@ This is my **first Android app**, built as a learning project to master modern A
 - [ ] Sort by expiry date
 
 **Medium-term**
-- [ ] Camera scanning (barcode/OCR)
+- [x] Camera scanning (barcode/OCR)
 - [ ] Expiry notifications with WorkManager
 - [ ] Recipe API integration
 - [ ] Shopping list management

@@ -3,7 +3,8 @@ package com.example.foodexpiryapp.domain.model
 import java.time.LocalDate
 
 /**
- * Represents a food item in the user's pantry
+ * Domain model representing a food item in the user's pantry.
+ * This is a pure Kotlin class with no Android/Room dependencies.
  */
 data class FoodItem(
     val id: Long = 0,
@@ -11,29 +12,43 @@ data class FoodItem(
     val category: FoodCategory,
     val expiryDate: LocalDate,
     val quantity: Int = 1,
-    val location: StorageLocation = StorageLocation.FRIDGE
-)
+    val location: StorageLocation = StorageLocation.FRIDGE,
+    val notes: String = "",
+    val barcode: String? = null,
+    val dateAdded: LocalDate = LocalDate.now()
+) {
+    /** True if this item has already expired. */
+    val isExpired: Boolean
+        get() = expiryDate.isBefore(LocalDate.now())
 
-/**
- * Categories of food items
- */
-enum class FoodCategory {
-    DAIRY,
-    MEAT,
-    VEGETABLES,
-    FRUITS,
-    GRAINS,
-    BEVERAGES,
-    SNACKS,
-    CONDIMENTS,
-    OTHER
+    /** Number of days until expiry (negative if already expired). */
+    val daysUntilExpiry: Long
+        get() = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), expiryDate)
 }
 
 /**
- * Where the food is stored
+ * Categories of food items.
  */
-enum class StorageLocation {
-    FRIDGE,
-    FREEZER,
-    PANTRY
+enum class FoodCategory(val displayName: String) {
+    DAIRY("Dairy"),
+    MEAT("Meat"),
+    VEGETABLES("Vegetables"),
+    FRUITS("Fruits"),
+    GRAINS("Grains"),
+    BEVERAGES("Beverages"),
+    SNACKS("Snacks"),
+    CONDIMENTS("Condiments"),
+    FROZEN("Frozen"),
+    LEFTOVERS("Leftovers"),
+    OTHER("Other")
+}
+
+/**
+ * Where the food is stored.
+ */
+enum class StorageLocation(val displayName: String) {
+    FRIDGE("Fridge"),
+    FREEZER("Freezer"),
+    PANTRY("Pantry"),
+    COUNTER("Counter")
 }
