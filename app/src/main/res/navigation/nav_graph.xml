@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/navigation_inventory">
+
+    <fragment
+        android:id="@+id/navigation_inventory"
+        android:name="com.example.foodexpiryapp.presentation.ui.inventory.InventoryFragment"
+        android:label="Inventory" />
+
+    <fragment
+        android:id="@+id/navigation_shopping"
+        android:name="com.example.foodexpiryapp.presentation.ui.shopping.ShoppingFragment"
+        android:label="Shopping" />
+
+    <fragment
+        android:id="@+id/navigation_recipes"
+        android:name="com.example.foodexpiryapp.presentation.ui.recipes.RecipesFragment"
+        android:label="Recipes" />
+
+    <fragment
+        android:id="@+id/navigation_planner"
+        android:name="com.example.foodexpiryapp.presentation.ui.planner.PlannerFragment"
+        android:label="Planner" />
+
+    <fragment
+        android:id="@+id/navigation_profile"
+        android:name="com.example.foodexpiryapp.presentation.ui.profile.ProfileFragment"
+        android:label="Profile" />
+
+</navigation>
