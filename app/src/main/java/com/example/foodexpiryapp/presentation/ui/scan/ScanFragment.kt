@@ -65,6 +65,12 @@ class ScanFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Check for initial scan mode from arguments
+        val mode = arguments?.getString("scan_mode")
+        if (mode == "date") {
+            isScanningBarcode = false
+        }
+
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         if (allPermissionsGranted()) {
@@ -80,18 +86,6 @@ class ScanFragment : Fragment() {
         binding.btnClose.setOnClickListener {
             findNavController().popBackStack()
         }
-
-        binding.btnScanBarcode.setOnClickListener {
-            isScanningBarcode = true
-            updateModeUI()
-            restartCamera()
-        }
-
-        binding.btnScanDate.setOnClickListener {
-            isScanningBarcode = false
-            updateModeUI()
-            restartCamera()
-        }
         
         updateModeUI()
     }
@@ -99,12 +93,8 @@ class ScanFragment : Fragment() {
     private fun updateModeUI() {
         if (isScanningBarcode) {
             binding.tvInstruction.text = "Point camera at barcode"
-            binding.btnScanBarcode.isEnabled = false
-            binding.btnScanDate.isEnabled = true
         } else {
             binding.tvInstruction.text = "Point camera at expiry date (e.g., EXP 12/2025)"
-            binding.btnScanBarcode.isEnabled = true
-            binding.btnScanDate.isEnabled = false
         }
     }
 

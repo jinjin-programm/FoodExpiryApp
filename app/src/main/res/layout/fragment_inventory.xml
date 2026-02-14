@@ -79,15 +79,45 @@
 
     </LinearLayout>
 
-    <!-- FAB to add new item -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_add_food"
+    <!-- Buttons to add new item -->
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:contentDescription="Add food item"
-        android:src="@android:drawable/ic_input_add"
-        app:tint="@android:color/white" />
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:clipToPadding="false"
+        android:gravity="center_horizontal">
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btn_photo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:src="@android:drawable/ic_menu_camera"
+            android:contentDescription="Photo"
+            app:backgroundTint="@color/purple_500"
+            app:tint="@android:color/white" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btn_barcode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:src="@drawable/ic_barcode"
+            android:contentDescription="Barcode"
+            app:backgroundTint="@color/purple_500"
+            app:tint="@android:color/white" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btn_write"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_menu_edit"
+            android:contentDescription="Write"
+            app:backgroundTint="@color/purple_500"
+            app:tint="@android:color/white" />
+
+    </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
