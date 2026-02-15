@@ -49,8 +49,9 @@ This is my **first Android app**, built as a learning project to master modern A
 - [x] User input form with Material Design components
 - [x] Name and email text inputs
 - [x] Household size slider (1-10 people)
-- [x] Dietary preference chips (Vegetarian, Vegan, Gluten-Free, Dairy-Free)
-- [x] Save button with toast feedback
+- [x] Dietary preference chips (Vegetarian, Vegan, Gluten-Free, etc.)
+- [x] Save button with persistence (Jetpack DataStore)
+- [x] MVVM architecture with StateFlow
 - [x] Interactive UI with real-time updates
 
 ### 🚧 In Progress
@@ -76,6 +77,7 @@ This is my **first Android app**, built as a learning project to master modern A
 
 **Medium-term**
 - [x] Camera scanning (barcode/OCR)
+- [x] YOLO Object Detection (FoodVision v8)
 - [ ] Expiry notifications with WorkManager
 - [ ] Recipe API integration
 - [ ] Shopping list management
@@ -480,9 +482,9 @@ Special thanks to:
 
 ---
 
-**Last Updated:** February 10, 2026  
+**Last Updated:** February 16, 2026  
 **Status:** 🚧 Active Development  
-**Next Milestone:** Room Database Implementation
+**Next Milestone:** Shopping List & Recipe API Implementation
 
 ---
 

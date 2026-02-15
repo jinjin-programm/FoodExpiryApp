@@ -54,6 +54,7 @@ android {
     buildFeatures {
         viewBinding = true
         buildConfig = true
+        mlModelBinding = true
     }
 }
 
@@ -116,10 +117,19 @@ dependencies {
     // ML Kit Text Recognition (OCR)
     implementation("com.google.mlkit:text-recognition:16.0.0")
 
+    // TensorFlow Lite for YOLO Object Detection
+    implementation("org.tensorflow:tensorflow-lite:2.14.0")
+    implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
+    implementation("org.tensorflow:tensorflow-lite-metadata:0.4.4")
+    implementation("org.tensorflow:tensorflow-lite-gpu:2.14.0")
+
     // Networking
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // DataStore
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
 
     // Testing
     testImplementation("junit:junit:4.13.2")

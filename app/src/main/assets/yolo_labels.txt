@@ -1,0 +1,55 @@
+asparagus
+avocados
+broccoli
+cabbage
+celery
+cucumber
+green_apples
+green_beans
+green_capsicum
+green_grapes
+kiwifruit
+lettuce
+limes
+peas
+spinach
+Banana
+Cauliflower
+Date
+Garlic
+Ginger
+Mushroom
+Onion
+Parsnip
+Peach
+Pear
+Potato
+Turnip
+Beetroot
+Blackberry
+Blueberry
+Cherry
+Eggplant
+Plum
+Purple asparagus
+Purple grapes
+Radish
+Raspberry
+Red Apple
+Red Grape
+Red cabbage
+Red capsicum
+Strawberry
+Tomato
+Watermelon
+apricot
+carrot
+corn
+grapefruit
+lemon
+mango
+nectarine
+orange
+pineapple
+pumpkin
+sweet_potato

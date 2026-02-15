@@ -134,6 +134,31 @@ class InventoryFragment : Fragment() {
                 showAddEditDialog(itemToShow)
             }
         }
+
+        // Listen for YOLO scan results
+        setFragmentResultListener("YOLO_SCAN_RESULT") { _, bundle ->
+            val label = bundle.getString("yolo_label") ?: "Unknown Item"
+            val categoryName = bundle.getString("yolo_category")
+            val category = categoryName?.let { name ->
+                FoodCategory.values().find { it.name == name }
+            } ?: FoodCategory.OTHER
+
+            draftFoodItem = null
+            
+            val newItem = FoodItem(
+                name = label.capitalize(),
+                category = category,
+                expiryDate = LocalDate.now().plusDays(7),
+                quantity = 1,
+                location = StorageLocation.FRIDGE,
+                notes = "",
+                barcode = null,
+                dateAdded = LocalDate.now()
+            )
+            
+            showAddEditDialog(newItem)
+            Snackbar.make(binding.root, "Detected: ${label.capitalize()}", Snackbar.LENGTH_SHORT).show()
+        }
     }
 
     private fun setupButtons() {
@@ -151,8 +176,8 @@ class InventoryFragment : Fragment() {
         }
         
         binding.btnPhoto.setOnClickListener {
-            // Placeholder for YOLO scanning
-            android.widget.Toast.makeText(requireContext(), "YOLO Scanner (Placeholder)", android.widget.Toast.LENGTH_SHORT).show()
+            draftFoodItem = null
+            findNavController().navigate(R.id.action_inventory_to_yolo_scan)
         }
     }
 
@@ -414,4 +439,9 @@ class InventoryFragment : Fragment() {
         _binding = null
         currentDialog = null
     }
+}
+
+// Extension function to capitalize first letter
+private fun String.capitalize(): String {
+    return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
 }
