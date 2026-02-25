@@ -15,7 +15,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import com.google.android.material.snackbar.Snackbar
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
@@ -35,7 +34,7 @@ class YoloScanFragment : Fragment() {
 
     companion object {
         private const val TAG = "YoloScanFragment"
-        private const val DETECTION_INTERVAL = 1000L // ms between detections
+        private const val DETECTION_INTERVAL_MS = 800L
     }
 
     private var _binding: FragmentYoloScanBinding? = null
@@ -51,8 +50,8 @@ class YoloScanFragment : Fragment() {
     private var bestDetection: DetectionResult? = null
 
     private val requestPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-            if (isGranted) {
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
                 startCamera()
             } else {
                 Toast.makeText(context, "Camera permission required for scanning", Toast.LENGTH_SHORT).show()
@@ -73,10 +72,16 @@ class YoloScanFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         cameraExecutor = Executors.newSingleThreadExecutor()
-        yoloDetector = context?.let { YoloDetector(it) }
 
-        showSnackbar("YOLO model loading...")
-        
+        // Initialise detector off the main thread to avoid blocking the UI
+        cameraExecutor.execute {
+            yoloDetector = context?.let { YoloDetector(it) }
+            activity?.runOnUiThread {
+                val loaded = yoloDetector?.isModelLoaded() == true
+                updateStatus(if (loaded) "YOLO26n ready – point at an object" else "Model unavailable")
+            }
+        }
+
         if (allPermissionsGranted()) {
             startCamera()
         } else {
@@ -93,13 +98,11 @@ class YoloScanFragment : Fragment() {
 
         binding.btnUseDetection.setOnClickListener {
             bestDetection?.let { detection ->
-                showSnackbar("Adding ${detection.label} to inventory (${(detection.confidence * 100).toInt()}% confidence)")
                 returnDetectionResult(detection)
             }
         }
 
         binding.btnManualSelect.setOnClickListener {
-            // Return a generic food item for manual editing
             returnDetectionResult(
                 DetectionResult(
                     label = "Food Item",
@@ -110,61 +113,57 @@ class YoloScanFragment : Fragment() {
             )
         }
 
-        // Show manual button initially
         binding.btnManualSelect.visibility = View.VISIBLE
     }
 
-    private fun startCamera() {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
+    // ────────────────────────────────────────────────────────────────────────
+    // Camera
+    // ────────────────────────────────────────────────────────────────────────
 
-        cameraProviderFuture.addListener({
-            cameraProvider = cameraProviderFuture.get()
+    private fun startCamera() {
+        val future = ProcessCameraProvider.getInstance(requireContext())
+        future.addListener({
+            cameraProvider = future.get()
             bindCameraUseCases()
         }, ContextCompat.getMainExecutor(requireContext()))
     }
 
     private fun bindCameraUseCases() {
-        val cameraProvider = cameraProvider ?: return
+        val provider = cameraProvider ?: return
 
         val preview = Preview.Builder()
             .build()
-            .also {
-                it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
-            }
+            .also { it.setSurfaceProvider(binding.viewFinder.surfaceProvider) }
 
         imageAnalyzer = ImageAnalysis.Builder()
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
-            .also {
-                it.setAnalyzer(cameraExecutor, ObjectAnalyzer())
-            }
-
-        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            .also { it.setAnalyzer(cameraExecutor, FrameAnalyzer()) }
 
         try {
-            cameraProvider.unbindAll()
-            cameraProvider.bindToLifecycle(
-                this, cameraSelector, preview, imageAnalyzer
-            )
-            showSnackbar("Camera started - YOLO ready")
-        } catch (exc: Exception) {
-            Log.e(TAG, "Use case binding failed", exc)
-            showSnackbar("Camera failed to start")
+            provider.unbindAll()
+            provider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageAnalyzer)
+        } catch (e: Exception) {
+            Log.e(TAG, "Camera binding failed", e)
+            updateStatus("Camera failed to start")
         }
     }
 
-    private inner class ObjectAnalyzer : ImageAnalysis.Analyzer {
+    // ────────────────────────────────────────────────────────────────────────
+    // Frame analysis
+    // ────────────────────────────────────────────────────────────────────────
+
+    private inner class FrameAnalyzer : ImageAnalysis.Analyzer {
         @SuppressLint("UnsafeOptInUsageError")
         override fun analyze(imageProxy: ImageProxy) {
-            val currentTime = System.currentTimeMillis()
-            
-            if (isProcessing || currentTime - lastDetectionTime < DETECTION_INTERVAL) {
+            val now = System.currentTimeMillis()
+
+            if (isProcessing || now - lastDetectionTime < DETECTION_INTERVAL_MS) {
                 imageProxy.close()
                 return
             }
 
-            val mediaImage = imageProxy.image
-            if (mediaImage == null) {
+            if (imageProxy.image == null) {
                 imageProxy.close()
                 return
             }
@@ -172,35 +171,15 @@ class YoloScanFragment : Fragment() {
             isProcessing = true
 
             try {
-                // Convert YUV image to bitmap
-                val bitmap = imageProxy.convertToBitmap()
-                
+                val bitmap = imageProxy.toNv21Bitmap()
                 if (bitmap != null) {
-                    activity?.runOnUiThread {
-                        showSnackbar("Running YOLO detection...")
-                    }
-                    
                     val detections = yoloDetector?.detect(bitmap) ?: emptyList()
-                    
-                    activity?.runOnUiThread {
-                        if (detections.isNotEmpty()) {
-                            val best = detections.maxByOrNull { it.confidence }
-                            showSnackbar("YOLO detected ${detections.size} objects. Best: ${best?.label} (${(best?.confidence?.times(100))?.toInt()}%)")
-                        } else {
-                            showSnackbar("YOLO: No objects detected")
-                        }
-                        processDetections(detections, bitmap)
-                    }
+                    activity?.runOnUiThread { handleDetections(detections, bitmap) }
                 } else {
-                    activity?.runOnUiThread {
-                        showSnackbar("YOLO: Failed to convert image")
-                    }
+                    Log.w(TAG, "Frame conversion failed")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error analyzing image", e)
-                activity?.runOnUiThread {
-                    showSnackbar("YOLO error: ${e.message}")
-                }
+                Log.e(TAG, "Frame analysis error", e)
             } finally {
                 isProcessing = false
                 lastDetectionTime = System.currentTimeMillis()
@@ -208,7 +187,8 @@ class YoloScanFragment : Fragment() {
             }
         }
 
-        private fun ImageProxy.convertToBitmap(): Bitmap? {
+        /** Convert ImageProxy (YUV_420_888) → NV21 → JPEG → Bitmap. */
+        private fun ImageProxy.toNv21Bitmap(): Bitmap? {
             return try {
                 val yBuffer = planes[0].buffer
                 val uBuffer = planes[1].buffer
@@ -219,59 +199,66 @@ class YoloScanFragment : Fragment() {
                 val vSize = vBuffer.remaining()
 
                 val nv21 = ByteArray(ySize + uSize + vSize)
-
                 yBuffer.get(nv21, 0, ySize)
                 vBuffer.get(nv21, ySize, vSize)
                 uBuffer.get(nv21, ySize + vSize, uSize)
 
                 val yuvImage = YuvImage(nv21, ImageFormat.NV21, width, height, null)
                 val out = ByteArrayOutputStream()
-                yuvImage.compressToJpeg(Rect(0, 0, width, height), 100, out)
-                val imageBytes = out.toByteArray()
-                
-                BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                yuvImage.compressToJpeg(Rect(0, 0, width, height), 90, out)
+                BitmapFactory.decodeByteArray(out.toByteArray(), 0, out.size())
             } catch (e: Exception) {
-                Log.e(TAG, "Error converting YUV to bitmap", e)
+                Log.e(TAG, "YUV→Bitmap conversion failed", e)
                 null
             }
         }
     }
 
-    private fun processDetections(detections: List<DetectionResult>, bitmap: Bitmap) {
+    // ────────────────────────────────────────────────────────────────────────
+    // UI updates
+    // ────────────────────────────────────────────────────────────────────────
+
+    private fun handleDetections(detections: List<DetectionResult>, bitmap: Bitmap) {
         if (detections.isNotEmpty()) {
-            // Find the best detection (highest confidence)
-            val best = detections.maxByOrNull { it.confidence }
-            
-            if (best != null && best.confidence > 0.5f) {
+            val best = detections.maxByOrNull { it.confidence }!!
+
+            // Only surface detections above 50 % confidence in the action bar
+            if (best.confidence >= 0.50f) {
                 bestDetection = best
-                
-                // Update UI
                 binding.tvDetectedItem.text = "Detected: ${best.label.capitalizeWords()}"
                 binding.tvConfidence.text = "Confidence: ${(best.confidence * 100).toInt()}%"
-                binding.tvDetectionStatus.text = "Food item detected!"
-                
-                // Show results container
+                updateStatus("${detections.size} object(s) detected")
                 binding.detectionResultsContainer.visibility = View.VISIBLE
                 binding.btnManualSelect.visibility = View.GONE
-                
-                // Update overlay with bounding boxes
-                binding.detectionOverlay.setDetections(detections, bitmap.width, bitmap.height)
+            } else {
+                // Low-confidence results: show in status bar only, don't promote to action
+                updateStatus("Low confidence – keep scanning (${(best.confidence * 100).toInt()}%)")
             }
+
+            binding.detectionOverlay.setDetections(detections, bitmap.width, bitmap.height)
         } else {
-            // No detections
-            binding.tvDetectionStatus.text = "Scanning... Point camera at food items"
+            updateStatus("Scanning… point camera at an object")
             binding.detectionOverlay.clearDetections()
         }
     }
 
+    private fun updateStatus(message: String) {
+        binding.tvDetectionStatus.text = message
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Result
+    // ────────────────────────────────────────────────────────────────────────
+
     private fun returnDetectionResult(detection: DetectionResult) {
-        val resultBundle = bundleOf(
-            "yolo_label" to detection.label,
-            "yolo_category" to detection.category.name,
-            "yolo_confidence" to detection.confidence
+        setFragmentResult(
+            "YOLO_SCAN_RESULT",
+            bundleOf(
+                "yolo_label"      to detection.label,
+                "yolo_category"   to detection.category.name,
+                "yolo_confidence" to detection.confidence
+            )
         )
-        
-        setFragmentResult("YOLO_SCAN_RESULT", resultBundle)
         findNavController().popBackStack()
     }
 
@@ -279,12 +266,9 @@ class YoloScanFragment : Fragment() {
         requireContext(), Manifest.permission.CAMERA
     ) == PackageManager.PERMISSION_GRANTED
 
-    private fun showSnackbar(message: String) {
-        view?.let {
-            Snackbar.make(it, message, Snackbar.LENGTH_SHORT).show()
-        }
-        Log.d(TAG, "Snackbar: $message")
-    }
+    // ────────────────────────────────────────────────────────────────────────
+    // Lifecycle
+    // ────────────────────────────────────────────────────────────────────────
 
     override fun onDestroyView() {
         super.onDestroyView()
@@ -294,9 +278,7 @@ class YoloScanFragment : Fragment() {
     }
 }
 
-// Extension function to capitalize first letter of each word
-private fun String.capitalizeWords(): String {
-    return this.split(" ").joinToString(" ") { word ->
+private fun String.capitalizeWords(): String =
+    split(" ").joinToString(" ") { word ->
         word.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
     }
-}

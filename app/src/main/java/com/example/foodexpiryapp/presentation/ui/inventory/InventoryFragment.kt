@@ -28,6 +28,7 @@ import com.example.foodexpiryapp.domain.model.StorageLocation
 import com.example.foodexpiryapp.presentation.adapter.FoodItemAdapter
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryEvent
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryViewModel
+import com.example.foodexpiryapp.util.ShelfLifeEstimator
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -143,12 +144,21 @@ class InventoryFragment : Fragment() {
                 FoodCategory.values().find { it.name == name }
             } ?: FoodCategory.OTHER
 
+            // Estimate smart expiry date based on the specific item label
+            val shelfLife = ShelfLifeEstimator.estimateShelfLife(listOf(label))
+            val calculatedExpiryDate = ShelfLifeEstimator.calculateExpiryDate(shelfLife.days)
+
             draftFoodItem = null
             
+            // Format label for display (e.g. "tomato_sauce" -> "Tomato Sauce")
+            val formattedName = label.replace("_", " ").split(" ").joinToString(" ") { 
+                it.replaceFirstChar { char -> if (char.isLowerCase()) char.titlecase() else char.toString() } 
+            }
+            
             val newItem = FoodItem(
-                name = label.capitalize(),
+                name = formattedName,
                 category = category,
-                expiryDate = LocalDate.now().plusDays(7),
+                expiryDate = calculatedExpiryDate,
                 quantity = 1,
                 location = StorageLocation.FRIDGE,
                 notes = "",
@@ -157,7 +167,7 @@ class InventoryFragment : Fragment() {
             )
             
             showAddEditDialog(newItem)
-            Snackbar.make(binding.root, "Detected: ${label.capitalize()}", Snackbar.LENGTH_SHORT).show()
+            Snackbar.make(binding.root, "Detected: $formattedName (${shelfLife.days} days)", Snackbar.LENGTH_SHORT).show()
         }
     }
 

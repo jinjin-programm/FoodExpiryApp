@@ -180,15 +180,15 @@ object ShelfLifeEstimator {
         "bun" to 5,
         
         // ==================== GRAINS & PASTA ====================
-        "pasta" to 4, // cooked pasta
-        "noodles" to 4,
-        "rice" to 4, // cooked rice
-        "quinoa" to 5,
-        "barley" to 5,
-        "couscous" to 5,
-        "oats" to 7, // cooked
-        "oatmeal" to 7,
-        "grains" to 5,
+        "pasta" to 730, // dried pasta
+        "noodles" to 730,
+        "rice" to 730, // dry white rice
+        "quinoa" to 365,
+        "barley" to 365,
+        "couscous" to 365,
+        "oats" to 365, // dry
+        "oatmeal" to 365,
+        "grains" to 365,
         "cereal" to 90, // opened
         "granola" to 30,
         

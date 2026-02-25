@@ -80,7 +80,10 @@ class DetectionOverlayView @JvmOverloads constructor(
             canvas.drawRect(scaledBox, boxPaint)
             
             // Draw label background
-            val label = "${detection.label} ${(detection.confidence * 100).toInt()}%"
+            val cleanLabel = detection.label.replace("_", " ").split(" ").joinToString(" ") { 
+                it.replaceFirstChar { char -> if (char.isLowerCase()) char.titlecase() else char.toString() } 
+            }
+            val label = "$cleanLabel ${(detection.confidence * 100).toInt()}%"
             val textBounds = android.graphics.Rect()
             textPaint.getTextBounds(label, 0, label.length, textBounds)
             
