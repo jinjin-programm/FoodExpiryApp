@@ -117,6 +117,15 @@ dependencies {
     // ML Kit Text Recognition (OCR)
     implementation("com.google.mlkit:text-recognition:16.0.0")
 
+    // Firebase Auth & Google Sign-In
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
+
+    // Glide for image loading
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    kapt("com.github.bumptech.glide:compiler:4.16.0")
+
     // TensorFlow Lite for YOLO Object Detection
     implementation("org.tensorflow:tensorflow-lite:2.14.0")
     implementation("org.tensorflow:tensorflow-lite-support:0.4.4")

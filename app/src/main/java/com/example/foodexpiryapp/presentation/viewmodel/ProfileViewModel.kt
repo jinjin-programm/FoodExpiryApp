@@ -18,7 +18,11 @@ data class ProfileUiState(
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val saveSuccess: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val isGoogleSignIn: Boolean = false,
+    val googleUserName: String? = null,
+    val googleUserEmail: String? = null,
+    val googleUserPhotoUrl: String? = null
 )
 
 sealed class ProfileEvent {
@@ -136,6 +140,41 @@ class ProfileViewModel @Inject constructor(
                 _uiState.update { it.copy(isSaving = false) }
                 _events.emit(ProfileEvent.ShowMessage("Failed to save profile: ${e.message}"))
             }
+        }
+    }
+
+    fun updateGoogleSignInState(
+        isSignedIn: Boolean,
+        displayName: String? = null,
+        email: String? = null,
+        photoUrl: String? = null
+    ) {
+        _uiState.update { state ->
+            state.copy(
+                isGoogleSignIn = isSignedIn,
+                googleUserName = displayName,
+                googleUserEmail = email,
+                googleUserPhotoUrl = photoUrl,
+                userProfile = if (isSignedIn && email != null) {
+                    state.userProfile.copy(
+                        name = displayName ?: state.userProfile.name,
+                        email = email
+                    )
+                } else {
+                    state.userProfile
+                }
+            )
+        }
+    }
+
+    fun signOutGoogle() {
+        _uiState.update { state ->
+            state.copy(
+                isGoogleSignIn = false,
+                googleUserName = null,
+                googleUserEmail = null,
+                googleUserPhotoUrl = null
+            )
         }
     }
 }
