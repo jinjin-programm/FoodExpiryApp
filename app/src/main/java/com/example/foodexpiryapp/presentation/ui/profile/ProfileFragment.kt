@@ -204,7 +204,7 @@ class ProfileFragment : Fragment() {
                         binding.editEmail.setText(state.userProfile.email)
                     }
                     
-                    val householdSize = state.userProfile.householdSize.toFloat()
+                    val householdSize = state.userProfile.householdSize.toFloat().coerceIn(1f, 10f)
                     if (binding.sliderHouseholdSize.value != householdSize) {
                         binding.sliderHouseholdSize.value = householdSize
                     }
@@ -226,7 +226,7 @@ class ProfileFragment : Fragment() {
                         binding.switchNotifications.isChecked = settings.notificationsEnabled
                     }
                     
-                    val daysBefore = settings.defaultDaysBefore.toFloat()
+                    val daysBefore = settings.defaultDaysBefore.toFloat().coerceIn(1f, 14f)
                     if (binding.sliderDaysBefore.value != daysBefore) {
                         binding.sliderDaysBefore.value = daysBefore
                     }

@@ -90,7 +90,7 @@ dependencies {
     kapt("androidx.room:room-compiler:$roomVersion")
 
     // Hilt Dependency Injection
-    val hiltVersion = "2.50"
+    val hiltVersion = "2.52"
     implementation("com.google.dagger:hilt-android:$hiltVersion")
     kapt("com.google.dagger:hilt-android-compiler:$hiltVersion")
 

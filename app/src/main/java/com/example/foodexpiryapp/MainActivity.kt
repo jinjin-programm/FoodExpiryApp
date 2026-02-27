@@ -14,13 +14,16 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        android.util.Log.d("MainActivity", "onCreate started")
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        android.util.Log.d("MainActivity", "layout set")
 
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
 
         binding.bottomNavigation.setupWithNavController(navController)
+        android.util.Log.d("MainActivity", "navigation setup complete")
     }
 }

@@ -24,7 +24,9 @@ class FoodExpiryApp : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        android.util.Log.d("FoodExpiryApp", "Application onCreate started")
         scheduleExpiryCheck()
+        android.util.Log.d("FoodExpiryApp", "Application onCreate finished")
     }
 
     private fun scheduleExpiryCheck() {
