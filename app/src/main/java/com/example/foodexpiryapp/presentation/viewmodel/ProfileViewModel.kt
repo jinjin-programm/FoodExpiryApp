@@ -22,7 +22,11 @@ data class ProfileUiState(
     val isGoogleSignIn: Boolean = false,
     val googleUserName: String? = null,
     val googleUserEmail: String? = null,
-    val googleUserPhotoUrl: String? = null
+    val googleUserPhotoUrl: String? = null,
+    val hasUnsavedChanges: Boolean = false,
+    val validationErrors: Map<String, String> = emptyMap(),
+    val selectedProfilePhotoUri: String? = null,
+    val isFirstTimeSetup: Boolean = false
 )
 
 sealed class ProfileEvent {
@@ -72,20 +76,58 @@ class ProfileViewModel @Inject constructor(
 
     fun updateName(name: String) {
         _uiState.update { state ->
-            state.copy(userProfile = state.userProfile.copy(name = name))
+            state.copy(
+                userProfile = state.userProfile.copy(name = name),
+                hasUnsavedChanges = true
+            )
         }
     }
 
-    fun updateEmail(email: String) {
+    fun updateValidationError(fieldName: String, error: String?) {
         _uiState.update { state ->
-            state.copy(userProfile = state.userProfile.copy(email = email))
+            val errors = state.validationErrors.toMutableMap()
+            if (error == null) {
+                errors.remove(fieldName)
+            } else {
+                errors[fieldName] = error
+            }
+            state.copy(validationErrors = errors.toMap())
         }
+    }
+
+    fun updateProfilePhoto(uri: String) {
+        _uiState.update { state ->
+            state.copy(
+                selectedProfilePhotoUri = uri,
+                userProfile = state.userProfile.copy(profilePhotoUri = uri),
+                hasUnsavedChanges = true
+            )
+        }
+    }
+
+    fun discardChanges() {
+        loadUserProfile()
+        loadNotificationSettings()
+        _uiState.update { state ->
+            state.copy(
+                hasUnsavedChanges = false,
+                selectedProfilePhotoUri = null,
+                validationErrors = emptyMap()
+            )
+        }
+    }
+
+    fun setFirstTimeSetup(value: Boolean) {
+        _uiState.update { it.copy(isFirstTimeSetup = value) }
     }
 
     fun updateHouseholdSize(size: Int) {
         val coercedSize = size.coerceIn(1, 10)
         _uiState.update { state ->
-            state.copy(userProfile = state.userProfile.copy(householdSize = coercedSize))
+            state.copy(
+                userProfile = state.userProfile.copy(householdSize = coercedSize),
+                hasUnsavedChanges = true
+            )
         }
     }
 
@@ -97,28 +139,40 @@ class ProfileViewModel @Inject constructor(
             } else {
                 currentPrefs.add(preference)
             }
-            state.copy(userProfile = state.userProfile.copy(dietaryPreferences = currentPrefs))
+            state.copy(
+                userProfile = state.userProfile.copy(dietaryPreferences = currentPrefs),
+                hasUnsavedChanges = true
+            )
         }
     }
 
     fun updateNotificationsEnabled(enabled: Boolean) {
         _uiState.update { state ->
-            state.copy(notificationSettings = state.notificationSettings.copy(notificationsEnabled = enabled))
+            state.copy(
+                notificationSettings = state.notificationSettings.copy(notificationsEnabled = enabled),
+                hasUnsavedChanges = true
+            )
         }
     }
 
     fun updateDefaultDaysBefore(days: Int) {
         _uiState.update { state ->
-            state.copy(notificationSettings = state.notificationSettings.copy(defaultDaysBefore = days))
+            state.copy(
+                notificationSettings = state.notificationSettings.copy(defaultDaysBefore = days),
+                hasUnsavedChanges = true
+            )
         }
     }
 
     fun updateNotificationTime(hour: Int, minute: Int) {
         _uiState.update { state ->
-            state.copy(notificationSettings = state.notificationSettings.copy(
-                notificationHour = hour,
-                notificationMinute = minute
-            ))
+            state.copy(
+                notificationSettings = state.notificationSettings.copy(
+                    notificationHour = hour,
+                    notificationMinute = minute
+                ),
+                hasUnsavedChanges = true
+            )
         }
     }
 

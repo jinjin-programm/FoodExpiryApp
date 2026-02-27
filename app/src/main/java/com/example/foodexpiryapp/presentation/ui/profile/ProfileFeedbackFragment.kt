@@ -5,14 +5,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.example.foodexpiryapp.databinding.FragmentProfileContainerBinding
-import com.google.android.material.tabs.TabLayoutMediator
+import com.example.foodexpiryapp.databinding.FragmentProfileFeedbackBinding
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class ProfileFragment : Fragment() {
+class ProfileFeedbackFragment : Fragment() {
 
-    private var _binding: FragmentProfileContainerBinding? = null
+    private var _binding: FragmentProfileFeedbackBinding? = null
     private val binding get() = _binding!!
 
     override fun onCreateView(
@@ -20,21 +19,12 @@ class ProfileFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentProfileContainerBinding.inflate(inflater, container, false)
+        _binding = FragmentProfileFeedbackBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        setupViewPager()
-    }
-
-    private fun setupViewPager() {
-        val adapter = ProfileTabsPagerAdapter(childFragmentManager, lifecycle)
-        binding.viewPager.adapter = adapter
-
-        TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
-            tab.text = adapter.getPageTitle(position)
-        }.attach()
+        // Feedback fragment content will be added here
     }
 
     override fun onDestroyView() {

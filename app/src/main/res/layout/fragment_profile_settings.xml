@@ -1,28 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout 
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorSurface">
-
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            app:title="👤 My Profile" />
-
-    </com.google.android.material.appbar.AppBarLayout>
-
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:layout_height="match_parent">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -54,65 +39,13 @@
                     android:textColor="?attr/colorPrimary" />
             </LinearLayout>
 
-            <!-- Google Sign-In Section -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardGoogleSignIn"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+            <ImageView
+                android:id="@+id/imgGooglePhoto"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
                 android:layout_marginBottom="16dp"
-                app:cardElevation="2dp"
-                app:cardCornerRadius="12dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp"
-                    android:gravity="center">
-
-                    <ImageView
-                        android:id="@+id/imgGooglePhoto"
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
-                        android:layout_marginBottom="8dp"
-                        android:visibility="gone"
-                        android:contentDescription="Google profile photo" />
-
-                    <TextView
-                        android:id="@+id/textGoogleUserName"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="?attr/textAppearanceBody1"
-                        android:textStyle="bold"
-                        android:visibility="gone" />
-
-                    <TextView
-                        android:id="@+id/textGoogleUserEmail"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="?attr/textAppearanceBody2"
-                        android:textColor="?android:attr/textColorSecondary"
-                        android:visibility="gone"
-                        android:layout_marginBottom="8dp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnGoogleSignIn"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Sign in with Google"
-                        app:icon="@drawable/ic_google" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnGoogleSignOut"
-                        style="@style/Widget.MaterialComponents.Button.TextButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Sign Out"
-                        android:visibility="gone" />
-
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                android:contentDescription="Profile photo"
+                android:scaleType="centerCrop" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/inputLayoutName"
@@ -331,7 +264,6 @@
         android:layout_height="wrap_content"
         android:indeterminate="true"
         android:visibility="gone"
-        app:layout_anchor="@id/toolbar"
-        app:layout_anchorGravity="bottom" />
+        android:layout_gravity="top" />
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</FrameLayout>
