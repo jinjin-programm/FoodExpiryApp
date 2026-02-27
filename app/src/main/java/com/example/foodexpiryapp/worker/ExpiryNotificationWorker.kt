@@ -16,20 +16,20 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.foodexpiryapp.MainActivity
 import com.example.foodexpiryapp.R
+import com.example.foodexpiryapp.domain.model.FoodItem
 import com.example.foodexpiryapp.domain.repository.FoodRepository
+import com.example.foodexpiryapp.domain.repository.NotificationSettingsRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.flow.first
 import java.time.LocalDate
 
-/**
- * Background worker that runs daily to check for food items about to expire.
- * Uses Hilt for dependency injection via @HiltWorker.
- */
 @HiltWorker
 class ExpiryNotificationWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted workerParams: WorkerParameters,
-    private val repository: FoodRepository
+    private val foodRepository: FoodRepository,
+    private val notificationSettingsRepository: NotificationSettingsRepository
 ) : CoroutineWorker(context, workerParams) {
 
     companion object {
@@ -42,13 +42,20 @@ class ExpiryNotificationWorker @AssistedInject constructor(
         return try {
             createNotificationChannel()
 
-            // Items expiring within the next 3 days
-            val cutoffDate = LocalDate.now().plusDays(3)
-            val expiringItems = repository.getExpiringBeforeSync(cutoffDate)
+            val settings = notificationSettingsRepository.getNotificationSettings().first()
 
-            if (expiringItems.isNotEmpty()) {
-                val expiredCount = expiringItems.count { it.isExpired }
-                val soonCount = expiringItems.size - expiredCount
+            if (!settings.notificationsEnabled) {
+                return Result.success()
+            }
+
+            val cutoffDate = LocalDate.now().plusDays(settings.defaultDaysBefore.toLong())
+            val allExpiringItems = foodRepository.getExpiringBeforeSync(cutoffDate)
+
+            val itemsToNotify = filterItemsForNotification(allExpiringItems, settings.defaultDaysBefore)
+
+            if (itemsToNotify.isNotEmpty()) {
+                val expiredCount = itemsToNotify.count { it.isExpired }
+                val soonCount = itemsToNotify.size - expiredCount
 
                 val message = buildString {
                     if (expiredCount > 0) {
@@ -60,7 +67,7 @@ class ExpiryNotificationWorker @AssistedInject constructor(
                     }
                 }
 
-                val details = expiringItems.take(5).joinToString("\n") { item ->
+                val details = itemsToNotify.take(5).joinToString("\n") { item ->
                     val daysText = when {
                         item.daysUntilExpiry < 0 -> "EXPIRED"
                         item.daysUntilExpiry == 0L -> "Today"
@@ -75,6 +82,15 @@ class ExpiryNotificationWorker @AssistedInject constructor(
             Result.success()
         } catch (e: Exception) {
             Result.retry()
+        }
+    }
+
+    private fun filterItemsForNotification(items: List<FoodItem>, defaultDaysBefore: Int): List<FoodItem> {
+        return items.filter { item ->
+            if (!item.notifyEnabled) return@filter false
+
+            val notifyDays = item.notifyDaysBefore ?: defaultDaysBefore
+            item.daysUntilExpiry <= notifyDays
         }
     }
 

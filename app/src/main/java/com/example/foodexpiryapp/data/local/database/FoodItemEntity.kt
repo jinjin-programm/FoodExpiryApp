@@ -13,11 +13,13 @@ data class FoodItemEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String,
-    val category: String,       // stored as enum name string
-    val expiryDate: String,     // stored as ISO-8601 (yyyy-MM-dd)
+    val category: String,
+    val expiryDate: String,
     val quantity: Int = 1,
-    val location: String,       // stored as enum name string
+    val location: String,
     val notes: String = "",
     val barcode: String? = null,
-    val dateAdded: String       // ISO-8601 date when item was added
+    val dateAdded: String,
+    val notifyEnabled: Boolean = true,
+    val notifyDaysBefore: Int? = null
 )

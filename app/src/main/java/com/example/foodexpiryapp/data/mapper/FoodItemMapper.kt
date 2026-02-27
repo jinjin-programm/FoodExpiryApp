@@ -29,7 +29,9 @@ object FoodItemMapper {
             },
             notes = entity.notes,
             barcode = entity.barcode,
-            dateAdded = LocalDate.parse(entity.dateAdded)
+            dateAdded = LocalDate.parse(entity.dateAdded),
+            notifyEnabled = entity.notifyEnabled,
+            notifyDaysBefore = entity.notifyDaysBefore
         )
     }
 
@@ -43,7 +45,9 @@ object FoodItemMapper {
             location = domain.location.name,
             notes = domain.notes,
             barcode = domain.barcode,
-            dateAdded = domain.dateAdded.toString()
+            dateAdded = domain.dateAdded.toString(),
+            notifyEnabled = domain.notifyEnabled,
+            notifyDaysBefore = domain.notifyDaysBefore
         )
     }
 }

@@ -15,7 +15,9 @@ data class FoodItem(
     val location: StorageLocation = StorageLocation.FRIDGE,
     val notes: String = "",
     val barcode: String? = null,
-    val dateAdded: LocalDate = LocalDate.now()
+    val dateAdded: LocalDate = LocalDate.now(),
+    val notifyEnabled: Boolean = true,
+    val notifyDaysBefore: Int? = null
 ) {
     /** True if this item has already expired. */
     val isExpired: Boolean
