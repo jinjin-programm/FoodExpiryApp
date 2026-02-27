@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.foodexpiryapp.databinding.FragmentProfileSettingsBinding
 import com.example.foodexpiryapp.domain.model.DietaryPreference
+import com.example.foodexpiryapp.presentation.util.PhotoStorageHelper
 import com.example.foodexpiryapp.presentation.util.ValidationHelper
 import com.example.foodexpiryapp.presentation.viewmodel.ProfileEvent
 import com.example.foodexpiryapp.presentation.viewmodel.ProfileViewModel
@@ -37,7 +38,13 @@ class ProfileSettingsFragment : Fragment() {
         ActivityResultContracts.GetContent()
     ) { uri ->
         if (uri != null) {
-            viewModel.updateProfilePhoto(uri.toString())
+            // Copy the image to cache
+            val cachedPath = PhotoStorageHelper.savePhotoCached(requireContext(), uri)
+            if (cachedPath != null) {
+                viewModel.updateProfilePhoto(cachedPath)
+                // Display the photo immediately
+                binding.imgGooglePhoto.setImageURI(uri)
+            }
         }
     }
 
@@ -171,6 +178,11 @@ class ProfileSettingsFragment : Fragment() {
                     // Guarded updates to prevent infinite loops and cursor jumps
                     if (binding.editName.text?.toString() != state.userProfile.name) {
                         binding.editName.setText(state.userProfile.name)
+                    }
+                    
+                    // Display profile photo if it exists
+                    if (state.userProfile.profilePhotoUri != null) {
+                        binding.imgGooglePhoto.setImageURI(android.net.Uri.parse(state.userProfile.profilePhotoUri))
                     }
                     
                     val householdSize = state.userProfile.householdSize.toFloat().coerceIn(1f, 10f)
