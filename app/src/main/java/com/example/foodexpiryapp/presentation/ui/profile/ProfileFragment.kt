@@ -16,6 +16,8 @@ import com.example.foodexpiryapp.presentation.viewmodel.ProfileEvent
 import com.example.foodexpiryapp.presentation.viewmodel.ProfileViewModel
 import com.google.android.material.chip.Chip
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.timepicker.MaterialTimePicker
+import com.google.android.material.timepicker.TimeFormat
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -84,9 +86,41 @@ class ProfileFragment : Fragment() {
                 viewModel.updateHouseholdSize(size)
             }
         }
+        
+        // Notification settings listeners
+        binding.switchNotifications.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.updateNotificationsEnabled(isChecked)
+        }
+        
+        binding.sliderDaysBefore.addOnChangeListener { _, value, _ ->
+            val days = value.toInt()
+            binding.textDaysBeforeLabel.text = "Notify days before expiry: $days day${if (days > 1) "s" else ""}"
+            viewModel.updateDefaultDaysBefore(days)
+        }
+        
+        binding.btnSetTime.setOnClickListener {
+            showTimePicker()
+        }
+        
         binding.btnSave.setOnClickListener {
             viewModel.saveProfile()
         }
+    }
+    
+    private fun showTimePicker() {
+        val currentSettings = viewModel.uiState.value.notificationSettings
+        val picker = MaterialTimePicker.Builder()
+            .setTimeFormat(TimeFormat.CLOCK_12H)
+            .setHour(currentSettings.notificationHour)
+            .setMinute(currentSettings.notificationMinute)
+            .setTitleText("Select notification time")
+            .build()
+        
+        picker.addOnPositiveButtonClickListener {
+            viewModel.updateNotificationTime(picker.hour, picker.minute)
+        }
+        
+        picker.show(parentFragmentManager, "time_picker")
     }
 
     private fun observeState() {
@@ -116,6 +150,21 @@ class ProfileFragment : Fragment() {
                             chip.isChecked = shouldBeChecked
                         }
                     }
+                    
+                    // Update notification settings UI
+                    val settings = state.notificationSettings
+                    if (binding.switchNotifications.isChecked != settings.notificationsEnabled) {
+                        binding.switchNotifications.isChecked = settings.notificationsEnabled
+                    }
+                    
+                    val daysBefore = settings.defaultDaysBefore.toFloat()
+                    if (binding.sliderDaysBefore.value != daysBefore) {
+                        binding.sliderDaysBefore.value = daysBefore
+                    }
+                    binding.textDaysBeforeLabel.text = "Notify days before expiry: ${settings.defaultDaysBefore} day${if (settings.defaultDaysBefore > 1) "s" else ""}"
+                    
+                    val timeText = formatTime(settings.notificationHour, settings.notificationMinute)
+                    binding.textNotificationTimeLabel.text = "Daily reminder time: $timeText"
 
                     // Progress
                     binding.progressIndicator.visibility = if (state.isSaving || state.isLoading) View.VISIBLE else View.GONE
@@ -123,6 +172,12 @@ class ProfileFragment : Fragment() {
                 }
             }
         }
+    }
+    
+    private fun formatTime(hour: Int, minute: Int): String {
+        val hour12 = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
+        val amPm = if (hour < 12) "AM" else "PM"
+        return String.format("%d:%02d %s", hour12, minute, amPm)
     }
 
     private fun observeEvents() {
