@@ -22,6 +22,11 @@ import sys
 import argparse
 from pathlib import Path
 
+# ── Fix: add Python Scripts dir to PATH so offload-arch.exe is found by ROCm ──
+_scripts_dir = Path(sys.executable).parent / "Scripts"
+if _scripts_dir.exists() and str(_scripts_dir) not in os.environ.get("PATH", ""):
+    os.environ["PATH"] = str(_scripts_dir) + os.pathsep + os.environ.get("PATH", "")
+
 # ── Configuration ─────────────────────────────────────────────────────────────
 DATASET_PATH = Path(r"D:\FoodExpiryDatasets\crawled_grocery_yolo")
 PROJECT_NAME = "yolo11_rocm"
