@@ -27,6 +27,25 @@ _scripts_dir = Path(sys.executable).parent / "Scripts"
 if _scripts_dir.exists() and str(_scripts_dir) not in os.environ.get("PATH", ""):
     os.environ["PATH"] = str(_scripts_dir) + os.pathsep + os.environ.get("PATH", "")
 
+# ── Fix: set ROCm/MIOpen env vars BEFORE torch is imported ────────────────────
+# MIOpen's JIT compiler (amd_comgr/HIPRTC) needs HIP device headers.
+# Without these, BatchNorm kernel compilation fails with 'type_traits not found'.
+import site as _site
+_sp = Path(_site.getusersitepackages())
+_rocm_core = _sp / "_rocm_sdk_core"
+if _rocm_core.exists():
+    # HIP include path for device-side headers
+    os.environ.setdefault("HIP_INCLUDE_PATH", str(_rocm_core / "include" / "hip"))
+    # ROCM_PATH so MIOpen/comgr can locate the SDK root
+    os.environ.setdefault("ROCM_PATH", str(_rocm_core))
+    # Add SDK bin to PATH for DLL resolution
+    _sdk_bin = str(_rocm_core / "bin")
+    if _sdk_bin not in os.environ.get("PATH", ""):
+        os.environ["PATH"] = _sdk_bin + os.pathsep + os.environ["PATH"]
+# Disable AI heuristics that trigger extra JIT compilations at startup
+os.environ.setdefault("MIOPEN_ENABLE_AI_HEUR", "0")
+os.environ.setdefault("MIOPEN_ENABLE_AI_IMMED_MODE_FALLBACK", "0")
+
 # ── Configuration ─────────────────────────────────────────────────────────────
 DATASET_PATH = Path(r"D:\FoodExpiryDatasets\crawled_grocery_yolo")
 PROJECT_NAME = "yolo11_rocm"
