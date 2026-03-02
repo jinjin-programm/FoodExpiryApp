@@ -32,3 +32,14 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Accidental Windows null file
+nul
+
+# YOLO training run outputs (large generated files)
+runs/
