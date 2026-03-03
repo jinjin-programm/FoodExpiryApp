@@ -222,8 +222,8 @@ class YoloScanFragment : Fragment() {
         if (detections.isNotEmpty()) {
             val best = detections.maxByOrNull { it.confidence }!!
 
-            // Only surface detections above 50 % confidence in the action bar
-            if (best.confidence >= 0.50f) {
+            // Surface detections above 40% confidence in the UI
+            if (best.confidence > 0.40f) {
                 bestDetection = best
                 binding.tvDetectedItem.text = "Detected: ${best.label.capitalizeWords()}"
                 binding.tvConfidence.text = "Confidence: ${(best.confidence * 100).toInt()}%"
@@ -231,8 +231,8 @@ class YoloScanFragment : Fragment() {
                 binding.detectionResultsContainer.visibility = View.VISIBLE
                 binding.btnManualSelect.visibility = View.GONE
             } else {
-                // Low-confidence results: show in status bar only, don't promote to action
-                updateStatus("Low confidence – keep scanning (${(best.confidence * 100).toInt()}%)")
+                // Very low-confidence results
+                updateStatus("Scanning… keep scanning (${(best.confidence * 100).toInt()}%)")
             }
 
             binding.detectionOverlay.setDetections(detections, bitmap.width, bitmap.height)

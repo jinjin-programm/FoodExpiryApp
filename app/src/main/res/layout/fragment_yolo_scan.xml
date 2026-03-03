@@ -22,17 +22,21 @@
             android:visibility="visible" />
     </androidx.camera.view.PreviewView>
 
-    <!-- Detection overlay for bounding boxes -->
-    <com.example.foodexpiryapp.presentation.ui.yolo.DetectionOverlayView
-        android:id="@+id/detectionOverlay"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
     <View
         android:id="@+id/overlay"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@drawable/scan_overlay"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Detection overlay for bounding boxes — must be ABOVE scan_overlay in z-order -->
+    <com.example.foodexpiryapp.presentation.ui.yolo.DetectionOverlayView
+        android:id="@+id/detectionOverlay"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

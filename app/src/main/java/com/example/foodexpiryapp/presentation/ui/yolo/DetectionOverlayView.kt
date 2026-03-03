@@ -25,7 +25,7 @@ class DetectionOverlayView @JvmOverloads constructor(
     private val boxPaint = Paint().apply {
         style = Paint.Style.STROKE
         strokeWidth = 6f
-        color = Color.GREEN
+        color = Color.RED
     }
     
     private val textPaint = Paint().apply {
@@ -63,6 +63,9 @@ class DetectionOverlayView @JvmOverloads constructor(
         val scaleY = height.toFloat() / imageHeight
         
         detections.forEach { detection ->
+            // Show bounding box when confidence is higher than 40%
+            if (detection.confidence <= 0.4f) return@forEach
+
             val scaledBox = RectF(
                 detection.boundingBox.left * scaleX,
                 detection.boundingBox.top * scaleY,
@@ -70,13 +73,7 @@ class DetectionOverlayView @JvmOverloads constructor(
                 detection.boundingBox.bottom * scaleY
             )
             
-            // Draw bounding box with color based on confidence
-            boxPaint.color = when {
-                detection.confidence > 0.8f -> Color.GREEN
-                detection.confidence > 0.6f -> Color.YELLOW
-                else -> Color.RED
-            }
-            
+            // Draw bounding box
             canvas.drawRect(scaledBox, boxPaint)
             
             // Draw label background

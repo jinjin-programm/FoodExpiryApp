@@ -22,6 +22,7 @@ class UserRepositoryImpl @Inject constructor(
         val USER_EMAIL = stringPreferencesKey("user_email")
         val HOUSEHOLD_SIZE = intPreferencesKey("household_size")
         val DIETARY_PREFERENCES = stringSetPreferencesKey("dietary_preferences")
+        val PROFILE_PHOTO_URI = stringPreferencesKey("profile_photo_uri")
     }
 
     override fun getUserProfile(): Flow<UserProfile> = dataStore.data
@@ -37,6 +38,7 @@ class UserRepositoryImpl @Inject constructor(
             val email = preferences[PreferencesKeys.USER_EMAIL] ?: ""
             val householdSize = (preferences[PreferencesKeys.HOUSEHOLD_SIZE] ?: 1).coerceIn(1, 10)
             val dietStrings = preferences[PreferencesKeys.DIETARY_PREFERENCES] ?: emptySet()
+            val profilePhotoUri = preferences[PreferencesKeys.PROFILE_PHOTO_URI]
             
             val dietaryPreferences = dietStrings.mapNotNull { dietName ->
                 try {
@@ -46,7 +48,7 @@ class UserRepositoryImpl @Inject constructor(
                 }
             }.toSet()
 
-            UserProfile(name, email, householdSize, dietaryPreferences)
+            UserProfile(name, email, householdSize, dietaryPreferences, profilePhotoUri)
         }
 
     override suspend fun saveUserProfile(profile: UserProfile) {
@@ -55,6 +57,9 @@ class UserRepositoryImpl @Inject constructor(
             preferences[PreferencesKeys.USER_EMAIL] = profile.email
             preferences[PreferencesKeys.HOUSEHOLD_SIZE] = profile.householdSize
             preferences[PreferencesKeys.DIETARY_PREFERENCES] = profile.dietaryPreferences.map { it.name }.toSet()
+            profile.profilePhotoUri?.let { 
+                preferences[PreferencesKeys.PROFILE_PHOTO_URI] = it 
+            } ?: preferences.remove(PreferencesKeys.PROFILE_PHOTO_URI)
         }
     }
 }

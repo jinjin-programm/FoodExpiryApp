@@ -22,7 +22,9 @@ data class ProfileUiState(
     val isGoogleSignIn: Boolean = false,
     val googleUserName: String? = null,
     val googleUserEmail: String? = null,
-    val googleUserPhotoUrl: String? = null
+    val googleUserPhotoUrl: String? = null,
+    val validationErrors: Map<String, String?> = emptyMap(),
+    val hasUnsavedChanges: Boolean = false
 )
 
 sealed class ProfileEvent {
@@ -42,6 +44,9 @@ class ProfileViewModel @Inject constructor(
     private val _events = MutableSharedFlow<ProfileEvent>()
     val events: SharedFlow<ProfileEvent> = _events.asSharedFlow()
 
+    private var originalProfile: UserProfile? = null
+    private var originalSettings: NotificationSettings? = null
+
     init {
         loadUserProfile()
         loadNotificationSettings()
@@ -53,6 +58,7 @@ class ProfileViewModel @Inject constructor(
             userRepository.getUserProfile()
                 .take(1)
                 .collect { profile ->
+                    originalProfile = profile
                     _uiState.update { 
                         it.copy(userProfile = profile, isLoading = false) 
                     }
@@ -65,27 +71,60 @@ class ProfileViewModel @Inject constructor(
             notificationSettingsRepository.getNotificationSettings()
                 .take(1)
                 .collect { settings ->
+                    originalSettings = settings
                     _uiState.update { it.copy(notificationSettings = settings) }
                 }
         }
+    }
+
+    private fun checkUnsavedChanges() {
+        val currentProfile = _uiState.value.userProfile
+        val currentSettings = _uiState.value.notificationSettings
+        
+        val profileChanged = originalProfile != null && currentProfile != originalProfile
+        val settingsChanged = originalSettings != null && currentSettings != originalSettings
+        
+        _uiState.update { it.copy(hasUnsavedChanges = profileChanged || settingsChanged) }
     }
 
     fun updateName(name: String) {
         _uiState.update { state ->
             state.copy(userProfile = state.userProfile.copy(name = name))
         }
+        checkUnsavedChanges()
     }
 
     fun updateEmail(email: String) {
         _uiState.update { state ->
             state.copy(userProfile = state.userProfile.copy(email = email))
         }
+        checkUnsavedChanges()
     }
 
     fun updateHouseholdSize(size: Int) {
         val coercedSize = size.coerceIn(1, 10)
         _uiState.update { state ->
             state.copy(userProfile = state.userProfile.copy(householdSize = coercedSize))
+        }
+        checkUnsavedChanges()
+    }
+
+    fun updateProfilePhoto(path: String) {
+        _uiState.update { state ->
+            state.copy(userProfile = state.userProfile.copy(profilePhotoUri = path))
+        }
+        checkUnsavedChanges()
+    }
+
+    fun updateValidationError(field: String, error: String?) {
+        _uiState.update { state ->
+            val errors = state.validationErrors.toMutableMap()
+            if (error == null) {
+                errors.remove(field)
+            } else {
+                errors[field] = error
+            }
+            state.copy(validationErrors = errors)
         }
     }
 
@@ -99,18 +138,21 @@ class ProfileViewModel @Inject constructor(
             }
             state.copy(userProfile = state.userProfile.copy(dietaryPreferences = currentPrefs))
         }
+        checkUnsavedChanges()
     }
 
     fun updateNotificationsEnabled(enabled: Boolean) {
         _uiState.update { state ->
             state.copy(notificationSettings = state.notificationSettings.copy(notificationsEnabled = enabled))
         }
+        checkUnsavedChanges()
     }
 
     fun updateDefaultDaysBefore(days: Int) {
         _uiState.update { state ->
             state.copy(notificationSettings = state.notificationSettings.copy(defaultDaysBefore = days))
         }
+        checkUnsavedChanges()
     }
 
     fun updateNotificationTime(hour: Int, minute: Int) {
@@ -119,6 +161,25 @@ class ProfileViewModel @Inject constructor(
                 notificationHour = hour,
                 notificationMinute = minute
             ))
+        }
+        checkUnsavedChanges()
+    }
+
+    fun discardChanges() {
+        viewModelScope.launch {
+            originalProfile?.let { profile ->
+                _uiState.update { it.copy(userProfile = profile) }
+            }
+            originalSettings?.let { settings ->
+                _uiState.update { it.copy(notificationSettings = settings) }
+            }
+            _uiState.update { 
+                it.copy(
+                    hasUnsavedChanges = false,
+                    validationErrors = emptyMap()
+                ) 
+            }
+            _events.emit(ProfileEvent.ShowMessage("Changes discarded"))
         }
     }
 
@@ -133,7 +194,15 @@ class ProfileViewModel @Inject constructor(
                 notificationSettingsRepository.updateDefaultDaysBefore(settings.defaultDaysBefore)
                 notificationSettingsRepository.updateNotificationTime(settings.notificationHour, settings.notificationMinute)
                 
-                _uiState.update { it.copy(isSaving = false) }
+                originalProfile = _uiState.value.userProfile
+                originalSettings = _uiState.value.notificationSettings
+                
+                _uiState.update { 
+                    it.copy(
+                        isSaving = false,
+                        hasUnsavedChanges = false
+                    ) 
+                }
                 _events.emit(ProfileEvent.SaveSuccess)
                 _events.emit(ProfileEvent.ShowMessage("Profile saved successfully!"))
             } catch (e: Exception) {

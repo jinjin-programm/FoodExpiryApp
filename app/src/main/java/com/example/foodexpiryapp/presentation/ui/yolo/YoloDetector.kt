@@ -47,25 +47,28 @@ class YoloDetector(
     companion object {
         private const val TAG = "YoloDetector"
 
-        // YOLO26n custom food model (11 classes, NMS-free TFLite export)
+        // YOLO26n custom food model (34 classes, NMS-free TFLite export)
         const val DEFAULT_MODEL_NAME = "food_yolo26n_float32.tflite"
 
         // Fallback models tried in order when the primary is unavailable
+        // crawled_grocery_yolo11n supports 51 classes including eggs, butter, cheese, etc.
         private const val FALLBACK_MODELS =
-            "yolo26n_float32.tflite,foodvision_yolov8.tflite,yolo11n_float32.tflite"
+            "crawled_grocery_yolo11n.tflite,yolo26n_float32.tflite,foodvision_yolov8.tflite,yolo11n_float32.tflite"
 
         // Labels files
         private const val COCO_LABELS_FILE = "coco_labels.txt"
         private const val FOOD_CATEGORIES_FILE = "food_categories.txt"
         private const val LEGACY_FOOD_LABELS_FILE = "yolo_labels.txt"
+        private const val CRAWLED_GROCERY_LABELS_FILE = "yolo_labels_crawled_grocery.txt"
 
         private const val INPUT_SIZE = 640
 
         // YOLO26n NMS-free export: up to 300 detections
         private const val MAX_DETECTIONS = 300
 
-        // Minimum score to keep a detection
-        private const val CONFIDENCE_THRESHOLD = 0.35f
+        // Minimum score to keep a detection — kept low so the overlay draws
+        // the red box early; the UI applies its own 40 % display threshold.
+        private const val CONFIDENCE_THRESHOLD = 0.25f
 
         // IoU threshold for the optional safety-net NMS applied to fallback models
         private const val IOU_THRESHOLD = 0.45f
@@ -105,7 +108,7 @@ class YoloDetector(
                 val options = Interpreter.Options().apply { numThreads = 4 }
                 interpreter = Interpreter(buffer, options)
                 
-                // Any YOLO26n exported as TFLite uses the NMS-free head in our pipeline
+        // NMS-free head is used for yolo26n exports only; yolo11n uses classic head
                 usingNmsFreeModel = candidate.contains("yolo26n")
                 loadedModelFile = candidate
                 Log.i(TAG, "Loaded model: \$candidate (nmsFree=\$usingNmsFreeModel)")
@@ -131,13 +134,15 @@ class YoloDetector(
         // But for training with 11 classes, the model still uses the same head structure.
         
         // Decide which label file to use based on the loaded model filename.
-        // - "food" + "yolo26" -> custom 11-class food model
-        // - just "yolo26" -> original 80-class COCO pretrained model
-        // - others -> legacy models
+        // - "food_yolo26n"         → custom 34-class food model
+        // - "crawled_grocery"      → 51-class grocery model (includes eggs)
+        // - "yolo26n"              → original 80-class COCO pretrained
+        // - others                 → legacy yolo_labels.txt
         val file = when {
-            loadedModelFile.contains("food_yolo26n") -> FOOD_CATEGORIES_FILE
-            loadedModelFile.contains("yolo26n") -> COCO_LABELS_FILE
-            else -> LEGACY_FOOD_LABELS_FILE
+            loadedModelFile.contains("food_yolo26n")    -> FOOD_CATEGORIES_FILE
+            loadedModelFile.contains("crawled_grocery") -> CRAWLED_GROCERY_LABELS_FILE
+            loadedModelFile.contains("yolo26n")         -> COCO_LABELS_FILE
+            else                                        -> LEGACY_FOOD_LABELS_FILE
         }
 
         try {
@@ -178,7 +183,7 @@ class YoloDetector(
             foodCategoryMap[cat.name.lowercase()] = cat
         }
 
-        // Then add our 34 specific YOLO classes mapped to the 11 broad UI categories
+        // food_yolo26n 34-class labels
         foodCategoryMap.apply {
             // FRUITS
             put("apple", FoodCategory.FRUITS)
@@ -229,6 +234,75 @@ class YoloDetector(
             put("soda", FoodCategory.BEVERAGES)
             put("tea", FoodCategory.BEVERAGES)
             put("water", FoodCategory.BEVERAGES)
+
+            // ── crawled_grocery_yolo11n 51-class labels ──────────────────────
+            // DAIRY
+            put("eggs", FoodCategory.DAIRY)
+            put("butter", FoodCategory.DAIRY)
+            put("cheese", FoodCategory.DAIRY)
+            put("cream", FoodCategory.DAIRY)
+            put("yogurt", FoodCategory.DAIRY)
+
+            // MEAT / SEAFOOD
+            put("beef_meat", FoodCategory.MEAT)
+            put("chicken_meat", FoodCategory.MEAT)
+            put("pork_meat", FoodCategory.MEAT)
+            put("lamb_meat", FoodCategory.MEAT)
+            put("duck_meat", FoodCategory.MEAT)
+            put("turkey_meat", FoodCategory.MEAT)
+            put("crab_meat", FoodCategory.MEAT)
+            put("shrimp", FoodCategory.MEAT)
+            put("scallops", FoodCategory.MEAT)
+            put("tofu", FoodCategory.MEAT)
+            put("cod_fish", FoodCategory.MEAT)
+            put("mackerel_fish", FoodCategory.MEAT)
+            put("salmon_fish", FoodCategory.MEAT)
+            put("tuna_fish", FoodCategory.MEAT)
+            put("sardines", FoodCategory.MEAT)
+            put("canned_tuna", FoodCategory.MEAT)
+
+            // GRAINS / BREAD
+            put("bagel", FoodCategory.GRAINS)
+            put("baguette", FoodCategory.GRAINS)
+            put("croissant", FoodCategory.GRAINS)
+            put("noodles", FoodCategory.GRAINS)
+            put("oatmeal", FoodCategory.GRAINS)
+            put("tortilla", FoodCategory.GRAINS)
+            put("wheat_flour", FoodCategory.GRAINS)
+            put("white_bread", FoodCategory.GRAINS)
+            put("canned_beans", FoodCategory.GRAINS)
+
+            // VEGETABLES (canned)
+            put("canned_corn", FoodCategory.VEGETABLES)
+            put("canned_soup", FoodCategory.VEGETABLES)
+            put("canned_tomatoes", FoodCategory.VEGETABLES)
+
+            // CONDIMENTS / SAUCES
+            put("apple_cider_vinegar", FoodCategory.CONDIMENTS)
+            put("bbq_sauce", FoodCategory.CONDIMENTS)
+            put("coconut_oil", FoodCategory.CONDIMENTS)
+            put("coffee_beans", FoodCategory.BEVERAGES)
+            put("curry_paste", FoodCategory.CONDIMENTS)
+            put("fish_sauce", FoodCategory.CONDIMENTS)
+            put("ketchup", FoodCategory.CONDIMENTS)
+            put("mayonnaise", FoodCategory.CONDIMENTS)
+            put("mustard", FoodCategory.CONDIMENTS)
+            put("olive_oil", FoodCategory.CONDIMENTS)
+            put("oyster_sauce", FoodCategory.CONDIMENTS)
+            put("rice_vinegar", FoodCategory.CONDIMENTS)
+            put("salt", FoodCategory.CONDIMENTS)
+            put("soy_sauce", FoodCategory.CONDIMENTS)
+            put("tea_bags", FoodCategory.BEVERAGES)
+            put("white_sugar", FoodCategory.CONDIMENTS)
+            put("black_pepper", FoodCategory.CONDIMENTS)
+
+            // COCO labels that are food-relevant
+            put("sandwich", FoodCategory.GRAINS)
+            put("hot dog", FoodCategory.MEAT)
+            put("pizza", FoodCategory.GRAINS)
+            put("donut", FoodCategory.SNACKS)
+            put("broccoli", FoodCategory.VEGETABLES)
+            put("carrot", FoodCategory.VEGETABLES)
         }
     }
 
