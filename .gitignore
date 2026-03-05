@@ -43,3 +43,6 @@ nul
 
 # YOLO training run outputs (large generated files)
 runs/
+
+# Local model assets (large files)
+app/src/main/assets/llm/*.gguf
