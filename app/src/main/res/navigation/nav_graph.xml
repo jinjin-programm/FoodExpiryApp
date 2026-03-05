@@ -14,6 +14,9 @@
         <action
             android:id="@+id/action_inventory_to_yolo_scan"
             app:destination="@id/navigation_yolo_scan" />
+        <action
+            android:id="@+id/action_inventory_to_llm_scan"
+            app:destination="@id/navigation_llm_scan" />
     </fragment>
 
     <fragment
@@ -45,5 +48,10 @@
         android:id="@+id/navigation_yolo_scan"
         android:name="com.example.foodexpiryapp.presentation.ui.yolo.YoloScanFragment"
         android:label="Food Scanner" />
+
+    <fragment
+        android:id="@+id/navigation_llm_scan"
+        android:name="com.example.foodexpiryapp.presentation.ui.llm.LlmScanFragment"
+        android:label="AI Food Scanner" />
 
 </navigation>

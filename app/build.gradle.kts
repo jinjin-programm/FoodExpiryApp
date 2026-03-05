@@ -9,7 +9,7 @@ plugins {
 
 android {
     namespace = "com.example.foodexpiryapp"  // ← YOUR package name
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.foodexpiryapp"  // ← YOUR package name
@@ -19,6 +19,10 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            abiFilters += listOf("arm64-v8a")
+        }
 
         // API Keys - placeholders for now
         buildConfigField("String", "RAPIDAPI_KEY", "\"test_key\"")
@@ -55,6 +59,13 @@ android {
         viewBinding = true
         buildConfig = true
         mlModelBinding = true
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/jni/CMakeLists.txt")
+            version = "3.22.1"
+        }
     }
 }
 
@@ -131,6 +142,9 @@ dependencies {
     implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
     implementation("org.tensorflow:tensorflow-lite-metadata:0.4.4")
     implementation("org.tensorflow:tensorflow-lite-gpu:2.14.0")
+
+    // llama.cpp for Local LLM Inference - pure Java GGUF parser
+    implementation("com.llama4j:gguf:0.1.1")
 
     // Networking
     implementation("com.squareup.retrofit2:retrofit:2.9.0")

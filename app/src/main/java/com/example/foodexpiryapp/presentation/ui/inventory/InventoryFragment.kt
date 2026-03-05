@@ -169,6 +169,37 @@ class InventoryFragment : Fragment() {
             showAddEditDialog(newItem)
             Snackbar.make(binding.root, "Detected: $formattedName (${shelfLife.days} days)", Snackbar.LENGTH_SHORT).show()
         }
+
+        // Listen for LLM AI scan results (Qwen3.5)
+        setFragmentResultListener("llm_scan_result") { _, bundle ->
+            val foodName = bundle.getString("food_name") ?: "Unknown"
+            val expiryDateStr = bundle.getString("expiry_date")
+            val confidence = bundle.getString("confidence") ?: "medium"
+
+            val expiryDate = if (!expiryDateStr.isNullOrBlank() && expiryDateStr != "not visible") {
+                parseDate(expiryDateStr) ?: LocalDate.now().plusDays(7)
+            } else {
+                // Estimate based on food type
+                val shelfLife = ShelfLifeEstimator.estimateShelfLife(listOf(foodName.lowercase()))
+                ShelfLifeEstimator.calculateExpiryDate(shelfLife.days)
+            }
+
+            draftFoodItem = null
+
+            val newItem = FoodItem(
+                name = foodName,
+                barcode = null,
+                expiryDate = expiryDate,
+                category = FoodCategory.OTHER,
+                location = StorageLocation.FRIDGE,
+                quantity = 1,
+                dateAdded = LocalDate.now(),
+                notes = "AI Scan (Confidence: $confidence)"
+            )
+
+            showAddEditDialog(newItem)
+            Snackbar.make(binding.root, "AI Detected: $foodName", Snackbar.LENGTH_SHORT).show()
+        }
     }
 
     private fun setupButtons() {
@@ -188,6 +219,11 @@ class InventoryFragment : Fragment() {
         binding.btnPhoto.setOnClickListener {
             draftFoodItem = null
             findNavController().navigate(R.id.action_inventory_to_yolo_scan)
+        }
+
+        binding.btnAiScan.setOnClickListener {
+            draftFoodItem = null
+            findNavController().navigate(R.id.action_inventory_to_llm_scan)
         }
     }
 

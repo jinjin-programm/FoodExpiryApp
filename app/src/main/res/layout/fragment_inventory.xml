@@ -79,7 +79,7 @@
 
     </LinearLayout>
 
-    <!-- Buttons to add new item -->
+        <!-- Buttons to add new item -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -88,6 +88,16 @@
         android:padding="16dp"
         android:clipToPadding="false"
         android:gravity="center_horizontal">
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btn_ai_scan"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:src="@android:drawable/ic_menu_view"
+            android:contentDescription="AI Scan"
+            app:backgroundTint="@color/purple_700"
+            app:tint="@android:color/white" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/btn_photo"
