@@ -32,7 +32,7 @@ class LlamaBridge private constructor() {
     @Volatile
     private var isModelLoaded = false
     
-    fun loadModel(modelPath: String, contextSize: Int = 2048, threads: Int = 4): Boolean {
+    fun loadModel(modelPath: String, contextSize: Int = 4096, threads: Int = 4): Boolean {
         return try {
             Log.i(TAG, "Loading model from: $modelPath")
             val result = nativeLoadModel(modelPath, contextSize, threads)

@@ -107,6 +107,12 @@ Java_com_example_foodexpiryapp_presentation_ui_llm_LlamaBridge_nativeGenerate(
 
     env->ReleaseStringUTFChars(prompt, promptStr);
 
+    uint32_t n_ctx = llama_n_ctx(g_context);
+    if ((uint32_t)tokens_list.size() > n_ctx) {
+        LOGE("Prompt too long: %zu tokens, max context: %u", tokens_list.size(), n_ctx);
+        return env->NewStringUTF("Error: Prompt too long (exceeds context size)");
+    }
+
     // Prepare batch
     llama_batch batch = llama_batch_init(tokens_list.size(), 0, 1);
     for (size_t i = 0; i < tokens_list.size(); ++i) {

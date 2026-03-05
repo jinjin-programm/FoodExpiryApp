@@ -131,8 +131,9 @@ class LlmVisionService(private val context: Context) {
             // Try LLM if model loaded
             if (llamaBridge.isLoaded()) {
                 val prompt = buildPrompt()
-                val base64Image = bitmapToBase64(bitmap)
-                val fullPrompt = "$prompt\n\nImage: $base64Image"
+                // For now, since model is text-only, sending image as base64 is causing overflow/crash
+                // We will add OCR here later. For now we just test the text prompt.
+                val fullPrompt = "$prompt\n\n[Image analysis pending OCR implementation]"
                 
                 try {
                     val response = llamaBridge.generate(fullPrompt)
