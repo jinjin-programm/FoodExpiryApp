@@ -80,8 +80,13 @@ class LlmScanFragment : Fragment() {
         // Initialize LLM service using coroutine
         llmVisionService = LlmVisionService(requireContext())
         scope.launch {
+            updateStatus("Initializing Qwen3.5...", Status.INITIALIZING)
             val initSuccess = llmVisionService?.initialize() ?: false
-            updateStatus(if (initSuccess) "Qwen3.5 ready - tap capture to scan" else "LLM init failed - tap capture to retry")
+            if (initSuccess) {
+                updateStatus("Qwen3.5 ready - tap capture to scan", Status.READY)
+            } else {
+                updateStatus("LLM init failed - tap capture to retry", Status.ERROR)
+            }
             binding.progressBar.visibility = View.GONE
         }
 
@@ -167,19 +172,14 @@ class LlmScanFragment : Fragment() {
         isProcessing = true
         binding.progressBar.visibility = View.VISIBLE
         binding.btnCapture.isEnabled = false
-        updateStatus("Analyzing image with Qwen3.5...")
+        updateStatus("Analyzing image with Qwen3.5...", Status.ANALYZING)
 
         detectionJob = scope.launch {
             try {
                 val result = llmVisionService?.analyzeImage(bitmap)
                 
                 result?.let {
-                    displayResult(it.foodName, it.expiryDate, it.confidence)
-                    
-                    // Show detailed response in toast for debugging
-                    if (it.foodName.contains("not found") || it.foodName.contains("failed")) {
-                        Toast.makeText(context, it.rawResponse, Toast.LENGTH_LONG).show()
-                    }
+                    displayResult(it.foodName, it.expiryDate, it.confidence, it.rawResponse)
                     
                     // Pass result back to inventory fragment
                     setFragmentResult(
@@ -192,10 +192,12 @@ class LlmScanFragment : Fragment() {
                         )
                     )
                 } ?: run {
+                    updateStatus("Detection failed", Status.ERROR)
                     Toast.makeText(context, "Detection failed", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Analysis error: ${e.message}", e)
+                updateStatus("Error: ${e.message}", Status.ERROR)
                 Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             } finally {
                 isProcessing = false
@@ -205,23 +207,39 @@ class LlmScanFragment : Fragment() {
         }
     }
 
-    private fun displayResult(foodName: String, expiryDate: String?, confidence: String) {
+    private fun displayResult(foodName: String, expiryDate: String?, confidence: String, rawResponse: String) {
         val binding = _binding ?: return
         binding.tvFoodName.text = foodName
-        binding.tvExpiryDate.text = expiryDate ?: "Not detected"
+        binding.tvExpiryDate.text = "Expiry: ${expiryDate ?: "Not detected"}"
         binding.tvConfidence.text = "Confidence: $confidence"
+        binding.tvRawResponse.text = rawResponse
         
         binding.resultCard.visibility = View.VISIBLE
-        updateStatus("Detection complete")
+        binding.rawResponseCard.visibility = View.VISIBLE
+        updateStatus("Detection complete", Status.READY)
 
-        // Auto-dismiss result after 5 seconds
+        // Auto-dismiss result after 10 seconds (increased so user can read debug box)
         binding.resultCard.postDelayed({
             _binding?.resultCard?.visibility = View.GONE
-        }, 5000)
+            _binding?.rawResponseCard?.visibility = View.GONE
+        }, 10000)
     }
 
-    private fun updateStatus(message: String) {
-        _binding?.tvStatus?.text = message
+    private enum class Status {
+        INITIALIZING, READY, ANALYZING, ERROR
+    }
+
+    private fun updateStatus(message: String, status: Status = Status.READY) {
+        val binding = _binding ?: return
+        binding.tvStatus.text = message
+        
+        val color = when (status) {
+            Status.INITIALIZING -> android.graphics.Color.BLUE
+            Status.READY -> android.graphics.Color.GREEN
+            Status.ANALYZING -> android.graphics.Color.YELLOW
+            Status.ERROR -> android.graphics.Color.RED
+        }
+        binding.viewStatusIndicator.backgroundTintList = android.content.res.ColorStateList.valueOf(color)
     }
 
     override fun onDestroyView() {

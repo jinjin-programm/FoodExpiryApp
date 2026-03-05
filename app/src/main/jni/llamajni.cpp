@@ -43,9 +43,11 @@ Java_com_example_foodexpiryapp_presentation_ui_llm_LlamaBridge_nativeGenerate(
     
     // Return a response - in real implementation this would call llama.cpp
     const char* response = 
-        "1. Food item name: Apple\n"
-        "2. Expiry date: not visible\n"
-        "3. Confidence: medium";
+        "1. Food item name: [Detected Item]\n"
+        "2. Expiry date: [not visible]\n"
+        "3. Confidence: [medium]\n\n"
+        "DEBUG: JNI Bridge is functional. Real LLM inference not yet implemented.\n"
+        "Model Path: (checked via nativeLoadModel)";
     
     env->ReleaseStringUTFChars(prompt, promptStr);
     return env->NewStringUTF(response);
