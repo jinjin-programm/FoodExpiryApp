@@ -206,6 +206,7 @@ class LlmScanFragment : Fragment() {
     }
 
     private fun displayResult(foodName: String, expiryDate: String?, confidence: String) {
+        val binding = _binding ?: return
         binding.tvFoodName.text = foodName
         binding.tvExpiryDate.text = expiryDate ?: "Not detected"
         binding.tvConfidence.text = "Confidence: $confidence"
@@ -213,14 +214,14 @@ class LlmScanFragment : Fragment() {
         binding.resultCard.visibility = View.VISIBLE
         updateStatus("Detection complete")
 
-        // Auto-dismiss result after 3 seconds
+        // Auto-dismiss result after 5 seconds
         binding.resultCard.postDelayed({
-            binding.resultCard.visibility = View.GONE
+            _binding?.resultCard?.visibility = View.GONE
         }, 5000)
     }
 
     private fun updateStatus(message: String) {
-        binding.tvStatus.text = message
+        _binding?.tvStatus?.text = message
     }
 
     override fun onDestroyView() {

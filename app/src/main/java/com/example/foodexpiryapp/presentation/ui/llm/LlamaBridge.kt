@@ -21,7 +21,7 @@ class LlamaBridge private constructor() {
         // Load the native library
         init {
             try {
-                System.loadLibrary("llama")
+                System.loadLibrary("llama_jni")
                 Log.i(TAG, "Native library loaded")
             } catch (e: UnsatisfiedLinkError) {
                 Log.e(TAG, "Failed to load native library: ${e.message}")

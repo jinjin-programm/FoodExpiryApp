@@ -219,6 +219,7 @@ class YoloScanFragment : Fragment() {
     // ────────────────────────────────────────────────────────────────────────
 
     private fun handleDetections(detections: List<DetectionResult>, bitmap: Bitmap) {
+        val binding = _binding ?: return
         if (detections.isNotEmpty()) {
             val best = detections.maxByOrNull { it.confidence }!!
 
@@ -243,7 +244,7 @@ class YoloScanFragment : Fragment() {
     }
 
     private fun updateStatus(message: String) {
-        binding.tvDetectionStatus.text = message
+        _binding?.tvDetectionStatus?.text = message
     }
 
     // ────────────────────────────────────────────────────────────────────────

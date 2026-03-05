@@ -14,16 +14,16 @@ add_compile_options(-stdlib=libc++)
 set(jniLibsDir ${CMAKE_SOURCE_DIR}/src/main/jniLibs)
 
 # Create the JNI library
-add_library(llama SHARED llamajni.cpp)
+add_library(llama_jni SHARED llamajni.cpp)
 
 # Include directories
-target_include_directories(llama PRIVATE
+target_include_directories(llama_jni PRIVATE
     ${CMAKE_SOURCE_DIR}/src/main/jni
 )
 
 # Link libraries - load llama dynamically at runtime
 # We don't link directly, we'll use dlopen in the JNI code
-target_link_libraries(llama
+target_link_libraries(llama_jni
     android
     log
     dl
