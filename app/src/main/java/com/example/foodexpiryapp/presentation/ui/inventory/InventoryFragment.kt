@@ -202,7 +202,7 @@ class InventoryFragment : Fragment() {
         }
     }
 
-    private fun setupButtons() {
+private fun setupButtons() {
         binding.btnWrite.setOnClickListener {
             draftFoodItem = null
             showAddEditDialog(null)
@@ -221,9 +221,8 @@ class InventoryFragment : Fragment() {
             findNavController().navigate(R.id.action_inventory_to_yolo_scan)
         }
 
-        binding.btnAiScan.setOnClickListener {
-            draftFoodItem = null
-            findNavController().navigate(R.id.action_inventory_to_llm_scan)
+        binding.btnVisionScan.setOnClickListener {
+            findNavController().navigate(R.id.action_inventory_to_vision_scan)
         }
     }
 

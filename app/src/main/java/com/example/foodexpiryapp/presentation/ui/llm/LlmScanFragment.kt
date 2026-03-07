@@ -179,6 +179,7 @@ class LlmScanFragment : Fragment() {
                 val result = llmVisionService?.analyzeImage(bitmap)
                 
                 result?.let {
+                    Log.d(TAG, "Detection result - food: ${it.foodName}, raw: ${it.rawResponse}")
                     displayResult(it.foodName, it.expiryDate, it.confidence, it.rawResponse)
                     
                     // Pass result back to inventory fragment

@@ -2,23 +2,21 @@ cmake_minimum_required(VERSION 3.22.1)
 
 project("llamajni")
 
-# Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Add_compile_options for Android
 add_compile_options(-stdlib=libc++)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+add_definitions(-DLLAMA_SHARED)
 
-# Include directories from llama.cpp
-set(LLAMA_INCLUDE_DIR "C:/llama.cpp/include")
-set(GGML_INCLUDE_DIR "C:/llama.cpp/ggml/include")
-set(LLAMA_COMMON_DIR "C:/llama.cpp/common")
+set(LLAMA_DIR "C:/llama.cpp")
+set(LLAMA_INCLUDE_DIR "${LLAMA_DIR}/include")
+set(GGML_INCLUDE_DIR "${LLAMA_DIR}/ggml/include")
+set(MTMD_DIR "${LLAMA_DIR}/tools/mtmd")
+set(VENDOR_DIR "${LLAMA_DIR}/vendor")
 
-# The pre-built libraries are in src/main/jniLibs/${ANDROID_ABI}/
 set(jniLibsDir ${CMAKE_SOURCE_DIR}/../jniLibs/${ANDROID_ABI})
 
-# Import prebuilt libraries
 add_library(llama SHARED IMPORTED)
 set_target_properties(llama PROPERTIES IMPORTED_LOCATION ${jniLibsDir}/libllama.so)
 
@@ -31,19 +29,26 @@ set_target_properties(ggml-base PROPERTIES IMPORTED_LOCATION ${jniLibsDir}/libgg
 add_library(ggml-cpu SHARED IMPORTED)
 set_target_properties(ggml-cpu PROPERTIES IMPORTED_LOCATION ${jniLibsDir}/libggml-cpu.so)
 
-# Create the JNI library
+add_library(mtmd SHARED IMPORTED)
+set_target_properties(mtmd PROPERTIES IMPORTED_LOCATION ${jniLibsDir}/libmtmd.so)
+
 add_library(llama_jni SHARED llamajni.cpp)
 
-# Include directories
 target_include_directories(llama_jni PRIVATE
     ${CMAKE_SOURCE_DIR}
     ${LLAMA_INCLUDE_DIR}
     ${GGML_INCLUDE_DIR}
-    ${LLAMA_COMMON_DIR}
+    ${MTMD_DIR}
+    ${VENDOR_DIR}
+    ${VENDOR_DIR}/stb
 )
 
-# Link libraries
+if (NOT MSVC)
+    target_compile_options(llama_jni PRIVATE -Wno-cast-qual)
+endif()
+
 target_link_libraries(llama_jni
+    mtmd
     llama
     ggml
     ggml-base

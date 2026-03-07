@@ -131,15 +131,31 @@ class LlmVisionService(private val context: Context) {
             // Try LLM if model loaded
             if (llamaBridge.isLoaded()) {
                 val prompt = buildPrompt()
-                // For now, since model is text-only, sending image as base64 is causing overflow/crash
-                // We will add OCR here later. For now we just test the text prompt.
                 val fullPrompt = "$prompt\n\n[Image analysis pending OCR implementation]"
                 
                 try {
                     val response = llamaBridge.generate(fullPrompt)
+                    Log.i(TAG, "Raw LLM response: [$response]")
+                    
+                    // If response starts with "Error:", show it directly
+                    if (response.startsWith("Error:")) {
+                        return@withContext DetectionResult(
+                            foodName = "LLM Error",
+                            expiryDate = null,
+                            confidence = "none",
+                            rawResponse = response
+                        )
+                    }
+                    
                     return@withContext parseResponse(response)
                 } catch (e: Exception) {
-                    Log.w(TAG, "LLM failed: ${e.message}, using fallback")
+                    Log.e(TAG, "LLM failed: ${e.message}", e)
+                    return@withContext DetectionResult(
+                        foodName = "Exception",
+                        expiryDate = null,
+                        confidence = "none",
+                        rawResponse = "Exception: ${e.message}"
+                    )
                 }
             }
             
@@ -227,6 +243,8 @@ Analyze this food image and respond with ONLY the following format:
     }
 
     private fun parseResponse(response: String): DetectionResult {
+        Log.i(TAG, "Parsing response: [$response]")
+        
         var foodName = "Unknown"
         var expiryDate: String? = null
         var confidence = "medium"
@@ -253,6 +271,10 @@ Analyze this food image and respond with ONLY the following format:
 
         if (foodName == "Unknown" || foodName.isBlank()) {
             foodName = extractFoodFromRaw(response)
+            // If still unknown, show first 50 chars of raw response
+            if (foodName == "Unknown") {
+                foodName = response.take(50).ifEmpty { "No response" }
+            }
         }
 
         return DetectionResult(
