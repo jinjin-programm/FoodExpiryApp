@@ -1,7 +1,6 @@
 package com.example.foodexpiryapp.presentation.ui.vision
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -24,8 +23,15 @@ import androidx.navigation.fragment.findNavController
 import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.databinding.FragmentVisionScanBinding
 import com.example.foodexpiryapp.presentation.ui.llm.LlamaBridge
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.label.ImageLabeler
+import com.google.mlkit.vision.label.ImageLabeling
+import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -37,12 +43,6 @@ class VisionScanFragment : Fragment() {
         private const val TAG = "VisionScanFragment"
         private const val MODEL_DIR = "llm"
         private const val MODEL_FILE = "model.gguf"
-        private const val MMPROJ_FILE = "mmproj.gguf"
-        private const val FOOD_PROMPT = """Identify the food item and expiry date in this image. 
-
-Respond in exactly this format with no other text:
-FOOD: [food name]
-EXPIRY: [date in DD/MM/YYYY format, or "not visible" if not shown]"""
     }
 
     private var _binding: FragmentVisionScanBinding? = null
@@ -57,6 +57,10 @@ EXPIRY: [date in DD/MM/YYYY format, or "not visible" if not shown]"""
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val llamaBridge = LlamaBridge.getInstance()
+
+    // ML Kit processors
+    private lateinit var textRecognizer: com.google.mlkit.vision.text.TextRecognizer
+    private lateinit var imageLabeler: ImageLabeler
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -82,10 +86,14 @@ EXPIRY: [date in DD/MM/YYYY format, or "not visible" if not shown]"""
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
-        updateStatus("Loading Qwen3-VL...", Status.INITIALIZING)
-        binding.progressBar.visibility = View.VISIBLE
+        // Initialize ML Kit processors
+        textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+        imageLabeler = ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS)
 
-        // Load model if not already loaded
+        updateStatus("Loading Qwen3.5-0.8B...", Status.INITIALIZING)
+        binding.progressBar.visibility = View.VISIBLE
+        binding.tvProgressDetail.text = "Loading text model..."
+
         loadModelIfNeeded()
 
         if (allPermissionsGranted()) {
@@ -98,25 +106,25 @@ EXPIRY: [date in DD/MM/YYYY format, or "not visible" if not shown]"""
     }
 
     private fun loadModelIfNeeded() {
-        if (llamaBridge.isLoaded() && llamaBridge.hasVisionSupport()) {
-            updateStatus("Qwen3-VL ready - tap capture", Status.READY)
+        if (llamaBridge.isLoaded()) {
+            updateStatus("Model ready - tap capture", Status.READY)
             binding.progressBar.visibility = View.GONE
+            binding.tvProgressDetail.text = "Point at food item and tap capture"
             return
         }
 
         modelLoadJob = scope.launch {
             updateStatus("Loading model...", Status.INITIALIZING)
-            
+            updateProgress("Copying model files...")
+
             try {
                 val success = withContext(Dispatchers.IO) {
                     loadModelInternal()
                 }
-                
-                if (success && llamaBridge.hasVisionSupport()) {
-                    updateStatus("Qwen3-VL ready - tap capture", Status.READY)
-                } else if (success) {
-                    updateStatus("Model loaded (text only)", Status.ERROR)
-                    Toast.makeText(context, "Vision not available - mmproj missing", Toast.LENGTH_LONG).show()
+
+                if (success) {
+                    updateStatus("Model ready - tap capture", Status.READY)
+                    updateProgress("Ready")
                 } else {
                     updateStatus("Failed to load model", Status.ERROR)
                     Toast.makeText(context, "Failed to load model", Toast.LENGTH_LONG).show()
@@ -126,6 +134,8 @@ EXPIRY: [date in DD/MM/YYYY format, or "not visible" if not shown]"""
                 updateStatus("Error: ${e.message}", Status.ERROR)
             } finally {
                 binding.progressBar.visibility = View.GONE
+                binding.tvProgressDetail.visibility = View.GONE
+                binding.tvInstruction.visibility = View.VISIBLE
             }
         }
     }
@@ -134,7 +144,6 @@ EXPIRY: [date in DD/MM/YYYY format, or "not visible" if not shown]"""
         val context = requireContext()
         val modelPath = File(context.filesDir, MODEL_DIR)
         val modelFile = File(modelPath, MODEL_FILE)
-        val mmprojFile = File(modelPath, MMPROJ_FILE)
 
         // Copy model from assets if needed
         if (!modelFile.exists()) {
@@ -152,39 +161,20 @@ EXPIRY: [date in DD/MM/YYYY format, or "not visible" if not shown]"""
             }
         }
 
-        // Copy mmproj from assets if needed
-        if (!mmprojFile.exists()) {
-            try {
-                context.assets.open("$MODEL_DIR/$MMPROJ_FILE").use { input ->
-                    modelPath.mkdirs()
-                    mmprojFile.outputStream().use { output ->
-                        input.copyTo(output)
-                    }
-                }
-                Log.i(TAG, "Mmproj copied from assets")
-            } catch (e: Exception) {
-                Log.w(TAG, "Mmproj not found: ${e.message}")
-            }
-        }
-
-        // Load model
+        // Load text-only model (Qwen3.5-0.8B)
         if (!llamaBridge.isLoaded()) {
             Log.i(TAG, "Loading model from: ${modelFile.absolutePath}")
-            // Use more threads for faster inference (adjust based on device)
-            val numThreads = Runtime.getRuntime().availableProcessors().coerceIn(4, 8)
+            
+            // Optimal settings for 0.8B model on mobile
+            val numThreads = Runtime.getRuntime().availableProcessors().coerceIn(2, 4)
             Log.i(TAG, "Using $numThreads threads for inference")
-            // Use 4096 context for vision model (2048 is too small)
-            val loaded = llamaBridge.loadModel(modelFile.absolutePath, 4096, numThreads)
+            
+            // 2048 context is sufficient for text-only model
+            val loaded = llamaBridge.loadModel(modelFile.absolutePath, 2048, numThreads)
             if (!loaded) {
                 Log.e(TAG, "Failed to load model")
                 return false
             }
-        }
-
-        // Load mmproj
-        if (mmprojFile.exists() && !llamaBridge.hasVisionSupport()) {
-            Log.i(TAG, "Loading mmproj from: ${mmprojFile.absolutePath}")
-            llamaBridge.loadMmproj(mmprojFile.absolutePath)
         }
 
         return llamaBridge.isLoaded()
@@ -251,52 +241,55 @@ EXPIRY: [date in DD/MM/YYYY format, or "not visible" if not shown]"""
             return
         }
 
-        if (!llamaBridge.hasVisionSupport()) {
-            Toast.makeText(context, "Vision not available", Toast.LENGTH_SHORT).show()
-            return
-        }
-
         val bitmap = latestBitmap
         if (bitmap == null) {
             Toast.makeText(context, "No image captured", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // Resize image for faster processing (320x240)
-        val resizedBitmap = Bitmap.createScaledBitmap(bitmap, 320, 240, true)
-        Log.d(TAG, "Image resized from ${bitmap.width}x${bitmap.height} to ${resizedBitmap.width}x${resizedBitmap.height}")
-
         isProcessing = true
         binding.progressBar.visibility = View.VISIBLE
         binding.btnCapture.isEnabled = false
         binding.tvProgressDetail.visibility = View.VISIBLE
         binding.tvInstruction.visibility = View.GONE
-        updateProgress("Step 1/3: Encoding image...")
-        updateStatus("Analyzing with Qwen3-VL...", Status.ANALYZING)
+        updateProgress("Step 1/3: Running OCR...")
+        updateStatus("Analyzing with ML Kit + Qwen3.5...", Status.ANALYZING)
 
         detectionJob = scope.launch {
             try {
                 val startTime = System.currentTimeMillis()
                 
-                // Update progress before native call
+                // Step 1: ML Kit OCR + Object Detection (parallel)
+                updateProgress("Step 1/3: Running ML Kit vision...")
+                val mlKitResult = withContext(Dispatchers.IO) {
+                    runMlKitAnalysis(bitmap)
+                }
+                
+                Log.d(TAG, "ML Kit results: labels=${mlKitResult.labels}, text=${mlKitResult.detectedText.take(100)}")
+                
+                // Step 2: Build prompt with ML Kit data
                 withContext(Dispatchers.Main) {
-                    updateProgress("Step 2/3: Processing with AI...")
+                    updateProgress("Step 2/3: Building prompt...")
+                }
+                
+                val prompt = buildFoodDetectionPrompt(mlKitResult)
+                Log.d(TAG, "Generated prompt (${prompt.length} chars)")
+                
+                // Step 3: Send to text-only LLM
+                withContext(Dispatchers.Main) {
+                    updateProgress("Step 3/3: AI analysis...")
                 }
                 
                 val response = withContext(Dispatchers.IO) {
-                    llamaBridge.generateWithImage(FOOD_PROMPT, resizedBitmap)
-                }
-                
-                withContext(Dispatchers.Main) {
-                    updateProgress("Step 3/3: Parsing result...")
+                    llamaBridge.generate(prompt, maxTokens = 150)
                 }
                 
                 val elapsed = (System.currentTimeMillis() - startTime) / 1000.0
-                Log.d(TAG, "Vision response (${elapsed}s): $response")
+                Log.d(TAG, "Total time: ${elapsed}s, Response: $response")
                 
                 val result = parseFoodResponse(response)
-                
                 displayResult(result.foodName, result.expiryDate, result.rawResponse)
+                
             } catch (e: Exception) {
                 Log.e(TAG, "Analysis error: ${e.message}", e)
                 updateStatus("Error: ${e.message}", Status.ERROR)
@@ -309,6 +302,72 @@ EXPIRY: [date in DD/MM/YYYY format, or "not visible" if not shown]"""
                 binding.btnCapture.isEnabled = true
             }
         }
+    }
+
+    private data class MlKitResult(
+        val labels: List<String>,
+        val detectedText: String
+    )
+
+    private fun runMlKitAnalysis(bitmap: Bitmap): MlKitResult {
+        val inputImage = InputImage.fromBitmap(bitmap, 0)
+        
+        // Object detection (Image Labeling)
+        val labels = mutableListOf<String>()
+        val labelTask = imageLabeler.process(inputImage)
+            .addOnSuccessListener { labelList ->
+                labels.addAll(labelList.map { it.text })
+                Log.d(TAG, "Detected ${labelList.size} labels: ${labels.joinToString()}")
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Image labeling failed: ${e.message}")
+            }
+        
+        // OCR (Text Recognition)
+        var detectedText = ""
+        val textTask = textRecognizer.process(inputImage)
+            .addOnSuccessListener { visionText ->
+                detectedText = visionText.text
+                Log.d(TAG, "Detected text: ${detectedText.take(100)}")
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "OCR failed: ${e.message}")
+            }
+        
+        // Wait for both tasks
+        Tasks.await(labelTask)
+        Tasks.await(textTask)
+        
+        return MlKitResult(labels, detectedText)
+    }
+
+    private fun buildFoodDetectionPrompt(mlKitResult: MlKitResult): String {
+        val labelsText = if (mlKitResult.labels.isNotEmpty()) {
+            mlKitResult.labels.take(5).joinToString(", ")
+        } else {
+            "none detected"
+        }
+        
+        val ocrText = if (mlKitResult.detectedText.isNotBlank()) {
+            mlKitResult.detectedText.take(300)
+        } else {
+            "none detected"
+        }
+
+        // Qwen3.5 ChatML format
+        return """<|im_start|>system
+You are a helpful AI assistant specialized in food identification. Analyze the sensor data from a camera image and identify the food item.
+
+Detected objects: $labelsText
+Extracted text: $ocrText
+
+Based on this information, identify the food item and any visible expiry date. Be concise and accurate.<|im_end|>
+<|im_start|>user
+What food item is in this image? Is there an expiry date visible? Answer in this exact format:
+FOOD: [food name]
+EXPIRY: [date or "not visible"]<|im_end|>
+<|im_start|>assistant
+"""
     }
 
     private fun updateProgress(message: String) {
@@ -324,26 +383,21 @@ EXPIRY: [date in DD/MM/YYYY format, or "not visible" if not shown]"""
     )
 
     private fun parseFoodResponse(response: String): FoodResult {
-        // Regex to find FOOD: [value] and EXPIRY: [value] patterns
-        // Handles optional brackets and matches last occurrence (most reliable)
         val foodRegex = Regex("""FOOD:\s*\[?([^\[\]\n]+)\]?"?""", RegexOption.IGNORE_CASE)
         val expiryRegex = Regex("""EXPIRY:\s*\[?([^\[\]\n]+)\]?"?""", RegexOption.IGNORE_CASE)
         
-        // Find all matches and take the LAST one (model often repeats correct answer at end)
         val foodMatches = foodRegex.findAll(response).toList()
         val expiryMatches = expiryRegex.findAll(response).toList()
         
         var foodName = foodMatches.lastOrNull()?.groupValues?.get(1)?.trim() ?: "Unknown"
         val expiryDate = expiryMatches.lastOrNull()?.groupValues?.get(1)?.trim()
         
-        // Clean up "not visible" cases
         val cleanExpiry = expiryDate?.takeIf { 
             !it.equals("not visible", ignoreCase = true) && 
             !it.equals("not shown", ignoreCase = true) &&
             it.isNotBlank() 
         }
         
-        // Fallback if no food found
         if (foodName == "Unknown" || foodName.isBlank()) {
             foodName = response.take(50).ifEmpty { "Unknown" }
         }
@@ -391,6 +445,15 @@ EXPIRY: [date in DD/MM/YYYY format, or "not visible" if not shown]"""
         modelLoadJob?.cancel()
         scope.cancel()
         cameraExecutor.shutdown()
+        
+        // Release ML Kit resources
+        try {
+            textRecognizer.close()
+            imageLabeler.close()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error closing ML Kit clients: ${e.message}")
+        }
+        
         _binding = null
     }
 }
@@ -411,8 +474,33 @@ private fun ImageProxy.toBitmap(): Bitmap? {
     uBuffer.get(nv21, ySize + vSize, uSize)
 
     val yuvImage = YuvImage(nv21, ImageFormat.NV21, width, height, null)
-    val out = java.io.ByteArrayOutputStream()
+    val out = ByteArrayOutputStream()
     yuvImage.compressToJpeg(Rect(0, 0, width, height), 100, out)
     val imageBytes = out.toByteArray()
     return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+}
+
+// ML Kit Tasks utility (for awaiting results)
+object Tasks {
+    fun <TResult : Any?> await(task: com.google.android.gms.tasks.Task<TResult>): TResult? {
+        var result: TResult? = null
+        var exception: Exception? = null
+        val latch = java.util.concurrent.CountDownLatch(1)
+        
+        task.addOnSuccessListener {
+            result = it
+            latch.countDown()
+        }.addOnFailureListener {
+            exception = it
+            latch.countDown()
+        }
+        
+        latch.await()
+        
+        if (exception != null) {
+            throw exception!!
+        }
+        
+        return result
+    }
 }

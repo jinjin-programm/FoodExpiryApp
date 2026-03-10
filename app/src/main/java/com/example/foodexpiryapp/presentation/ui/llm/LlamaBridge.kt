@@ -1,10 +1,7 @@
 package com.example.foodexpiryapp.presentation.ui.llm
 
-import android.graphics.Bitmap
 import android.util.Log
 import java.io.File
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 
 class LlamaBridge private constructor() {
     
@@ -23,7 +20,7 @@ class LlamaBridge private constructor() {
         init {
             try {
                 System.loadLibrary("llama_jni")
-                Log.i(TAG, "Native library loaded")
+                Log.i(TAG, "Native library loaded successfully")
             } catch (e: UnsatisfiedLinkError) {
                 Log.e(TAG, "Failed to load native library: ${e.message}")
             }
@@ -32,36 +29,42 @@ class LlamaBridge private constructor() {
     
     @Volatile
     private var isModelLoaded = false
+    
     @Volatile
     private var hasVision = false
     
-    fun loadModel(modelPath: String, contextSize: Int = 4096, threads: Int = 4): Boolean {
+    fun loadModel(modelPath: String, contextSize: Int = 2048, threads: Int = 4): Boolean {
         return try {
-            Log.i(TAG, "Loading model from: $modelPath")
-            val result = nativeLoadModel(modelPath, contextSize, threads)
+            Log.i(TAG, "Loading model: $modelPath")
+            Log.i(TAG, "Config: contextSize=$contextSize, threads=$threads")
+            
+            val file = File(modelPath)
+            if (!file.exists()) {
+                Log.e(TAG, "Model file not found: $modelPath")
+                return false
+            }
+            
+            val optimalThreads = if (threads <= 0) {
+                val availableProcessors = Runtime.getRuntime().availableProcessors()
+                availableProcessors.coerceIn(2, 4)
+            } else {
+                threads.coerceIn(1, 8)
+            }
+            
+            Log.i(TAG, "Using $optimalThreads threads for inference")
+            
+            val result = nativeLoadModel(modelPath, contextSize, optimalThreads)
             isModelLoaded = result == 0
-            Log.i(TAG, "Model load result: $result")
+            
+            if (isModelLoaded) {
+                Log.i(TAG, "Model loaded successfully")
+            } else {
+                Log.e(TAG, "Failed to load model, error code: $result")
+            }
+            
             isModelLoaded
         } catch (e: Exception) {
-            Log.e(TAG, "Error loading model: ${e.message}", e)
-            false
-        }
-    }
-    
-    fun loadMmproj(mmprojPath: String): Boolean {
-        return try {
-            Log.i(TAG, "Loading mmproj from: $mmprojPath")
-            val result = nativeLoadMmproj(mmprojPath)
-            if (result == 0) {
-                hasVision = nativeHasVision()
-                Log.i(TAG, "Mmproj loaded, vision support: $hasVision")
-                true
-            } else {
-                Log.e(TAG, "Failed to load mmproj: $result")
-                false
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error loading mmproj: ${e.message}", e)
+            Log.e(TAG, "Exception loading model: ${e.message}", e)
             false
         }
     }
@@ -70,65 +73,63 @@ class LlamaBridge private constructor() {
         try {
             nativeFreeModel()
             isModelLoaded = false
-            hasVision = false
             Log.i(TAG, "Model freed")
         } catch (e: Exception) {
-            Log.e(TAG, "Error freeing model: ${e.message}")
-        }
-    }
-    
-    fun generate(prompt: String): String {
-        if (!isModelLoaded) {
-            return "Error: Model not loaded"
-        }
-        return try {
-            nativeGenerate(prompt)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error generating: ${e.message}", e)
-            "Error: ${e.message}"
-        }
-    }
-    
-    fun generateWithImage(prompt: String, bitmap: Bitmap): String {
-        if (!isModelLoaded) {
-            return "Error: Model not loaded"
-        }
-        if (!hasVision) {
-            return "Error: Vision model not loaded (mmproj required)"
-        }
-        return try {
-            val rgbData = bitmapToRgbData(bitmap)
-            nativeGenerateWithImage(prompt, rgbData, bitmap.width, bitmap.height)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error generating with image: ${e.message}", e)
-            "Error: ${e.message}"
+            Log.e(TAG, "Exception freeing model: ${e.message}")
         }
     }
     
     fun isLoaded(): Boolean = isModelLoaded
     
-    fun hasVisionSupport(): Boolean = hasVision
-    
-    private fun bitmapToRgbData(bitmap: Bitmap): ByteArray {
-        val width = bitmap.width
-        val height = bitmap.height
-        val pixels = IntArray(width * height)
-        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
-        
-        val rgbData = ByteArray(width * height * 3)
-        var index = 0
-        for (pixel in pixels) {
-            rgbData[index++] = ((pixel shr 16) and 0xFF).toByte() // R
-            rgbData[index++] = ((pixel shr 8) and 0xFF).toByte()  // G
-            rgbData[index++] = (pixel and 0xFF).toByte()          // B
+    fun generate(prompt: String, maxTokens: Int = 256): String {
+        if (!isModelLoaded) {
+            return "Error: Model not loaded"
         }
-        return rgbData
+        
+        return try {
+            val startTime = System.currentTimeMillis()
+            val response = nativeGenerate(prompt, maxTokens)
+            val elapsed = System.currentTimeMillis() - startTime
+            
+            Log.i(TAG, "Generated response in ${elapsed}ms, ${response.length} chars")
+            response
+        } catch (e: Exception) {
+            Log.e(TAG, "Generation error: ${e.message}", e)
+            "Error: ${e.message}"
+        }
     }
     
+    fun loadMmproj(mmprojPath: String): Boolean {
+        return try {
+            Log.i(TAG, "Loading mmproj: $mmprojPath")
+            
+            val file = File(mmprojPath)
+            if (!file.exists()) {
+                Log.e(TAG, "Mmproj file not found: $mmprojPath")
+                return false
+            }
+            
+            val result = nativeLoadMmproj(mmprojPath)
+            hasVision = result == 0
+            
+            if (hasVision) {
+                Log.i(TAG, "Mmproj loaded successfully, vision enabled")
+            } else {
+                Log.e(TAG, "Failed to load mmproj, error code: $result")
+            }
+            
+            hasVision
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception loading mmproj: ${e.message}", e)
+            false
+        }
+    }
+    
+    fun hasVisionSupport(): Boolean = hasVision
+    
     private external fun nativeLoadModel(modelPath: String, contextSize: Int, threads: Int): Int
-    private external fun nativeLoadMmproj(mmprojPath: String): Int
     private external fun nativeFreeModel()
-    private external fun nativeGenerate(prompt: String): String
-    private external fun nativeGenerateWithImage(prompt: String, imageData: ByteArray, width: Int, height: Int): String
-    private external fun nativeHasVision(): Boolean
+    private external fun nativeIsLoaded(): Boolean
+    private external fun nativeGenerate(prompt: String, maxTokens: Int): String
+    private external fun nativeLoadMmproj(mmprojPath: String): Int
 }
