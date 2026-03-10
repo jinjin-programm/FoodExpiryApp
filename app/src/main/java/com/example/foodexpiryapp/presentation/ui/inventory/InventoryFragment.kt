@@ -2,11 +2,13 @@ package com.example.foodexpiryapp.presentation.ui.inventory
 
 import android.app.DatePickerDialog
 import android.os.Bundle
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
@@ -31,6 +33,8 @@ import com.example.foodexpiryapp.presentation.viewmodel.InventoryViewModel
 import com.example.foodexpiryapp.util.ShelfLifeEstimator
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import com.leinardi.android.speeddial.SpeedDialActionItem
+import com.leinardi.android.speeddial.SpeedDialView
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -71,7 +75,7 @@ class InventoryFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
         setupSearch()
-        setupButtons()
+        setupSpeedDial()
         observeState()
         observeEvents()
 
@@ -200,29 +204,66 @@ class InventoryFragment : Fragment() {
             showAddEditDialog(newItem)
             Snackbar.make(binding.root, "AI Detected: $foodName", Snackbar.LENGTH_SHORT).show()
         }
-    }
+}
 
-private fun setupButtons() {
-        binding.btnWrite.setOnClickListener {
-            draftFoodItem = null
-            showAddEditDialog(null)
-        }
+private fun setupSpeedDial() {
+        val speedDial = binding.speedDial
         
-        binding.btnBarcode.setOnClickListener {
-            draftFoodItem = null
-            val bundle = android.os.Bundle().apply {
-                putString("scan_mode", "barcode")
+        speedDial.addActionItem(
+            SpeedDialActionItem.Builder(R.id.btn_vision_scan, android.R.drawable.ic_menu_gallery)
+                .setLabel("Vision Scan (AI)")
+                .setFabBackgroundColor(ResourcesCompat.getColor(resources, R.color.purple_500, null))
+                .setFabImageTintColor(Color.WHITE)
+                .create()
+        )
+        
+        speedDial.addActionItem(
+            SpeedDialActionItem.Builder(R.id.btn_photo, android.R.drawable.ic_menu_camera)
+                .setLabel("Photo Scan")
+                .setFabBackgroundColor(ResourcesCompat.getColor(resources, R.color.purple_500, null))
+                .setFabImageTintColor(Color.WHITE)
+                .create()
+        )
+        
+        speedDial.addActionItem(
+            SpeedDialActionItem.Builder(R.id.btn_barcode, R.drawable.ic_barcode)
+                .setLabel("Barcode")
+                .setFabBackgroundColor(ResourcesCompat.getColor(resources, R.color.purple_500, null))
+                .setFabImageTintColor(Color.WHITE)
+                .create()
+        )
+        
+        speedDial.addActionItem(
+            SpeedDialActionItem.Builder(R.id.btn_write, android.R.drawable.ic_menu_edit)
+                .setLabel("Manual Entry")
+                .setFabBackgroundColor(ResourcesCompat.getColor(resources, R.color.purple_500, null))
+                .setFabImageTintColor(Color.WHITE)
+                .create()
+        )
+        
+        speedDial.setOnActionSelectedListener { actionItem ->
+            when (actionItem.id) {
+                R.id.btn_vision_scan -> {
+                    findNavController().navigate(R.id.action_inventory_to_vision_scan)
+                }
+                R.id.btn_photo -> {
+                    draftFoodItem = null
+                    findNavController().navigate(R.id.action_inventory_to_yolo_scan)
+                }
+                R.id.btn_barcode -> {
+                    draftFoodItem = null
+                    val bundle = android.os.Bundle().apply {
+                        putString("scan_mode", "barcode")
+                    }
+                    findNavController().navigate(R.id.action_inventory_to_scan, bundle)
+                }
+                R.id.btn_write -> {
+                    draftFoodItem = null
+                    showAddEditDialog(null)
+                }
             }
-            findNavController().navigate(R.id.action_inventory_to_scan, bundle)
-        }
-        
-        binding.btnPhoto.setOnClickListener {
-            draftFoodItem = null
-            findNavController().navigate(R.id.action_inventory_to_yolo_scan)
-        }
-
-        binding.btnVisionScan.setOnClickListener {
-            findNavController().navigate(R.id.action_inventory_to_vision_scan)
+            speedDial.close()
+            true
         }
     }
 
