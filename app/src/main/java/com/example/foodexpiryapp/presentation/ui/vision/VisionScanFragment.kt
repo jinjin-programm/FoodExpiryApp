@@ -23,6 +23,8 @@ import androidx.navigation.fragment.findNavController
 import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.databinding.FragmentVisionScanBinding
 import com.example.foodexpiryapp.presentation.ui.llm.LlamaBridge
+import com.google.mlkit.vision.barcode.BarcodeScanner
+import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.label.ImageLabeler
 import com.google.mlkit.vision.label.ImageLabeling
@@ -58,9 +60,7 @@ class VisionScanFragment : Fragment() {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val llamaBridge = LlamaBridge.getInstance()
 
-    // ML Kit processors
-    private lateinit var textRecognizer: com.google.mlkit.vision.text.TextRecognizer
-    private lateinit var imageLabeler: ImageLabeler
+    // ML Kit processors removed for true vision
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -85,10 +85,6 @@ class VisionScanFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         cameraExecutor = Executors.newSingleThreadExecutor()
-
-        // Initialize ML Kit processors
-        textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-        imageLabeler = ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS)
 
         updateStatus("Loading Qwen3.5-0.8B...", Status.INITIALIZING)
         binding.progressBar.visibility = View.VISIBLE
@@ -123,7 +119,7 @@ class VisionScanFragment : Fragment() {
                 }
 
                 if (success) {
-                    updateStatus("Model ready - tap capture", Status.READY)
+                    updateStatus("Vision model ready - tap capture", Status.READY)
                     updateProgress("Ready")
                 } else {
                     updateStatus("Failed to load model", Status.ERROR)
@@ -144,6 +140,7 @@ class VisionScanFragment : Fragment() {
         val context = requireContext()
         val modelPath = File(context.filesDir, MODEL_DIR)
         val modelFile = File(modelPath, MODEL_FILE)
+        val mmprojFile = File(modelPath, "mmproj.gguf")
 
         // Copy model from assets if needed
         if (!modelFile.exists()) {
@@ -160,6 +157,21 @@ class VisionScanFragment : Fragment() {
                 return false
             }
         }
+        
+        // Copy mmproj from assets if needed
+        if (!mmprojFile.exists()) {
+            try {
+                context.assets.open("$MODEL_DIR/mmproj.gguf").use { input ->
+                    modelPath.mkdirs()
+                    mmprojFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                Log.i(TAG, "Mmproj copied from assets")
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to copy mmproj: ${e.message}")
+            }
+        }
 
         // Load text-only model (Qwen3.5-0.8B)
         if (!llamaBridge.isLoaded()) {
@@ -169,11 +181,15 @@ class VisionScanFragment : Fragment() {
             val numThreads = Runtime.getRuntime().availableProcessors().coerceIn(2, 4)
             Log.i(TAG, "Using $numThreads threads for inference")
             
-            // 2048 context is sufficient for text-only model
             val loaded = llamaBridge.loadModel(modelFile.absolutePath, 2048, numThreads)
             if (!loaded) {
                 Log.e(TAG, "Failed to load model")
                 return false
+            }
+            
+            if (mmprojFile.exists() && loaded) {
+                Log.i(TAG, "Loading vision encoder from: ${mmprojFile.absolutePath}")
+                llamaBridge.loadMmproj(mmprojFile.absolutePath)
             }
         }
 
@@ -252,36 +268,17 @@ class VisionScanFragment : Fragment() {
         binding.btnCapture.isEnabled = false
         binding.tvProgressDetail.visibility = View.VISIBLE
         binding.tvInstruction.visibility = View.GONE
-        updateProgress("Step 1/3: Running OCR...")
-        updateStatus("Analyzing with ML Kit + Qwen3.5...", Status.ANALYZING)
+        updateProgress("Analyzing image with Qwen vision...")
+        updateStatus("Thinking...", Status.ANALYZING)
 
         detectionJob = scope.launch {
             try {
                 val startTime = System.currentTimeMillis()
                 
-                // Step 1: ML Kit OCR + Object Detection (parallel)
-                updateProgress("Step 1/3: Running ML Kit vision...")
-                val mlKitResult = withContext(Dispatchers.IO) {
-                    runMlKitAnalysis(bitmap)
-                }
-                
-                Log.d(TAG, "ML Kit results: labels=${mlKitResult.labels}, text=${mlKitResult.detectedText.take(100)}")
-                
-                // Step 2: Build prompt with ML Kit data
-                withContext(Dispatchers.Main) {
-                    updateProgress("Step 2/3: Building prompt...")
-                }
-                
-                val prompt = buildFoodDetectionPrompt(mlKitResult)
-                Log.d(TAG, "Generated prompt (${prompt.length} chars)")
-                
-                // Step 3: Send to text-only LLM
-                withContext(Dispatchers.Main) {
-                    updateProgress("Step 3/3: AI analysis...")
-                }
+                val prompt = "Identify the food item and its expiry date. Answer ONLY in this format:\nFOOD: [name]\nEXPIRY: [date or \"not visible\"]"
                 
                 val response = withContext(Dispatchers.IO) {
-                    llamaBridge.generate(prompt, maxTokens = 150)
+                    llamaBridge.generateWithImage(prompt, bitmap, maxTokens = 150)
                 }
                 
                 val elapsed = (System.currentTimeMillis() - startTime) / 1000.0
@@ -302,72 +299,6 @@ class VisionScanFragment : Fragment() {
                 binding.btnCapture.isEnabled = true
             }
         }
-    }
-
-    private data class MlKitResult(
-        val labels: List<String>,
-        val detectedText: String
-    )
-
-    private fun runMlKitAnalysis(bitmap: Bitmap): MlKitResult {
-        val inputImage = InputImage.fromBitmap(bitmap, 0)
-        
-        // Object detection (Image Labeling)
-        val labels = mutableListOf<String>()
-        val labelTask = imageLabeler.process(inputImage)
-            .addOnSuccessListener { labelList ->
-                labels.addAll(labelList.map { it.text })
-                Log.d(TAG, "Detected ${labelList.size} labels: ${labels.joinToString()}")
-            }
-            .addOnFailureListener { e ->
-                Log.e(TAG, "Image labeling failed: ${e.message}")
-            }
-        
-        // OCR (Text Recognition)
-        var detectedText = ""
-        val textTask = textRecognizer.process(inputImage)
-            .addOnSuccessListener { visionText ->
-                detectedText = visionText.text
-                Log.d(TAG, "Detected text: ${detectedText.take(100)}")
-            }
-            .addOnFailureListener { e ->
-                Log.e(TAG, "OCR failed: ${e.message}")
-            }
-        
-        // Wait for both tasks
-        Tasks.await(labelTask)
-        Tasks.await(textTask)
-        
-        return MlKitResult(labels, detectedText)
-    }
-
-    private fun buildFoodDetectionPrompt(mlKitResult: MlKitResult): String {
-        val labelsText = if (mlKitResult.labels.isNotEmpty()) {
-            mlKitResult.labels.take(5).joinToString(", ")
-        } else {
-            "none detected"
-        }
-        
-        val ocrText = if (mlKitResult.detectedText.isNotBlank()) {
-            mlKitResult.detectedText.take(300)
-        } else {
-            "none detected"
-        }
-
-        // Qwen3.5 ChatML format
-        return """<|im_start|>system
-You are a helpful AI assistant specialized in food identification. Analyze the sensor data from a camera image and identify the food item.
-
-Detected objects: $labelsText
-Extracted text: $ocrText
-
-Based on this information, identify the food item and any visible expiry date. Be concise and accurate.<|im_end|>
-<|im_start|>user
-What food item is in this image? Is there an expiry date visible? Answer in this exact format:
-FOOD: [food name]
-EXPIRY: [date or "not visible"]<|im_end|>
-<|im_start|>assistant
-"""
     }
 
     private fun updateProgress(message: String) {
@@ -414,10 +345,13 @@ EXPIRY: [date or "not visible"]<|im_end|>
         binding.rawResponseCard.visibility = View.VISIBLE
         updateStatus("Detection complete", Status.READY)
 
+        // Don't hide automatically so user can scroll and read long output
+        /*
         binding.resultCard.postDelayed({
             _binding?.resultCard?.visibility = View.GONE
             _binding?.rawResponseCard?.visibility = View.GONE
         }, 15000)
+        */
     }
 
     private enum class Status {
@@ -445,14 +379,6 @@ EXPIRY: [date or "not visible"]<|im_end|>
         modelLoadJob?.cancel()
         scope.cancel()
         cameraExecutor.shutdown()
-        
-        // Release ML Kit resources
-        try {
-            textRecognizer.close()
-            imageLabeler.close()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error closing ML Kit clients: ${e.message}")
-        }
         
         _binding = null
     }

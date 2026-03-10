@@ -122,11 +122,14 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
     implementation("androidx.camera:camera-view:$cameraxVersion")
 
-    // ML Kit Barcode Scanning
+// ML Kit Barcode Scanning
     implementation("com.google.mlkit:barcode-scanning:17.2.0")
 
     // ML Kit Text Recognition (OCR)
     implementation("com.google.mlkit:text-recognition:16.0.0")
+
+    // ML Kit Image Labeling (Object Detection)
+    implementation("com.google.mlkit:image-labeling:17.0.7")
 
     // Firebase Auth & Google Sign-In
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))

@@ -13,7 +13,6 @@ set(LLAMA_DIR "C:/llama.cpp")
 set(LLAMA_INCLUDE_DIR "${LLAMA_DIR}/include")
 set(GGML_INCLUDE_DIR "${LLAMA_DIR}/ggml/include")
 set(MTMD_DIR "${LLAMA_DIR}/tools/mtmd")
-set(VENDOR_DIR "${LLAMA_DIR}/vendor")
 
 set(jniLibsDir ${CMAKE_SOURCE_DIR}/../jniLibs/${ANDROID_ABI})
 
@@ -29,6 +28,7 @@ set_target_properties(ggml-base PROPERTIES IMPORTED_LOCATION ${jniLibsDir}/libgg
 add_library(ggml-cpu SHARED IMPORTED)
 set_target_properties(ggml-cpu PROPERTIES IMPORTED_LOCATION ${jniLibsDir}/libggml-cpu.so)
 
+# Multimodal tool library
 add_library(mtmd SHARED IMPORTED)
 set_target_properties(mtmd PROPERTIES IMPORTED_LOCATION ${jniLibsDir}/libmtmd.so)
 
@@ -39,8 +39,6 @@ target_include_directories(llama_jni PRIVATE
     ${LLAMA_INCLUDE_DIR}
     ${GGML_INCLUDE_DIR}
     ${MTMD_DIR}
-    ${VENDOR_DIR}
-    ${VENDOR_DIR}/stb
 )
 
 if (NOT MSVC)
@@ -48,11 +46,11 @@ if (NOT MSVC)
 endif()
 
 target_link_libraries(llama_jni
-    mtmd
     llama
     ggml
     ggml-base
     ggml-cpu
+    mtmd
     android
     log
 )

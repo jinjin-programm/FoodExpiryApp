@@ -3,16 +3,20 @@
 #include <string>
 #include <vector>
 #include <cstring>
+#include <cstdlib>
 #include "llama.h"
+#include "mtmd.h"
+#include "mtmd-helper.h"
 
 #define LOG_TAG "LlamaJni"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
-// Global state for text-only inference
+// Global state
 static llama_model* g_model = nullptr;
 static llama_context* g_context = nullptr;
 static const llama_vocab* g_vocab = nullptr;
+static mtmd_context* g_mtmd_ctx = nullptr;
 
 extern "C" {
 
@@ -32,6 +36,10 @@ Java_com_example_foodexpiryapp_presentation_ui_llm_LlamaBridge_nativeLoadModel(
     
     if (g_model != nullptr) {
         LOGI("Model already loaded, freeing previous instance");
+        if (g_mtmd_ctx) {
+            mtmd_free(g_mtmd_ctx);
+            g_mtmd_ctx = nullptr;
+        }
         llama_free(g_context);
         llama_model_free(g_model);
         g_context = nullptr;
@@ -74,8 +82,6 @@ Java_com_example_foodexpiryapp_presentation_ui_llm_LlamaBridge_nativeLoadModel(
     ctx_params.n_threads = threads;
     ctx_params.n_threads_batch = threads;
     ctx_params.rope_scaling_type = LLAMA_ROPE_SCALING_TYPE_UNSPECIFIED;
-    ctx_params.cb_eval = nullptr;
-    ctx_params.cb_eval_user_data = nullptr;
     
     g_context = llama_init_from_model(g_model, ctx_params);
     
@@ -90,7 +96,6 @@ Java_com_example_foodexpiryapp_presentation_ui_llm_LlamaBridge_nativeLoadModel(
     
     env->ReleaseStringUTFChars(modelPath, path);
     
-    // Log model info
     uint32_t n_ctx = llama_n_ctx(g_context);
     uint32_t n_embd = llama_model_n_embd(g_model);
     uint32_t n_layer = llama_model_n_layer(g_model);
@@ -104,6 +109,10 @@ Java_com_example_foodexpiryapp_presentation_ui_llm_LlamaBridge_nativeFreeModel(
         JNIEnv* env, jobject thiz) {
     LOGI("Freeing model and context");
     
+    if (g_mtmd_ctx) {
+        mtmd_free(g_mtmd_ctx);
+        g_mtmd_ctx = nullptr;
+    }
     if (g_context) {
         llama_free(g_context);
         g_context = nullptr;
@@ -135,116 +144,74 @@ Java_com_example_foodexpiryapp_presentation_ui_llm_LlamaBridge_nativeGenerate(
     const char* promptStr = env->GetStringUTFChars(prompt, nullptr);
     LOGI("Generating response for prompt (%zu chars)", strlen(promptStr));
 
-    // Clear KV cache for fresh generation
+    // Clear KV cache
     llama_memory_t mem = llama_get_memory(g_context);
     if (mem) {
         llama_memory_clear(mem, false);
     }
-    LOGI("KV cache cleared");
 
     // Tokenize prompt
     bool add_bos = llama_vocab_get_add_bos(g_vocab);
-    bool add_eos = llama_vocab_get_add_eos(g_vocab);
     
     std::vector<llama_token> tokens;
-    int n_max = strlen(promptStr) + 256;
+    int n_max = strlen(promptStr) + 128;
     tokens.resize(n_max);
     
     int n_tokens = llama_tokenize(g_vocab, promptStr, strlen(promptStr), 
-                                   tokens.data(), tokens.size(), add_bos, false);
+                                   tokens.data(), tokens.size(), add_bos, true);
     
     if (n_tokens < 0) {
         tokens.resize(-n_tokens);
         n_tokens = llama_tokenize(g_vocab, promptStr, strlen(promptStr),
-                                   tokens.data(), tokens.size(), add_bos, false);
+                                   tokens.data(), tokens.size(), add_bos, true);
     }
     tokens.resize(n_tokens);
-    
     env->ReleaseStringUTFChars(prompt, promptStr);
     
     LOGI("Tokenized to %d tokens", n_tokens);
 
-    // Validate context size
-    uint32_t n_ctx = llama_n_ctx(g_context);
-    if ((uint32_t)n_tokens + maxTokens > n_ctx) {
-        LOGE("Prompt too long: %d tokens, max: %u", n_tokens, n_ctx - maxTokens);
-        return env->NewStringUTF("Error: Prompt too long");
-    }
-
-    // Create batch for prompt
+    // Create batch
     llama_batch batch = llama_batch_init(n_tokens, 0, 1);
-    
     for (int i = 0; i < n_tokens; i++) {
         batch_add_token(batch, tokens[i], (llama_pos)i);
     }
-    // Set logits for last token
     batch.logits[batch.n_tokens - 1] = true;
 
     // Decode prompt
-    int result = llama_decode(g_context, batch);
-    if (result != 0) {
-        LOGE("Failed to decode prompt: %d", result);
+    if (llama_decode(g_context, batch) != 0) {
         llama_batch_free(batch);
         return env->NewStringUTF("Error: Failed to process prompt");
     }
-    
     llama_batch_free(batch);
-    LOGI("Prompt decoded successfully");
 
-    // Generate tokens
+    // Generate
     std::string response;
     int n_generated = 0;
     llama_pos n_past = (llama_pos)n_tokens;
-    
-    // Use greedy sampling for speed
     struct llama_sampler* sampler = llama_sampler_init_greedy();
-    
     llama_batch gen_batch = llama_batch_init(1, 0, 1);
     
     while (n_generated < maxTokens) {
-        // Sample next token
         llama_token new_token = llama_sampler_sample(sampler, g_context, -1);
+        if (llama_vocab_is_eog(g_vocab, new_token)) break;
         
-        // Check for EOS
-        if (llama_vocab_is_eog(g_vocab, new_token)) {
-            LOGI("Reached EOS after %d tokens", n_generated);
-            break;
-        }
-        
-        // Convert token to text
         char buf[128];
         int n = llama_token_to_piece(g_vocab, new_token, buf, sizeof(buf), 0, false);
-        if (n > 0) {
-            response.append(buf, n);
-        }
+        if (n > 0) response.append(buf, n);
         
-        // Prepare batch for next token
         gen_batch.n_tokens = 0;
         batch_add_token(gen_batch, new_token, n_past);
         gen_batch.logits[0] = true;
         
-        // Decode
-        result = llama_decode(g_context, gen_batch);
-        if (result != 0) {
-            LOGE("Failed to decode token %d: %d", n_generated, result);
-            break;
-        }
+        if (llama_decode(g_context, gen_batch) != 0) break;
         
         n_past++;
         n_generated++;
-        
-        // Memory check
-        if (n_past >= (llama_pos)n_ctx - 1) {
-            LOGI("Reached context limit at %d tokens", n_generated);
-            break;
-        }
+        if (n_past >= (llama_pos)llama_n_ctx(g_context) - 1) break;
     }
     
     llama_sampler_free(sampler);
     llama_batch_free(gen_batch);
-    
-    LOGI("Generated %d tokens: %s", n_generated, response.substr(0, 100).c_str());
-    
     return env->NewStringUTF(response.c_str());
 }
 
@@ -252,18 +219,127 @@ JNIEXPORT jint JNICALL
 Java_com_example_foodexpiryapp_presentation_ui_llm_LlamaBridge_nativeLoadMmproj(
         JNIEnv* env, jobject thiz, jstring mmprojPath) {
     
+    if (g_model == nullptr) {
+        LOGE("Text model must be loaded before mmproj");
+        return -4;
+    }
+
     const char* path = env->GetStringUTFChars(mmprojPath, nullptr);
-    LOGI("Mmproj loading requested: %s", path);
-    LOGI("Note: Vision support not implemented in this build");
+    LOGI("Loading mmproj from: %s", path);
+    
+    struct mtmd_context_params m_params = mtmd_context_params_default();
+    m_params.n_threads = 4;
+    m_params.use_gpu = false;
+    
+    g_mtmd_ctx = mtmd_init_from_file(path, g_model, m_params);
+    
     env->ReleaseStringUTFChars(mmprojPath, path);
     
-    // Vision/multimodal support not implemented
-    // Return non-zero to indicate failure
-    return -1;
+    if (g_mtmd_ctx == nullptr) {
+        LOGE("Failed to load mmproj");
+        return -5;
+    }
+    
+    LOGI("Mmproj loaded successfully, vision support enabled");
+    return 0;
+}
+
+JNIEXPORT jstring JNICALL
+Java_com_example_foodexpiryapp_presentation_ui_llm_LlamaBridge_nativeGenerateWithImage(
+        JNIEnv* env, jobject thiz, jstring prompt, jbyteArray rgbData, jint width, jint height, jint maxTokens) {
+    
+    if (!g_context || !g_mtmd_ctx) {
+        return env->NewStringUTF("Error: Model or Vision not loaded");
+    }
+
+    // 1. Prepare Image
+    jbyte* pixels = env->GetByteArrayElements(rgbData, nullptr);
+    mtmd_bitmap* bitmap = mtmd_bitmap_init((uint32_t)width, (uint32_t)height, (const unsigned char*)pixels);
+    env->ReleaseByteArrayElements(rgbData, pixels, JNI_ABORT);
+
+    if (!bitmap) {
+        return env->NewStringUTF("Error: Failed to process bitmap");
+    }
+
+    // 2. Prepare Prompt and Tokenize
+    const char* promptStr = env->GetStringUTFChars(prompt, nullptr);
+    
+    // Add image marker if not present
+    std::string fullPrompt = promptStr;
+    if (fullPrompt.find(mtmd_default_marker()) == std::string::npos) {
+        fullPrompt = std::string(mtmd_default_marker()) + "\n" + fullPrompt;
+    }
+    
+    mtmd_input_text input_text = { fullPrompt.c_str(), true, true };
+    mtmd_input_chunks* chunks = mtmd_input_chunks_init();
+    
+    const mtmd_bitmap* bitmaps[1] = { bitmap };
+    int result = mtmd_tokenize(g_mtmd_ctx, chunks, &input_text, bitmaps, 1);
+    
+    env->ReleaseStringUTFChars(prompt, promptStr);
+    mtmd_bitmap_free(bitmap);
+
+    if (result != 0) {
+        mtmd_input_chunks_free(chunks);
+        return env->NewStringUTF("Error: Failed to tokenize multimodal input");
+    }
+
+    // 3. Inference - use helper function to handle all chunks correctly
+    llama_memory_t mem = llama_get_memory(g_context);
+    if (mem) {
+        llama_memory_clear(mem, false);
+    }
+    
+    LOGI("Processing %zu multimodal chunks with helper", mtmd_input_chunks_size(chunks));
+    
+    llama_pos new_n_past = 0;
+    int32_t eval_result = mtmd_helper_eval_chunks(g_mtmd_ctx, g_context, chunks, 
+                                                   0,  // n_past (start from 0)
+                                                   0,  // seq_id
+                                                   512, // n_batch
+                                                   true, // logits_last
+                                                   &new_n_past);
+    
+    mtmd_input_chunks_free(chunks);
+    
+    if (eval_result != 0) {
+        return env->NewStringUTF("Error: Failed to eval multimodal chunks");
+    }
+    
+    llama_pos n_past = new_n_past;
+
+    // 4. Generation
+    std::string response;
+    int n_generated = 0;
+    struct llama_sampler* sampler = llama_sampler_init_greedy();
+    llama_batch gen_batch = llama_batch_init(1, 0, 1);
+    
+    while (n_generated < maxTokens) {
+        llama_token new_token = llama_sampler_sample(sampler, g_context, -1);
+        if (llama_vocab_is_eog(g_vocab, new_token)) break;
+        
+        char buf[128];
+        int n = llama_token_to_piece(g_vocab, new_token, buf, sizeof(buf), 0, false);
+        if (n > 0) response.append(buf, n);
+        
+        gen_batch.n_tokens = 0;
+        batch_add_token(gen_batch, new_token, n_past);
+        gen_batch.logits[0] = true;
+        
+        if (llama_decode(g_context, gen_batch) != 0) break;
+        
+        n_past++;
+        n_generated++;
+        if (n_past >= (llama_pos)llama_n_ctx(g_context) - 1) break;
+    }
+    
+    llama_sampler_free(sampler);
+    llama_batch_free(gen_batch);
+    return env->NewStringUTF(response.c_str());
 }
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
-    LOGI("JNI_OnLoad called for text-only llama.cpp");
+    LOGI("JNI_OnLoad called with multimodal support");
     return JNI_VERSION_1_6;
 }
 

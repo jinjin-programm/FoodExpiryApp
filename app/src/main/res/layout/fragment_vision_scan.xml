@@ -180,16 +180,21 @@
 
             <androidx.core.widget.NestedScrollView
                 android:layout_width="match_parent"
-                android:layout_height="120dp"
-                android:layout_marginTop="4dp">
+                android:layout_height="200dp"
+                android:layout_marginTop="4dp"
+                android:fadeScrollbars="false"
+                android:scrollbarSize="4dp"
+                android:scrollbarThumbVertical="@android:color/white"
+                android:scrollbars="vertical">
 
                 <TextView
                     android:id="@+id/tv_raw_response"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="monospace"
+                    android:paddingBottom="8dp"
                     android:textColor="#00FF00"
-                    android:textSize="11sp"
+                    android:textSize="12sp"
                     tools:text="FOOD: Apple\nEXPIRY: not visible" />
 
             </androidx.core.widget.NestedScrollView>
