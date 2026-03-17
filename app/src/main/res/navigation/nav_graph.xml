@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/navigation_inventory">
+
+<fragment
+        android:id="@+id/navigation_inventory"
+        android:name="com.example.foodexpiryapp.presentation.ui.inventory.InventoryFragment"
+        android:label="Inventory">
+        <action
+            android:id="@+id/action_inventory_to_scan"
+            app:destination="@id/navigation_scan" />
+        <action
+            android:id="@+id/action_inventory_to_yolo_scan"
+            app:destination="@id/navigation_yolo_scan" />
+        <action
+            android:id="@+id/action_inventory_to_llm_scan"
+            app:destination="@id/navigation_llm_scan" />
+<action
+            android:id="@+id/action_inventory_to_chat"
+            app:destination="@id/navigation_chat" />
+        <action
+            android:id="@+id/action_inventory_to_vision_scan"
+            app:destination="@id/navigation_vision_scan" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_shopping"
+        android:name="com.example.foodexpiryapp.presentation.ui.shopping.ShoppingFragment"
+        android:label="Shopping" />
+
+    <fragment
+        android:id="@+id/navigation_recipes"
+        android:name="com.example.foodexpiryapp.presentation.ui.recipes.RecipesFragment"
+        android:label="Recipes" />
+
+    <fragment
+        android:id="@+id/navigation_planner"
+        android:name="com.example.foodexpiryapp.presentation.ui.planner.PlannerFragment"
+        android:label="Planner" />
+
+    <fragment
+        android:id="@+id/navigation_profile"
+        android:name="com.example.foodexpiryapp.presentation.ui.profile.ProfileFragment"
+        android:label="Profile" />
+
+    <fragment
+        android:id="@+id/navigation_scan"
+        android:name="com.example.foodexpiryapp.presentation.ui.scan.ScanFragment"
+        android:label="Scan Item" />
+
+    <fragment
+        android:id="@+id/navigation_yolo_scan"
+        android:name="com.example.foodexpiryapp.presentation.ui.yolo.YoloScanFragment"
+        android:label="Food Scanner" />
+
+<fragment
+        android:id="@+id/navigation_llm_scan"
+        android:name="com.example.foodexpiryapp.presentation.ui.llm.LlmScanFragment"
+        android:label="AI Food Scanner" />
+
+    <fragment
+        android:id="@+id/navigation_vision_scan"
+        android:name="com.example.foodexpiryapp.presentation.ui.vision.VisionScanFragment"
+        android:label="Vision Scanner" />
+
+    <fragment
+        android:id="@+id/navigation_chat"
+        android:name="com.example.foodexpiryapp.presentation.ui.chat.ChatFragment"
+        android:label="Chat" />
+
+</navigation>
