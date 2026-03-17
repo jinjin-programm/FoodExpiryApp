@@ -1,5 +1,6 @@
 package com.example.foodexpiryapp.presentation.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.foodexpiryapp.domain.model.DietaryPreference
@@ -7,7 +8,9 @@ import com.example.foodexpiryapp.domain.model.NotificationSettings
 import com.example.foodexpiryapp.domain.model.UserProfile
 import com.example.foodexpiryapp.domain.repository.NotificationSettingsRepository
 import com.example.foodexpiryapp.domain.repository.UserRepository
+import com.example.foodexpiryapp.util.NotificationScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -35,7 +38,8 @@ sealed class ProfileEvent {
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val userRepository: UserRepository,
-    private val notificationSettingsRepository: NotificationSettingsRepository
+    private val notificationSettingsRepository: NotificationSettingsRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -193,6 +197,9 @@ class ProfileViewModel @Inject constructor(
                 notificationSettingsRepository.updateNotificationsEnabled(settings.notificationsEnabled)
                 notificationSettingsRepository.updateDefaultDaysBefore(settings.defaultDaysBefore)
                 notificationSettingsRepository.updateNotificationTime(settings.notificationHour, settings.notificationMinute)
+                
+                // Reschedule notifications with new settings
+                NotificationScheduler.scheduleDailyNotification(context, settings)
                 
                 originalProfile = _uiState.value.userProfile
                 originalSettings = _uiState.value.notificationSettings

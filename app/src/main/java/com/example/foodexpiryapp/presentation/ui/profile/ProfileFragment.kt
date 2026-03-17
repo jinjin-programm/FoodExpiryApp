@@ -14,6 +14,9 @@ import com.example.foodexpiryapp.databinding.FragmentProfileBinding
 import com.example.foodexpiryapp.domain.model.DietaryPreference
 import com.example.foodexpiryapp.presentation.viewmodel.ProfileEvent
 import com.example.foodexpiryapp.presentation.viewmodel.ProfileViewModel
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import com.example.foodexpiryapp.worker.ExpiryNotificationWorker
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -141,6 +144,13 @@ class ProfileFragment : Fragment() {
         
         binding.btnSetTime.setOnClickListener {
             showTimePicker()
+        }
+
+        binding.btnTestNotification.setOnClickListener {
+            val workRequest = OneTimeWorkRequestBuilder<ExpiryNotificationWorker>()
+                .build()
+            WorkManager.getInstance(requireContext()).enqueue(workRequest)
+            Snackbar.make(binding.root, "Test notification triggered!", Snackbar.LENGTH_SHORT).show()
         }
         
         binding.btnSave.setOnClickListener {

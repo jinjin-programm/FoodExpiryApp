@@ -99,7 +99,7 @@ class ExpiryNotificationWorker @AssistedInject constructor(
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Food Expiry Reminders",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Notifications about food items that are about to expire"
             }
@@ -133,7 +133,8 @@ class ExpiryNotificationWorker @AssistedInject constructor(
             .setContentTitle(title)
             .setContentText(details.lines().firstOrNull() ?: "")
             .setStyle(NotificationCompat.BigTextStyle().bigText(details))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()
