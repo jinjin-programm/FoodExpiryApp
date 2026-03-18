@@ -16,7 +16,10 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.foodexpiryapp.MainActivity
 import com.example.foodexpiryapp.R
+import com.example.foodexpiryapp.domain.model.AnalyticsEvent
+import com.example.foodexpiryapp.domain.model.EventType
 import com.example.foodexpiryapp.domain.model.FoodItem
+import com.example.foodexpiryapp.domain.repository.AnalyticsRepository
 import com.example.foodexpiryapp.domain.repository.FoodRepository
 import com.example.foodexpiryapp.domain.repository.NotificationSettingsRepository
 import dagger.assisted.Assisted
@@ -29,7 +32,8 @@ class ExpiryNotificationWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted workerParams: WorkerParameters,
     private val foodRepository: FoodRepository,
-    private val notificationSettingsRepository: NotificationSettingsRepository
+    private val notificationSettingsRepository: NotificationSettingsRepository,
+    private val analyticsRepository: AnalyticsRepository
 ) : CoroutineWorker(context, workerParams) {
 
     companion object {
@@ -48,8 +52,24 @@ class ExpiryNotificationWorker @AssistedInject constructor(
                 return Result.success()
             }
 
-            val cutoffDate = LocalDate.now().plusDays(settings.defaultDaysBefore.toLong())
+            val today = LocalDate.now()
+            val cutoffDate = today.plusDays(settings.defaultDaysBefore.toLong())
             val allExpiringItems = foodRepository.getExpiringBeforeSync(cutoffDate)
+
+            // Track expired items in analytics
+            allExpiringItems.filter { it.isExpired }.forEach { item ->
+                val daysExpired = (-item.daysUntilExpiry).toInt()
+                analyticsRepository.trackEvent(
+                    AnalyticsEvent(
+                        eventName = "item_expired",
+                        eventType = EventType.ITEM_EXPIRED,
+                        itemName = item.name,
+                        itemCategory = item.category.name,
+                        itemLocation = item.location.name,
+                        additionalData = mapOf("days_expired" to daysExpired.toString())
+                    )
+                )
+            }
 
             val itemsToNotify = filterItemsForNotification(allExpiringItems, settings.defaultDaysBefore)
 
@@ -77,7 +97,22 @@ class ExpiryNotificationWorker @AssistedInject constructor(
                 }
 
                 showNotification(message, details)
+
+                // Track notification sent in analytics
+                analyticsRepository.trackEvent(
+                    AnalyticsEvent(
+                        eventName = "notification_sent",
+                        eventType = EventType.NOTIFICATION_SENT,
+                        additionalData = mapOf(
+                            "expiring_count" to soonCount.toString(),
+                            "expired_count" to expiredCount.toString()
+                        )
+                    )
+                )
             }
+
+            // Cleanup old analytics events (30 days retention)
+            analyticsRepository.cleanupOldEvents(30)
 
             Result.success()
         } catch (e: Exception) {

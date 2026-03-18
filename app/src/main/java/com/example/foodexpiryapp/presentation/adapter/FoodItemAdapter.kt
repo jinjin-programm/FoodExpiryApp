@@ -12,7 +12,8 @@ import com.example.foodexpiryapp.domain.model.FoodItem
 import java.time.format.DateTimeFormatter
 
 class FoodItemAdapter(
-    private val onItemClick: (FoodItem) -> Unit
+    private val onItemClick: (FoodItem) -> Unit,
+    private val onEatenToggle: (FoodItem, Boolean) -> Unit
 ) : ListAdapter<FoodItem, FoodItemAdapter.FoodItemViewHolder>(FoodItemDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FoodItemViewHolder {
@@ -38,6 +39,10 @@ class FoodItemAdapter(
             binding.textLocation.text = item.location.displayName
             binding.textQuantity.text = "Qty: ${item.quantity}"
             binding.textExpiryDate.text = item.expiryDate.format(dateFormatter)
+
+            // Reset checkbox state
+            binding.checkboxEaten.setOnCheckedChangeListener(null)
+            binding.checkboxEaten.isChecked = false
 
             // Days left label + color
             val days = item.daysUntilExpiry
@@ -69,6 +74,13 @@ class FoodItemAdapter(
             binding.categoryIndicator.setBackgroundColor(Color.parseColor(categoryColor))
 
             binding.root.setOnClickListener { onItemClick(item) }
+
+            // Eaten checkbox listener
+            binding.checkboxEaten.setOnCheckedChangeListener { _, isChecked ->
+                if (isChecked) {
+                    onEatenToggle(item, true)
+                }
+            }
         }
 
         private fun getCategoryColor(category: FoodCategory): String {

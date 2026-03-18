@@ -6,6 +6,9 @@ import com.example.foodexpiryapp.domain.model.FoodCategory
 import com.example.foodexpiryapp.domain.model.FoodItem
 import com.example.foodexpiryapp.domain.model.StorageLocation
 import com.example.foodexpiryapp.domain.usecase.*
+import com.example.foodexpiryapp.domain.model.AnalyticsEvent
+import com.example.foodexpiryapp.domain.model.EventType
+import com.example.foodexpiryapp.domain.repository.AnalyticsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -38,7 +41,8 @@ class InventoryViewModel @Inject constructor(
     private val addFoodItem: AddFoodItemUseCase,
     private val updateFoodItem: UpdateFoodItemUseCase,
     private val deleteFoodItem: DeleteFoodItemUseCase,
-    private val searchFoodItems: SearchFoodItemsUseCase
+    private val searchFoodItems: SearchFoodItemsUseCase,
+    private val analyticsRepository: AnalyticsRepository
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
@@ -76,12 +80,34 @@ class InventoryViewModel @Inject constructor(
     fun onSearchQueryChanged(query: String) {
         _searchQuery.value = query
         _uiState.update { it.copy(searchQuery = query) }
+        
+        if (query.isNotBlank() && query.length >= 3) {
+            analyticsRepository.trackEvent(
+                AnalyticsEvent(
+                    eventName = "search_query",
+                    eventType = EventType.SEARCH_QUERY,
+                    additionalData = mapOf("query" to query)
+                )
+            )
+        }
     }
 
     fun onAddFoodItem(foodItem: FoodItem) {
         viewModelScope.launch {
             try {
                 addFoodItem(foodItem)
+                
+                // Track analytics
+                analyticsRepository.trackEvent(
+                    AnalyticsEvent(
+                        eventName = "item_added",
+                        eventType = EventType.ITEM_ADDED,
+                        itemName = foodItem.name,
+                        itemCategory = foodItem.category.name,
+                        itemLocation = foodItem.location.name
+                    )
+                )
+                
                 _events.emit(InventoryEvent.ShowMessage("${foodItem.name} added"))
             } catch (e: Exception) {
                 _events.emit(InventoryEvent.ShowMessage("Error: ${e.message}"))
@@ -104,9 +130,48 @@ class InventoryViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 deleteFoodItem(foodItem)
+                
+                // Track analytics
+                analyticsRepository.trackEvent(
+                    AnalyticsEvent(
+                        eventName = "item_deleted",
+                        eventType = EventType.ITEM_DELETED,
+                        itemName = foodItem.name,
+                        itemCategory = foodItem.category.name,
+                        itemLocation = foodItem.location.name,
+                        additionalData = mapOf("reason" to "swipe_delete")
+                    )
+                )
+                
                 _events.emit(InventoryEvent.ItemDeleted(foodItem))
             } catch (e: Exception) {
                 _events.emit(InventoryEvent.ShowMessage("Error: ${e.message}"))
+            }
+        }
+    }
+
+    /** Mark a food item as eaten. */
+    fun onMarkAsEaten(foodItem: FoodItem) {
+        viewModelScope.launch {
+            try {
+                val daysBeforeExpiry = foodItem.daysUntilExpiry.toInt()
+                
+                // Track analytics
+                analyticsRepository.trackEvent(
+                    AnalyticsEvent(
+                        eventName = "item_eaten",
+                        eventType = EventType.ITEM_EATEN,
+                        itemName = foodItem.name,
+                        itemCategory = foodItem.category.name,
+                        itemLocation = foodItem.location.name,
+                        additionalData = mapOf("days_before_expiry" to daysBeforeExpiry.toString())
+                    )
+                )
+                
+                deleteFoodItem(foodItem)
+                _events.emit(InventoryEvent.ShowMessage("${foodItem.name} marked as eaten!"))
+            } catch (e: Exception) {
+                _events.emit(InventoryEvent.ShowMessage("Error marking eaten: ${e.message}"))
             }
         }
     }

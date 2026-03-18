@@ -7,4 +7,10 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Stat Card Colors -->
+    <color name="stat_added_bg">#E8F5E9</color>      <!-- Light Green -->
+    <color name="stat_eaten_bg">#FFF3E0</color>      <!-- Light Orange -->
+    <color name="stat_expired_bg">#FFEBEE</color>    <!-- Light Red -->
+    <color name="green_500">#4CAF50</color>
 </resources>
