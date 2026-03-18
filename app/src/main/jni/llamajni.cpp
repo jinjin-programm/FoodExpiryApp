@@ -21,7 +21,7 @@ static mtmd_context* g_mtmd_ctx = nullptr;
 extern "C" {
 
 // Helper to add tokens to batch
-static void batch_add_token(llama_batch& batch, llama_token id, llama_pos pos) {
+static void         batch_add_token(llama_batch& batch, llama_token id, llama_pos pos) {
     batch.token[batch.n_tokens] = id;
     batch.pos[batch.n_tokens] = pos;
     batch.n_seq_id[batch.n_tokens] = 1;

@@ -8,16 +8,27 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
+import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.ui.setupWithNavController
+import androidx.viewpager2.widget.ViewPager2
 import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.databinding.ActivityMainBinding
+import com.example.foodexpiryapp.domain.model.AnalyticsEvent
+import com.example.foodexpiryapp.domain.model.EventType
+import com.example.foodexpiryapp.domain.repository.AnalyticsRepository
+import com.example.foodexpiryapp.presentation.adapter.MainPagerAdapter
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private lateinit var navController: NavController
+
+    @Inject
+    lateinit var analyticsRepository: AnalyticsRepository
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -36,13 +47,75 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         android.util.Log.d("MainActivity", "layout set")
 
+        // Track app opened
+        analyticsRepository.trackEvent(
+            AnalyticsEvent(
+                eventName = "app_opened",
+                eventType = EventType.APP_OPENED
+            )
+        )
+
         askNotificationPermission()
 
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        val navController = navHostFragment.navController
+        navController = navHostFragment.navController
 
-        binding.bottomNavigation.setupWithNavController(navController)
+        // Setup ViewPager2
+        val pagerAdapter = MainPagerAdapter(this)
+        binding.viewPager.adapter = pagerAdapter
+        binding.viewPager.offscreenPageLimit = 2
+
+        // Sync ViewPager with BottomNavigationView
+        binding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                super.onPageSelected(position)
+                val itemId = when (position) {
+                    0 -> R.id.navigation_inventory
+                    1 -> R.id.navigation_shopping
+                    2 -> R.id.navigation_recipes
+                    3 -> R.id.navigation_planner
+                    4 -> R.id.navigation_profile
+                    else -> R.id.navigation_inventory
+                }
+                if (binding.bottomNavigation.selectedItemId != itemId) {
+                    binding.bottomNavigation.selectedItemId = itemId
+                }
+            }
+        })
+
+        binding.bottomNavigation.setOnItemSelectedListener { item ->
+            val page = when (item.itemId) {
+                R.id.navigation_inventory -> 0
+                R.id.navigation_shopping -> 1
+                R.id.navigation_recipes -> 2
+                R.id.navigation_planner -> 3
+                R.id.navigation_profile -> 4
+                else -> -1
+            }
+            if (page != -1) {
+                binding.viewPager.isVisible = true
+                binding.navHostFragment.isVisible = false
+                binding.viewPager.currentItem = page
+                true
+            } else {
+                false
+            }
+        }
+
+        // Listen for navigation changes to hide ViewPager when on detail screens
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            val isMainTab = destination.id in listOf(
+                R.id.navigation_inventory,
+                R.id.navigation_shopping,
+                R.id.navigation_recipes,
+                R.id.navigation_planner,
+                R.id.navigation_profile
+            )
+            binding.viewPager.isVisible = isMainTab
+            binding.navHostFragment.isVisible = !isMainTab
+        }
+
         android.util.Log.d("MainActivity", "navigation setup complete")
     }
 

@@ -27,6 +27,9 @@ import com.example.foodexpiryapp.databinding.FragmentInventoryBinding
 import com.example.foodexpiryapp.domain.model.FoodCategory
 import com.example.foodexpiryapp.domain.model.FoodItem
 import com.example.foodexpiryapp.domain.model.StorageLocation
+import com.example.foodexpiryapp.domain.model.AnalyticsEvent
+import com.example.foodexpiryapp.domain.model.EventType
+import com.example.foodexpiryapp.domain.repository.AnalyticsRepository
 import com.example.foodexpiryapp.presentation.adapter.FoodItemAdapter
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryEvent
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryViewModel
@@ -54,6 +57,9 @@ class InventoryFragment : Fragment() {
     lateinit var barcodeRepository: BarcodeRepository
 
     private lateinit var foodAdapter: FoodItemAdapter
+
+    @Inject
+    lateinit var analyticsRepository: AnalyticsRepository
 
     private val displayFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
 
@@ -91,6 +97,17 @@ class InventoryFragment : Fragment() {
                     barcodeRepository.scanBarcode(barcode).fold(
                         onSuccess = { result ->
                             binding.loadingProgress.visibility = View.GONE
+                            
+                            // Track analytics
+                            analyticsRepository.trackEvent(
+                                AnalyticsEvent(
+                                    eventName = "scan_success",
+                                    eventType = EventType.SCAN_SUCCESS,
+                                    itemName = result.name,
+                                    additionalData = mapOf("scan_type" to "barcode")
+                                )
+                            )
+
                             val newItem = FoodItem(
                                 name = result.name,
                                 barcode = barcode,
@@ -105,6 +122,16 @@ class InventoryFragment : Fragment() {
                         },
                         onFailure = { error ->
                             binding.loadingProgress.visibility = View.GONE
+                            
+                            // Track analytics
+                            analyticsRepository.trackEvent(
+                                AnalyticsEvent(
+                                    eventName = "scan_failure",
+                                    eventType = EventType.SCAN_FAILURE,
+                                    additionalData = mapOf("scan_type" to "barcode", "error" to (error.message ?: "unknown"))
+                                )
+                            )
+
                             // Fallback to manual entry
                             val newItem = FoodItem(
                                 name = "Scanned Item",
@@ -143,6 +170,17 @@ class InventoryFragment : Fragment() {
         // Listen for YOLO scan results
         setFragmentResultListener("YOLO_SCAN_RESULT") { _, bundle ->
             val label = bundle.getString("yolo_label") ?: "Unknown Item"
+            
+            // Track analytics
+            analyticsRepository.trackEvent(
+                AnalyticsEvent(
+                    eventName = "scan_success",
+                    eventType = EventType.SCAN_SUCCESS,
+                    itemName = label,
+                    additionalData = mapOf("scan_type" to "yolo")
+                )
+            )
+
             val categoryName = bundle.getString("yolo_category")
             val category = categoryName?.let { name ->
                 FoodCategory.values().find { it.name == name }
@@ -177,6 +215,17 @@ class InventoryFragment : Fragment() {
         // Listen for LLM AI scan results (Qwen3.5)
         setFragmentResultListener("llm_scan_result") { _, bundle ->
             val foodName = bundle.getString("food_name") ?: "Unknown"
+            
+            // Track analytics
+            analyticsRepository.trackEvent(
+                AnalyticsEvent(
+                    eventName = "scan_success",
+                    eventType = EventType.SCAN_SUCCESS,
+                    itemName = foodName,
+                    additionalData = mapOf("scan_type" to "llm")
+                )
+            )
+
             val expiryDateStr = bundle.getString("expiry_date")
             val confidence = bundle.getString("confidence") ?: "medium"
 
@@ -268,9 +317,16 @@ private fun setupSpeedDial() {
     }
 
     private fun setupRecyclerView() {
-        foodAdapter = FoodItemAdapter { item ->
-            showAddEditDialog(item)
-        }
+        foodAdapter = FoodItemAdapter(
+            onItemClick = { item ->
+                showAddEditDialog(item)
+            },
+            onEatenToggle = { item, isEaten ->
+                if (isEaten) {
+                    viewModel.onMarkAsEaten(item)
+                }
+            }
+        )
 
         binding.foodItemsRecyclerView.apply {
             adapter = foodAdapter
@@ -292,6 +348,17 @@ private fun setupSpeedDial() {
             }
         }
         ItemTouchHelper(swipeCallback).attachToRecyclerView(binding.foodItemsRecyclerView)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        analyticsRepository.trackEvent(
+            AnalyticsEvent(
+                eventName = "screen_view",
+                eventType = EventType.SCREEN_VIEW,
+                additionalData = mapOf("screen_name" to "inventory")
+            )
+        )
     }
 
     private fun setupSearch() {
