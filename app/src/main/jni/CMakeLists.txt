@@ -9,12 +9,20 @@ add_compile_options(-stdlib=libc++)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-DLLAMA_SHARED)
 
-set(LLAMA_DIR "C:/llama.cpp")
-set(LLAMA_INCLUDE_DIR "${LLAMA_DIR}/include")
-set(GGML_INCLUDE_DIR "${LLAMA_DIR}/ggml/include")
-set(MTMD_DIR "${LLAMA_DIR}/tools/mtmd")
+if(DEFINED ENV{LLAMA_CPP_DIR} AND NOT "$ENV{LLAMA_CPP_DIR}" STREQUAL "")
+    set(LLAMA_DIR "$ENV{LLAMA_CPP_DIR}")
+    set(LLAMA_INCLUDE_DIR "${LLAMA_DIR}/include")
+    set(GGML_INCLUDE_DIR "${LLAMA_DIR}/ggml/include")
+    set(MTMD_DIR "${LLAMA_DIR}/tools/mtmd")
+    message(STATUS "Using external llama.cpp from: ${LLAMA_DIR}")
+else()
+    set(LLAMA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    set(GGML_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/ggml")
+    set(MTMD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/mtmd")
+    message(STATUS "Using bundled headers from: ${CMAKE_CURRENT_SOURCE_DIR}/include")
+endif()
 
-set(jniLibsDir ${CMAKE_SOURCE_DIR}/../jniLibs/${ANDROID_ABI})
+set(jniLibsDir ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/${ANDROID_ABI})
 
 add_library(llama SHARED IMPORTED)
 set_target_properties(llama PROPERTIES IMPORTED_LOCATION ${jniLibsDir}/libllama.so)
@@ -35,7 +43,7 @@ set_target_properties(mtmd PROPERTIES IMPORTED_LOCATION ${jniLibsDir}/libmtmd.so
 add_library(llama_jni SHARED llamajni.cpp)
 
 target_include_directories(llama_jni PRIVATE
-    ${CMAKE_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
     ${LLAMA_INCLUDE_DIR}
     ${GGML_INCLUDE_DIR}
     ${MTMD_DIR}
