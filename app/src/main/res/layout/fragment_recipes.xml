@@ -1,18 +1,317 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@android:color/white">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="🍳 Recipes Screen"
-        android:textSize="24sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <!-- Header with Stats Cards -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="8dp">
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_margin="4dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="#E8F5E9">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="$"
+                        android:textSize="20sp"
+                        android:textColor="#2E7D32"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/text_money_saved"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#2E7D32"
+                        tools:text="$0.00" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Money Saved"
+                        android:textSize="11sp"
+                        android:textColor="#558B2F" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_margin="4dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="#FFF3E0">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="%"
+                        android:textSize="20sp"
+                        android:textColor="#E65100"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/text_waste_rescued"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#E65100"
+                        tools:text="0%" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Waste Rescued"
+                        android:textSize="11sp"
+                        android:textColor="#EF6C00" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_margin="4dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="#E3F2FD">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🍳"
+                        android:textSize="20sp" />
+
+                    <TextView
+                        android:id="@+id/text_recipes_used"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#1565C0"
+                        tools:text="0" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Recipes Made"
+                        android:textSize="11sp"
+                        android:textColor="#1976D2" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+
+        <!-- Expiring Soon Items Section -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_expiring_soon"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginBottom="8dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="#FFEBEE">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⚠️ Expiring Soon"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#C62828" />
+
+                <TextView
+                    android:id="@+id/text_expiring_items"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textSize="12sp"
+                    android:textColor="#B71C1C"
+                    tools:text="Milk (2 days), Eggs (1 day), Spinach (3 days)" />
+
+                <TextView
+                    android:id="@+id/text_expiring_hint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Cook a recipe to save these items!"
+                    android:textSize="11sp"
+                    android:textColor="#D32F2F"
+                    android:fontStyle="italic" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Filter Chips -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:paddingHorizontal="8dp">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chip_group_filters"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:singleSelection="true"
+                app:selectionRequired="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_all"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="All"
+                    android:checked="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_best_match"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Best Match" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_use_soon"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Use Soon" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_waste_buster"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Waste Buster" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_quick"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Quick" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_vegetarian"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Vegetarian" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_vegan"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Vegan" />
+            </com.google.android.material.chip.ChipGroup>
+        </HorizontalScrollView>
+
+        <!-- Loading indicator -->
+        <ProgressBar
+            android:id="@+id/loading_progress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="24dp"
+            android:visibility="gone" />
+
+        <!-- Empty State -->
+        <LinearLayout
+            android:id="@+id/empty_state_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:padding="32dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🍳"
+                android:textSize="48sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="No matching recipes"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Add more items to your inventory to get recipe suggestions!"
+                android:textSize="14sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:gravity="center" />
+        </LinearLayout>
+
+        <!-- Recipe list -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recipes_recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingTop="8dp"
+            android:paddingBottom="16dp"
+            tools:listitem="@layout/item_recipe" />
+
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
