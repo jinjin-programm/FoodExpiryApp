@@ -155,7 +155,7 @@ The recipe data is entirely local in `assets/recipes.json`. This means:
 - ✅ No API rate limits
 - ✅ No API key needed
 - ✅ Easy to extend with more recipes
-- ✅ Can later swap in Spoonacular/TheMealDB API for more recipes
+- ✅ Can later add TheMealDB as a cached online source for more recipes
 
 ---
 
@@ -174,7 +174,7 @@ The recipe data is entirely local in `assets/recipes.json`. This means:
 ## Next Steps (Optional)
 
 1. **Add more recipes** to `assets/recipes.json` (currently 20)
-2. **Swap in TheMealDB API** — use free test key `"1"` for larger recipe database
+2. **Add TheMealDB API** — use free test key `"1"` for development, then cache results locally
 3. **Add recipe detail screen** — tap a recipe to see full steps and ingredients
 4. **Add "skip recipe"** — mark as not interested to improve matching
 5. **Connect to weekly stats dashboard** — show recipe impact alongside existing stats

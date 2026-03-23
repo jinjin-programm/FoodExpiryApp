@@ -68,12 +68,14 @@ app/src/main/java/com/example/foodexpiryapp/
 - UI polishing and screen refinement
 - Feature stabilization across scan / chat / inventory flows
 - Test coverage expansion
+- TheMealDB integration plan (local-first, cached online recipes)
 
 ### Next
 
 - Finalize repository cleanup and code consistency
 - Improve error handling and edge cases
 - Verify notifications, analytics, and model loading on device
+- Add TheMealDB integration after docs/plan approval
 
 ## Git Timeline
 

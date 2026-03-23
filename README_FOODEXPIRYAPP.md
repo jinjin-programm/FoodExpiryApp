@@ -79,7 +79,7 @@ This is my **first Android app**, built as a learning project to master modern A
 - [x] Camera scanning (barcode/OCR)
 - [x] YOLO Object Detection (FoodVision v8)
 - [ ] Expiry notifications with WorkManager
-- [ ] Recipe API integration
+- [ ] Recipe API integration (TheMealDB, local-first + cache)
 - [ ] Shopping list management
 - [ ] Meal planner calendar view
 
@@ -347,7 +347,7 @@ Configure your settings:
 - [ ] Camera scanning
 - [ ] Barcode detection
 - [ ] Expiry notifications
-- [ ] Recipe API integration
+- [ ] Recipe API integration (TheMealDB)
 - [ ] Shopping list generation
 
 ### 📋 Phase 9: Polish & Optimization (Planned)
@@ -484,7 +484,7 @@ Special thanks to:
 
 **Last Updated:** February 16, 2026  
 **Status:** 🚧 Active Development  
-**Next Milestone:** Shopping List & Recipe API Implementation
+**Next Milestone:** Shopping List & TheMealDB Recipe API Implementation
 
 ---
 

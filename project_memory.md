@@ -30,6 +30,7 @@
 | Preferences | Jetpack DataStore |
 | Background | WorkManager (expiry notifications) |
 | Barcode API | OpenFoodFacts (Retrofit + OkHttp) |
+| Recipe API (planned) | TheMealDB (free dev key `1`, supporter key for public release) |
 | ML — YOLO | TensorFlow Lite (`foodvision_yolov8.tflite`, 55 food classes) |
 | ML — Vision | ML Kit (Google) |
 | ML — LLM | Local Qwen3.5-0.8b via JNI bridge |
@@ -106,6 +107,7 @@ app/src/main/java/com/example/foodexpiryapp/
 - UI polishing across screens
 - Scan/chat/inventory flow stabilization
 - Test coverage expansion
+- Planning TheMealDB integration for richer recipe search/suggestions
 
 ### ❌ Not Started / Placeholder
 - **Planner screen** — currently just placeholder text "📅 Planner Screen"
@@ -196,7 +198,8 @@ All keys are placeholder `"test_key"` — not yet configured for production:
 1. **Do NOT modify `build.gradle.kts`** without asking — dependency changes can break the build
 2. **Planner screen is empty** — any work on it is building from scratch
 3. **All ML models are local** — no cloud API calls for inference
-4. **Recipes are hardcoded** in `assets/recipes.json` — no external API
-5. **OpenFoodFacts is the only remote API** used for barcode lookup
+4. **Recipes are hardcoded** in `assets/recipes.json` today — no external API yet
+5. **OpenFoodFacts is the only remote API currently used** for barcode lookup
+6. **TheMealDB is planned** as an optional recipe source with local caching
 6. **Room DB exists** but migration strategy may be incomplete
 7. **This is a learning project** — code quality matters but simplicity is valued over over-engineering
