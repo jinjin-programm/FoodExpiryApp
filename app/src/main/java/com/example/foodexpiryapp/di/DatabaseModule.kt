@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.room.migration.Migration
 import com.example.foodexpiryapp.data.local.dao.FoodItemDao
+import com.example.foodexpiryapp.data.local.dao.MealPlanDao
 import com.example.foodexpiryapp.data.local.database.AppDatabase
 import dagger.Module
 import dagger.Provides
@@ -30,7 +31,7 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "food_expiry_db"
-        ).addMigrations(MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
+        ).addMigrations(MIGRATION_1_2, AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4)
             .build()
     }
 
@@ -38,5 +39,11 @@ object DatabaseModule {
     @Singleton
     fun provideFoodItemDao(database: AppDatabase): FoodItemDao {
         return database.foodItemDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideMealPlanDao(database: AppDatabase): MealPlanDao {
+        return database.mealPlanDao()
     }
 }

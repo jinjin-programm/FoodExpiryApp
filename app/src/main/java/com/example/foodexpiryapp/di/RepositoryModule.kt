@@ -1,10 +1,12 @@
 package com.example.foodexpiryapp.di
 
 import com.example.foodexpiryapp.data.repository.FoodRepositoryImpl
+import com.example.foodexpiryapp.data.repository.MealPlanRepositoryImpl
 import com.example.foodexpiryapp.data.repository.NotificationSettingsRepositoryImpl
 import com.example.foodexpiryapp.data.repository.RecipeRepositoryImpl
 import com.example.foodexpiryapp.data.repository.UserRepositoryImpl
 import com.example.foodexpiryapp.domain.repository.FoodRepository
+import com.example.foodexpiryapp.domain.repository.MealPlanRepository
 import com.example.foodexpiryapp.domain.repository.NotificationSettingsRepository
 import com.example.foodexpiryapp.domain.repository.RecipeRepository
 import com.example.foodexpiryapp.domain.repository.UserRepository
@@ -33,4 +35,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindRecipeRepository(impl: RecipeRepositoryImpl): RecipeRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMealPlanRepository(impl: MealPlanRepositoryImpl): MealPlanRepository
 }
