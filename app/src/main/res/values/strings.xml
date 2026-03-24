@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">FoodExpiryAPP</string>
+    
+    <!-- Feedback Screen -->
+    <string name="feedback_title">Send Feedback</string>
+    <string name="feedback_subtitle">We\'d love to hear your thoughts, suggestions, or report any issues.</string>
+    <string name="feedback_hint">Type your feedback here…</string>
+    <string name="feedback_send_button">Send Feedback</string>
+    <string name="feedback_note">This will open your email app. Your device info will be included to help us improve.</string>
+    <string name="feedback_error_empty">Please enter your feedback before sending</string>
+    <string name="feedback_chooser_title">Send feedback via</string>
+    <string name="feedback_no_email_app">No email app found. Please install an email app to send feedback.</string>
 </resources>

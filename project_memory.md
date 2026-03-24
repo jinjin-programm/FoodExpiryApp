@@ -84,24 +84,34 @@ app/src/main/java/com/example/foodexpiryapp/
 └── receiver/                        # BootReceiver (reschedule after reboot)
 ```
 
-**Assets:** `app/src/main/assets/` — model files, labels (`yolo_labels.txt`), recipes (`recipes.json`)
-**ML models:** `app/src/main/ml/` — `foodvision_yolov8.tflite`
-**JNI:** `app/src/main/jni/` — native LLM bridge
+**Assets:** `app/src/main/assets/` — model files, labels (`yolo_labels.txt`), recipes (`recipes.json`), LLM models (`llm/model.gguf`, `llm/mmproj.gguf`)
+**ML models:** `app/src/main/ml/` — `foodvision_yolov8.tflite`, `yolo11n_float32.tflite`, `crawled_grocery_yolo11n.tflite`
+**JNI:** `app/src/main/jni/` — native LLM bridge (`libllama_jni.so`)
 
 ---
 
 ## Features Status
 
 ### ✅ Done
-- Inventory screen (CRUD, search, filter, color-coded urgency badges, swipe-to-delete)
-- Shopping screen (weekly stats, shopping list)
-- Recipes screen (20 local recipes, inventory matching, waste reduction scoring)
+- Inventory screen (CRUD, search, filter, color-coded urgency badges, swipe-to-delete, mark as eaten)
+- Shopping screen (weekly stats — items added, eaten, expired, notifications sent)
+- Recipes screen (20 local recipes, inventory matching, filters: Best Match, Use Soon, Waste Buster, Quick, Vegetarian, Vegan, money saved tracking)
 - Profile screen (Google Sign-In, photo upload, dietary preferences, household size, notification settings, first-time setup dialog)
-- Scan screens: Barcode (OpenFoodFacts), YOLO (TFLite), LLM (Qwen3.5 JNI), Vision (ML Kit)
-- Chat screen (conversational LLM interface)
-- Analytics tracking (SCREEN_VIEW, ITEM_ADDED, ITEM_EATEN, ITEM_EXPIRED, RECIPE_VIEWED, RECIPE_COOKED, NOTIFICATION_SENT)
+  - ProfileSettingsFragment (detailed settings with validation, notification time)
+  - ProfileAccountFragment (Google Sign-In management)
+- Scan screens:
+  - Barcode scanning (ML Kit + OpenFoodFacts API)
+  - OCR date scanning (ML Kit text recognition)
+  - YOLO object detection (TFLite — YOLO26n/YOLO11n, multiple models available)
+  - LLM vision scan (Qwen3.5-0.8b via JNI, text + vision with mmproj)
+  - Vision scan (ML Kit)
+- Chat screen (conversational LLM interface with Qwen3.5)
+- Analytics tracking (SCREEN_VIEW, ITEM_ADDED, ITEM_EATEN, ITEM_DELETED, ITEM_EXPIRED, RECIPE_VIEWED, RECIPE_COOKED, SCAN_SUCCESS, NOTIFICATION_SENT)
 - Expiry notifications (WorkManager + BootReceiver)
-- Swipe navigation, Material Design 3 theming
+- Swipe navigation, Material Design 3 theming, ViewPager for main tabs
+- Planner screen (meal slots: Breakfast/Lunch/Dinner/Snack, product/recipe picker dialogs, MealPlanDao/Entity/Repository, PlannerViewModel)
+- ShelfLifeEstimator (smart expiry date estimation based on food type)
+- LlmVisionService (color-based food detection fallback using HSV histogram)
 
 ### 🚧 In Progress
 - UI polishing across screens
@@ -110,7 +120,7 @@ app/src/main/java/com/example/foodexpiryapp/
 - Planning TheMealDB integration for richer recipe search/suggestions
 
 ### ❌ Not Started / Placeholder
-- **Planner screen** — currently just placeholder text "📅 Planner Screen"
+- **ProfileHelpFragment** — empty stub (34 lines, no content)
 - Database migrations (Room setup exists but may need migration strategy)
 - Error handling edge cases
 
@@ -118,23 +128,30 @@ app/src/main/java/com/example/foodexpiryapp/
 
 ## YOLO Model Info
 
-- **Model:** FoodVision YOLOv8 → `foodvision_yolov8.tflite` (~15 MB)
-- **Classes:** 55 food types (fruits + vegetables)
-- **Location:** `app/src/main/ml/foodvision_yolov8.tflite`
-- **Labels:** `app/src/main/assets/yolo_labels.txt`
-- **Input:** 640×640 RGB
-- **Old model (deprecated):** `yolo11n_float32.tflite` (80 generic classes) — do NOT use
-- **Setup script:** `python setup_foodvision_model.py`
+Multiple YOLO models available:
+
+| Model | Location | Classes | Purpose |
+|-------|----------|---------|---------|
+| `foodvision_yolov8.tflite` | `app/src/main/ml/` | 55 | Food-specific detection (fruits + vegetables) |
+| `food_yolo26n_float32.tflite` | `app/src/main/assets/` | 34 | Custom food detection |
+| `crawled_grocery_yolo11n.tflite` | `app/src/main/assets/` + `ml/` | 51 | Grocery product detection |
+| `yolo11n_float32.tflite` | `app/src/main/ml/` + `assets/` | 80 | Generic COCO classes |
+| `yolo26n_float32.tflite` | `app/src/main/assets/` | 80 | Generic COCO classes |
+
+**Labels:** `app/src/main/assets/yolo_labels.txt`, `food_categories.txt`, `yolo_labels_crawled_grocery.txt`, `coco_labels.txt`
+**Input:** 640×640 RGB
 
 ---
 
 ## LLM / JNI Bridge
 
 - **Model:** Qwen3.5-0.8b (local inference)
-- **Bridge:** `LlamaBridge.kt` (JNI) → `app/src/main/jni/`
-- **Service:** `LlmVisionService.kt`
-- **Screen:** `LlmScanFragment.kt`, `ChatFragment.kt`
+- **Files:** `app/src/main/assets/llm/model.gguf` (text), `mmproj.gguf` (vision projection)
+- **Bridge:** `LlamaBridge.kt` (JNI) → `app/src/main/jni/` → native C++ (`libllama_jni.so`)
+- **Service:** `LlmVisionService.kt` (also has color-based food detection fallback using HSV)
+- **Screens:** `LlmScanFragment.kt`, `VisionScanFragment.kt`, `ChatFragment.kt`
 - **NDK:** arm64-v8a only
+- **Supports:** Text-only inference + Vision (with mmproj)
 
 ---
 
@@ -196,10 +213,12 @@ All keys are placeholder `"test_key"` — not yet configured for production:
 ## Important Notes for Agents
 
 1. **Do NOT modify `build.gradle.kts`** without asking — dependency changes can break the build
-2. **Planner screen is empty** — any work on it is building from scratch
+2. **Planner screen is implemented** — includes MealPlanDao, Entity, Repository, ViewModel, and UI
 3. **All ML models are local** — no cloud API calls for inference
 4. **Recipes are hardcoded** in `assets/recipes.json` today — no external API yet
 5. **OpenFoodFacts is the only remote API currently used** for barcode lookup
 6. **TheMealDB is planned** as an optional recipe source with local caching
-6. **Room DB exists** but migration strategy may be incomplete
-7. **This is a learning project** — code quality matters but simplicity is valued over over-engineering
+7. **Room DB exists** but migration strategy may be incomplete
+8. **Feedback screen is implemented** — email intent to `123qwerty100@gmail.com`
+9. **Duplicate code** — there's an `app/app/` subdirectory with older/duplicate versions of some files (can be cleaned up)
+10. **This is a learning project** — code quality matters but simplicity is valued over over-engineering
