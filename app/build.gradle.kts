@@ -31,6 +31,7 @@ android {
         buildConfigField("String", "OPENAI_API_KEY", "\"test_key\"")
         buildConfigField("String", "API_NINJAS_KEY", "\"test_key\"")
         buildConfigField("String", "FOODDATA_CENTRAL_KEY", "\"test_key\"")
+        buildConfigField("String", "THEMEALDB_API_KEY", "\"1\"")
     }
 
     buildTypes {
@@ -151,6 +152,9 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.16.0")
     kapt("com.github.bumptech.glide:compiler:4.16.0")
 
+    // Coil for modern image loading
+    implementation("io.coil-kt:coil:2.6.0")
+
     // TensorFlow Lite for YOLO Object Detection
     implementation("org.tensorflow:tensorflow-lite:2.14.0")
     implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
@@ -173,6 +177,7 @@ dependencies {
 
     // Testing
     testImplementation("junit:junit:4.13.2")
+    testImplementation("androidx.test:core-ktx:1.5.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     testImplementation("org.mockito:mockito-core:5.8.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")

@@ -10,12 +10,14 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.databinding.FragmentShoppingBinding
 import com.example.foodexpiryapp.databinding.ItemStatCardBinding
 import com.example.foodexpiryapp.domain.model.AnalyticsEvent
 import com.example.foodexpiryapp.domain.model.EventType
 import com.example.foodexpiryapp.domain.repository.AnalyticsRepository
+import com.example.foodexpiryapp.presentation.adapter.ShoppingItemAdapter
 import com.example.foodexpiryapp.presentation.viewmodel.ShoppingViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -32,6 +34,8 @@ class ShoppingFragment : Fragment() {
     @Inject
     lateinit var analyticsRepository: AnalyticsRepository
 
+    private lateinit var shoppingAdapter: ShoppingItemAdapter
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -44,7 +48,9 @@ class ShoppingFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupStatCards()
+        setupRecyclerView()
         observeStats()
+        observeShoppingItems()
         
         // Track screen view
         analyticsRepository.trackEvent(
@@ -79,6 +85,17 @@ class ShoppingFragment : Fragment() {
         expiredCard.root.setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.stat_expired_bg))
     }
 
+    private fun setupRecyclerView() {
+        shoppingAdapter = ShoppingItemAdapter(
+            onToggle = { viewModel.onToggleItem(it) },
+            onDelete = { viewModel.onDeleteItem(it) }
+        )
+        binding.shoppingListRecyclerView.apply {
+            adapter = shoppingAdapter
+            layoutManager = LinearLayoutManager(requireContext())
+        }
+    }
+
     private fun observeStats() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -87,6 +104,17 @@ class ShoppingFragment : Fragment() {
                     ItemStatCardBinding.bind(binding.cardEaten.root).textStatCount.text = stats.itemsEaten.toString()
                     ItemStatCardBinding.bind(binding.cardExpired.root).textStatCount.text = stats.itemsExpired.toString()
                     binding.textNotificationsCount.text = stats.notificationsSent.toString()
+                }
+            }
+        }
+    }
+
+    private fun observeShoppingItems() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.shoppingItems.collect { items ->
+                    shoppingAdapter.submitList(items)
+                    binding.textEmpty.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
                 }
             }
         }

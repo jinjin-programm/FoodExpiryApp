@@ -2,7 +2,9 @@ package com.example.foodexpiryapp.domain.usecase
 
 import com.example.foodexpiryapp.domain.model.FoodItem
 import com.example.foodexpiryapp.domain.model.Recipe
+import com.example.foodexpiryapp.domain.model.RecipeIngredient
 import com.example.foodexpiryapp.domain.model.RecipeMatch
+import com.example.foodexpiryapp.domain.repository.FoodRepository
 import com.example.foodexpiryapp.domain.repository.RecipeRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -68,6 +70,20 @@ class ScoreRecipesForInventoryUseCase @Inject constructor(
             )
         }.sortedByDescending { 
             it.matchCount * 10 + it.urgencyLevel * 5 + it.wasteRescuePercent
+        }
+    }
+}
+
+class ConsumeIngredientsUseCase @Inject constructor(
+    private val foodRepository: FoodRepository
+) {
+    suspend operator fun invoke(matchedItems: List<FoodItem>) {
+        for (item in matchedItems) {
+            if (item.quantity > 1) {
+                foodRepository.updateFoodItem(item.copy(quantity = item.quantity - 1))
+            } else {
+                foodRepository.deleteFoodItem(item)
+            }
         }
     }
 }

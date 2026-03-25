@@ -1,6 +1,7 @@
 package com.example.foodexpiryapp.di
 
 import com.example.foodexpiryapp.data.remote.OpenFoodFactsApi
+import com.example.foodexpiryapp.data.remote.TheMealDbApi
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
@@ -29,5 +30,15 @@ object NetworkModule {
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
             .create(OpenFoodFactsApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideTheMealDbApi(gson: Gson): TheMealDbApi {
+        return Retrofit.Builder()
+            .baseUrl(TheMealDbApi.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .build()
+            .create(TheMealDbApi::class.java)
     }
 }

@@ -6,11 +6,14 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import coil.load
 import com.example.foodexpiryapp.databinding.ItemRecipeBinding
+import com.example.foodexpiryapp.domain.model.Recipe
 import com.example.foodexpiryapp.domain.model.RecipeMatch
 import com.example.foodexpiryapp.domain.model.RecipeTag
 
 class RecipeAdapter(
+    private val onRecipeClick: (Recipe) -> Unit,
     private val onRecipeCooked: (RecipeMatch) -> Unit
 ) : ListAdapter<RecipeMatch, RecipeAdapter.RecipeViewHolder>(RecipeDiffCallback()) {
 
@@ -33,6 +36,11 @@ class RecipeAdapter(
 
         fun bind(match: RecipeMatch) {
             val recipe = match.recipe
+
+            binding.imageRecipe.load(recipe.imageUrl) {
+                crossfade(true)
+                placeholder(android.R.drawable.progress_horizontal)
+            }
 
             binding.textRecipeName.text = recipe.name
             binding.textRecipeDescription.text = recipe.description
@@ -71,6 +79,10 @@ class RecipeAdapter(
 
             binding.buttonCook.setOnClickListener {
                 onRecipeCooked(match)
+            }
+
+            binding.root.setOnClickListener {
+                onRecipeClick(recipe)
             }
         }
     }

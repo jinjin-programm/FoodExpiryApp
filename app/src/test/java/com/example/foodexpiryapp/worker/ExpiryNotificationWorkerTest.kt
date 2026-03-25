@@ -8,6 +8,7 @@ import com.example.foodexpiryapp.domain.model.FoodCategory
 import com.example.foodexpiryapp.domain.model.FoodItem
 import com.example.foodexpiryapp.domain.model.NotificationSettings
 import com.example.foodexpiryapp.domain.model.StorageLocation
+import com.example.foodexpiryapp.domain.repository.AnalyticsRepository
 import com.example.foodexpiryapp.domain.repository.FoodRepository
 import com.example.foodexpiryapp.domain.repository.NotificationSettingsRepository
 import kotlinx.coroutines.flow.flowOf
@@ -28,6 +29,9 @@ class ExpiryNotificationWorkerTest {
 
     @Mock
     private lateinit var notificationSettingsRepository: NotificationSettingsRepository
+    
+    @Mock
+    private lateinit var analyticsRepository: AnalyticsRepository
 
     private lateinit var context: Context
     private lateinit var workerParams: WorkerParameters
@@ -165,7 +169,7 @@ class ExpiryNotificationWorkerTest {
     }
 
     private fun createWorker(): ExpiryNotificationWorker {
-        return ExpiryNotificationWorker(context, workerParams, foodRepository, notificationSettingsRepository)
+        return ExpiryNotificationWorker(context, workerParams, foodRepository, notificationSettingsRepository, analyticsRepository)
     }
 
     private fun createFoodItem(

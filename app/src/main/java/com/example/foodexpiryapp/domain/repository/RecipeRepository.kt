@@ -10,4 +10,5 @@ interface RecipeRepository {
     fun searchRecipes(query: String): Flow<List<Recipe>>
     fun getRecipesByTag(tag: String): Flow<List<Recipe>>
     fun getRecipesMatchingInventory(inventoryItemNames: List<String>): Flow<List<Recipe>>
+    fun getRandomRecipes(count: Int = 10): Flow<List<Recipe>>
 }
