@@ -46,3 +46,4 @@ runs/
 
 # Local model assets (large files)
 app/src/main/assets/llm/*.gguf
+analytics-branch-backup/

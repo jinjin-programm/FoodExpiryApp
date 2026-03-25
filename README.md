@@ -119,7 +119,7 @@ app/src/main/java/com/freshalert/
 | API | Purpose | Auth Method |
 |-----|---------|-------------|
 | **Spoonacular (RapidAPI)** | Recipe search, ingredient lookup, barcode scan | `X-RapidAPI-Key` header |
-| **TheMealDB** | Free recipe database with categories/areas | None (free tier) |
+| **TheMealDB** | Free recipe database with categories/areas | None (free tier, planned integration) |
 | **API Ninjas** | Quick nutrition lookup by food name | `X-Api-Key` header |
 | **USDA FoodData Central** | Comprehensive USDA nutrition database | `api_key` query param |
 | **OpenAI Vision** | AI food identification from photos | `Bearer` token |
@@ -146,6 +146,20 @@ app/src/main/java/com/freshalert/
    - `ic_home.xml`, `ic_pantry.xml`, `ic_scan.xml`, `ic_recipe.xml`, `ic_profile.xml`
 
 5. **Create Fragment classes** for each navigation destination (stubs provided in nav_graph)
+
+---
+
+## TheMealDB Integration Plan
+
+Use TheMealDB as an optional online recipe source to expand search results while keeping the app fast and offline-friendly.
+
+1. Keep local `assets/recipes.json` as the default offline recipe source.
+2. Add TheMealDB search by meal name and ingredient.
+3. Map TheMealDB meals into the existing `Recipe` model.
+4. Cache fetched recipes in Room so repeat loads stay smooth.
+5. Merge local and remote recipes in the Recipes and Planner screens.
+6. Rank suggestions using expiring inventory items.
+7. Fall back to local recipes if the network is unavailable.
 
 ---
 

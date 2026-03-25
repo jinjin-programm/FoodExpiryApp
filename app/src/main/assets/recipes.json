@@ -1,0 +1,599 @@
+{
+  "recipes": [
+    {
+      "id": 1,
+      "name": "Quick Stir Fry with Expiring Vegetables",
+      "description": "A fast and healthy stir fry that uses up soft vegetables before they go bad. Great for using odd vegetables in your fridge.",
+      "imageUrl": null,
+      "ingredients": [
+        {"name": "mixed vegetables", "quantity": "2", "unit": "cups", "isOptional": false},
+        {"name": "soy sauce", "quantity": "2", "unit": "tbsp", "isOptional": false},
+        {"name": "garlic", "quantity": "2", "unit": "cloves", "isOptional": false},
+        {"name": "cooking oil", "quantity": "1", "unit": "tbsp", "isOptional": false},
+        {"name": "rice", "quantity": "1", "unit": "cup", "isOptional": false}
+      ],
+      "steps": [
+        "Heat oil in a wok or large pan over high heat.",
+        "Add minced garlic and stir for 30 seconds.",
+        "Add all vegetables and stir fry for 4-5 minutes until tender-crisp.",
+        "Add soy sauce and toss to coat.",
+        "Serve hot over steamed rice."
+      ],
+      "prepTimeMinutes": 10,
+      "cookTimeMinutes": 10,
+      "servings": 2,
+      "cuisine": "Asian Fusion",
+      "tags": ["VEGETARIAN", "VEGAN", "QUICK", "STIRFRY", "WASTE_BUSTER"],
+      "estimatedCost": 4.50,
+      "estimatedSaving": 3.00,
+      "wasteRescueScore": 90
+    },
+    {
+      "id": 2,
+      "name": "Banana Oat Smoothie",
+      "description": "Perfect for using overripe bananas. A healthy breakfast that takes just 2 minutes.",
+      "imageUrl": null,
+      "ingredients": [
+        {"name": "banana", "quantity": "2", "unit": "ripe", "isOptional": false},
+        {"name": "oats", "quantity": "0.5", "unit": "cup", "isOptional": false},
+        {"name": "milk", "quantity": "1", "unit": "cup", "isOptional": true},
+        {"name": "honey", "quantity": "1", "unit": "tbsp", "isOptional": true},
+        {"name": "cinnamon", "quantity": "0.5", "unit": "tsp", "isOptional": true}
+      ],
+      "steps": [
+        "Add all ingredients to a blender.",
+        "Blend until smooth, about 1 minute.",
+        "Pour into a glass and enjoy immediately."
+      ],
+      "prepTimeMinutes": 2,
+      "cookTimeMinutes": 0,
+      "servings": 1,
+      "cuisine": "Breakfast",
+      "tags": ["QUICK", "BREAKFAST", "NO_COOK", "WASTE_BUSTER", "MONEY_SAVER"],
+      "estimatedCost": 1.50,
+      "estimatedSaving": 2.50,
+      "wasteRescueScore": 95
+    },
+    {
+      "id": 3,
+      "name": "Leftover Rice Fried Rice",
+      "description": "The best fried rice is made with day-old rice! Uses expiring vegetables and leftover meat.",
+      "imageUrl": null,
+      "ingredients": [
+        {"name": "rice", "quantity": "2", "unit": "cups", "isOptional": false, "notes": "day-old preferred"},
+        {"name": "egg", "quantity": "2", "unit": "large", "isOptional": false},
+        {"name": "mixed vegetables", "quantity": "1", "unit": "cup", "isOptional": false},
+        {"name": "soy sauce", "quantity": "2", "unit": "tbsp", "isOptional": false},
+        {"name": "green onion", "quantity": "2", "unit": "stalks", "isOptional": true},
+        {"name": "cooking oil", "quantity": "1", "unit": "tbsp", "isOptional": false}
+      ],
+      "steps": [
+        "Heat oil in a large wok or skillet over high heat.",
+        "Scramble eggs and set aside.",
+        "Add vegetables and stir fry for 2 minutes.",
+        "Add rice and break up any clumps, stirring for 3 minutes.",
+        "Add soy sauce and scrambled eggs, toss well.",
+        "Garnish with green onions and serve."
+      ],
+      "prepTimeMinutes": 5,
+      "cookTimeMinutes": 10,
+      "servings": 3,
+      "cuisine": "Asian",
+      "tags": ["QUICK", "WASTE_BUSTER", "MONEY_SAVER", "USE_SOON"],
+      "estimatedCost": 3.00,
+      "estimatedSaving": 4.50,
+      "wasteRescueScore": 85
+    },
+    {
+      "id": 4,
+      "name": "Creamy Milk Soup",
+      "description": "A warming soup that uses milk nearing its expiry date. Zero waste and incredibly comforting.",
+      "imageUrl": null,
+      "ingredients": [
+        {"name": "milk", "quantity": "500", "unit": "ml", "isOptional": false},
+        {"name": "butter", "quantity": "2", "unit": "tbsp", "isOptional": false},
+        {"name": "flour", "quantity": "2", "unit": "tbsp", "isOptional": false},
+        {"name": "onion", "quantity": "1", "unit": "medium", "isOptional": true},
+        {"name": "salt", "quantity": "1", "unit": "tsp", "isOptional": false},
+        {"name": "black pepper", "quantity": "0.5", "unit": "tsp", "isOptional": true}
+      ],
+      "steps": [
+        "Melt butter in a pot over medium heat.",
+        "Add diced onion and cook until soft.",
+        "Stir in flour to make a roux, cook for 1 minute.",
+        "Gradually add milk, stirring constantly to avoid lumps.",
+        "Simmer for 10 minutes until thickened.",
+        "Season with salt and pepper, serve warm."
+      ],
+      "prepTimeMinutes": 5,
+      "cookTimeMinutes": 15,
+      "servings": 4,
+      "cuisine": "Comfort Food",
+      "tags": ["VEGETARIAN", "SOUP", "WASTE_BUSTER", "URGENT"],
+      "estimatedCost": 2.50,
+      "estimatedSaving": 3.50,
+      "wasteRescueScore": 100
+    },
+    {
+      "id": 5,
+      "name": "Egg Fried Noodles",
+      "description": "A quick weeknight dinner using expiring eggs and any noodles you have. Customizable with whatever vegetables are about to go bad.",
+      "imageUrl": null,
+      "ingredients": [
+        {"name": "noodles", "quantity": "200", "unit": "g", "isOptional": false},
+        {"name": "egg", "quantity": "3", "unit": "large", "isOptional": false},
+        {"name": "soy sauce", "quantity": "2", "unit": "tbsp", "isOptional": false},
+        {"name": "garlic", "quantity": "2", "unit": "cloves", "isOptional": false},
+        {"name": "mixed vegetables", "quantity": "1", "unit": "cup", "isOptional": true},
+        {"name": "cooking oil", "quantity": "2", "unit": "tbsp", "isOptional": false}
+      ],
+      "steps": [
+        "Cook noodles according to package directions, drain and set aside.",
+        "Heat oil in a wok, scramble eggs and push aside.",
+        "Add garlic and vegetables, stir fry 2 minutes.",
+        "Add noodles and soy sauce, toss everything together.",
+        "Serve hot."
+      ],
+      "prepTimeMinutes": 5,
+      "cookTimeMinutes": 10,
+      "servings": 2,
+      "cuisine": "Asian",
+      "tags": ["QUICK", "WASTE_BUSTER", "MONEY_SAVER", "USE_SOON"],
+      "estimatedCost": 3.50,
+      "estimatedSaving": 4.00,
+      "wasteRescueScore": 88
+    },
+    {
+      "id": 6,
+      "name": "Vegetable Frittata",
+      "description": "A versatile egg dish that lets you use up any vegetables in your fridge. Perfect for using slightly soft produce.",
+      "imageUrl": null,
+      "ingredients": [
+        {"name": "egg", "quantity": "6", "unit": "large", "isOptional": false},
+        {"name": "milk", "quantity": "0.25", "unit": "cup", "isOptional": true},
+        {"name": "spinach", "quantity": "1", "unit": "cup", "isOptional": false},
+        {"name": "tomato", "quantity": "1", "unit": "medium", "isOptional": false},
+        {"name": "cheese", "quantity": "0.5", "unit": "cup", "isOptional": true},
+        {"name": "olive oil", "quantity": "1", "unit": "tbsp", "isOptional": false},
+        {"name": "salt", "quantity": "0.5", "unit": "tsp", "isOptional": false},
+        {"name": "black pepper", "quantity": "0.25", "unit": "tsp", "isOptional": true}
+      ],
+      "steps": [
+        "Preheat oven to 180C (350F).",
+        "Beat eggs with milk, salt, and pepper.",
+        "Heat olive oil in an oven-safe skillet.",
+        "Sauté vegetables until slightly soft.",
+        "Pour egg mixture over vegetables.",
+        "Cook on stovetop until edges set, about 5 minutes.",
+        "Transfer to oven and bake 15 minutes until golden."
+      ],
+      "prepTimeMinutes": 10,
+      "cookTimeMinutes": 20,
+      "servings": 4,
+      "cuisine": "Italian",
+      "tags": ["VEGETARIAN", "BREAKFAST", "LUNCH", "WASTE_BUSTER"],
+      "estimatedCost": 5.00,
+      "estimatedSaving": 5.50,
+      "wasteRescueScore": 92
+    },
+    {
+      "id": 7,
+      "name": "Apple Cinnamon Oatmeal",
+      "description": "Uses overripe apples that are too soft to eat fresh. A warm, budget-friendly breakfast.",
+      "imageUrl": null,
+      "ingredients": [
+        {"name": "apple", "quantity": "2", "unit": "medium", "isOptional": false},
+        {"name": "oats", "quantity": "1", "unit": "cup", "isOptional": false},
+        {"name": "milk", "quantity": "2", "unit": "cups", "isOptional": true},
+        {"name": "cinnamon", "quantity": "1", "unit": "tsp", "isOptional": false},
+        {"name": "honey", "quantity": "1", "unit": "tbsp", "isOptional": true},
+        {"name": "butter", "quantity": "1", "unit": "tsp", "isOptional": true}
+      ],
+      "steps": [
+        "Dice apples into small cubes.",
+        "Combine oats, milk, and apples in a saucepan.",
+        "Cook over medium heat for 5-7 minutes, stirring occasionally.",
+        "Add cinnamon and butter, mix well.",
+        "Drizzle with honey and serve warm."
+      ],
+      "prepTimeMinutes": 5,
+      "cookTimeMinutes": 10,
+      "servings": 2,
+      "cuisine": "Breakfast",
+      "tags": ["VEGETARIAN", "BREAKFAST", "WASTE_BUSTER", "MONEY_SAVER"],
+      "estimatedCost": 2.00,
+      "estimatedSaving": 3.00,
+      "wasteRescueScore": 90
+    },
+    {
+      "id": 8,
+      "name": "One Pot Pasta Primavera",
+      "description": "Everything cooks in one pot! Uses any vegetables that need to be used. Minimal cleanup.",
+      "imageUrl": null,
+      "ingredients": [
+        {"name": "pasta", "quantity": "250", "unit": "g", "isOptional": false},
+        {"name": "mixed vegetables", "quantity": "2", "unit": "cups", "isOptional": false},
+        {"name": "tomato", "quantity": "2", "unit": "medium", "isOptional": false},
+        {"name": "garlic", "quantity": "3", "unit": "cloves", "isOptional": false},
+        {"name": "olive oil", "quantity": "2", "unit": "tbsp", "isOptional": false},
+        {"name": "parmesan", "quantity": "0.5", "unit": "cup", "isOptional": true},
+        {"name": "italian seasoning", "quantity": "1", "unit": "tsp", "isOptional": false}
+      ],
+      "steps": [
+        "Add pasta, vegetables, garlic, olive oil, and seasoning to a large pot.",
+        "Cover with water, bring to boil.",
+        "Cook for 10-12 minutes, stirring occasionally.",
+        "Drain excess water if needed.",
+        "Top with parmesan and serve."
+      ],
+      "prepTimeMinutes": 5,
+      "cookTimeMinutes": 15,
+      "servings": 4,
+      "cuisine": "Italian",
+      "tags": ["VEGETARIAN", "ONE_POT", "QUICK", "WASTE_BUSTER", "USE_SOON"],
+      "estimatedCost": 5.50,
+      "estimatedSaving": 6.00,
+      "wasteRescueScore": 87
+    },
+    {
+      "id": 9,
+      "name": "Cheese Sauce for Anything",
+      "description": "Turns expiring milk and cheese into a versatile cheese sauce perfect for pasta, vegetables, or nachos.",
+      "imageUrl": null,
+      "ingredients": [
+        {"name": "milk", "quantity": "250", "unit": "ml", "isOptional": false},
+        {"name": "cheese", "quantity": "150", "unit": "g", "isOptional": false},
+        {"name": "butter", "quantity": "2", "unit": "tbsp", "isOptional": false},
+        {"name": "flour", "quantity": "2", "unit": "tbsp", "isOptional": false},
+        {"name": "salt", "quantity": "0.5", "unit": "tsp", "isOptional": false},
+        {"name": "mustard", "quantity": "0.5", "unit": "tsp", "isOptional": true}
+      ],
+      "steps": [
+        "Melt butter in a saucepan over medium heat.",
+        "Add flour and whisk for 1 minute.",
+        "Gradually add milk, whisking constantly.",
+        "Cook until sauce thickens, about 3 minutes.",
+        "Remove from heat and stir in cheese until melted.",
+        "Season with salt and mustard."
+      ],
+      "prepTimeMinutes": 2,
+      "cookTimeMinutes": 8,
+      "servings": 4,
+      "cuisine": "Universal",
+      "tags": ["VEGETARIAN", "WASTE_BUSTER", "URGENT", "MONEY_SAVER"],
+      "estimatedCost": 3.00,
+      "estimatedSaving": 4.00,
+      "wasteRescueScore": 100
+    },
+    {
+      "id": 10,
+      "name": "Fruit Salad with Expiring Fruits",
+      "description": "Combine any fruits nearing their expiry into a refreshing salad. Great for using soft bananas, apples, and berries.",
+      "imageUrl": null,
+      "ingredients": [
+        {"name": "banana", "quantity": "1", "unit": "ripe", "isOptional": false},
+        {"name": "apple", "quantity": "1", "unit": "medium", "isOptional": false},
+        {"name": "orange", "quantity": "1", "unit": "medium", "isOptional": true},
+        {"name": "honey", "quantity": "1", "unit": "tbsp", "isOptional": true},
+        {"name": "lemon juice", "quantity": "1", "unit": "tbsp", "isOptional": true}
+      ],
+      "steps": [
+        "Wash and chop all fruits into bite-sized pieces.",
+        "Combine in a large bowl.",
+        "Drizzle with honey and lemon juice.",
+        "Toss gently and serve chilled."
+      ],
+      "prepTimeMinutes": 10,
+      "cookTimeMinutes": 0,
+      "servings": 3,
+      "cuisine": "Healthy",
+      "tags": ["VEGAN", "NO_COOK", "QUICK", "WASTE_BUSTER", "URGENT"],
+      "estimatedCost": 3.50,
+      "estimatedSaving": 4.00,
+      "wasteRescueScore": 95
+    },
+    {
+      "id": 11,
+      "name": "Vegetable Curry",
+      "description": "A warming, flavorful curry that works with almost any vegetables. Perfect for using odd amounts of produce.",
+      "imageUrl": null,
+      "ingredients": [
+        {"name": "mixed vegetables", "quantity": "3", "unit": "cups", "isOptional": false},
+        {"name": "coconut milk", "quantity": "400", "unit": "ml", "isOptional": false},
+        {"name": "curry powder", "quantity": "2", "unit": "tbsp", "isOptional": false},
+        {"name": "onion", "quantity": "1", "unit": "large", "isOptional": false},
+        {"name": "garlic", "quantity": "3", "unit": "cloves", "isOptional": false},
+        {"name": "ginger", "quantity": "1", "unit": "inch", "isOptional": true},
+        {"name": "rice", "quantity": "1", "unit": "cup", "isOptional": false}
+      ],
+      "steps": [
+        "Sauté diced onion, garlic, and ginger in oil until fragrant.",
+        "Add curry powder and cook for 1 minute.",
+        "Add vegetables and stir to coat with spices.",
+        "Pour in coconut milk and simmer for 20 minutes.",
+        "Serve hot over steamed rice."
+      ],
+      "prepTimeMinutes": 10,
+      "cookTimeMinutes": 25,
+      "servings": 4,
+      "cuisine": "Indian",
+      "tags": ["VEGAN", "VEGETARIAN", "CURRY", "DINNER", "WASTE_BUSTER"],
+      "estimatedCost": 6.00,
+      "estimatedSaving": 7.00,
+      "wasteRescueScore": 85
+    },
+    {
+      "id": 12,
+      "name": "Bread Pudding",
+      "description": "Transform stale bread and expiring milk into a delicious dessert. Zero food waste, all flavor.",
+      "imageUrl": null,
+      "ingredients": [
+        {"name": "bread", "quantity": "4", "unit": "slices", "isOptional": false, "notes": "stale or day-old"},
+        {"name": "milk", "quantity": "250", "unit": "ml", "isOptional": false},
+        {"name": "egg", "quantity": "2", "unit": "large", "isOptional": false},
+        {"name": "sugar", "quantity": "0.25", "unit": "cup", "isOptional": false},
+        {"name": "butter", "quantity": "2", "unit": "tbsp", "isOptional": false},
+        {"name": "cinnamon", "quantity": "1", "unit": "tsp", "isOptional": true},
+        {"name": "vanilla", "quantity": "1", "unit": "tsp", "isOptional": true}
+      ],
+      "steps": [
+        "Preheat oven to 180C (350F).",
+        "Cube bread into 1-inch pieces.",
+        "Whisk milk, eggs, sugar, melted butter, and vanilla together.",
+        "Pour mixture over bread cubes, let soak for 10 minutes.",
+        "Bake for 35-40 minutes until golden and set.",
+        "Serve warm with a dusting of cinnamon."
+      ],
+      "prepTimeMinutes": 15,
+      "cookTimeMinutes": 40,
+      "servings": 6,
+      "cuisine": "Dessert",
+      "tags": ["VEGETARIAN", "WASTE_BUSTER", "DESSERT", "FAMILY_FAV"],
+      "estimatedCost": 3.00,
+      "estimatedSaving": 5.00,
+      "wasteRescueScore": 98
+    },
+    {
+      "id": 13,
+      "name": "Tomato Pasta Sauce",
+      "description": "Uses overripe tomatoes that are too soft to eat raw. Converts them into a versatile pasta sauce.",
+      "imageUrl": null,
+      "ingredients": [
+        {"name": "tomato", "quantity": "4", "unit": "large", "isOptional": false},
+        {"name": "garlic", "quantity": "4", "unit": "cloves", "isOptional": false},
+        {"name": "olive oil", "quantity": "3", "unit": "tbsp", "isOptional": false},
+        {"name": "basil", "quantity": "5", "unit": "leaves", "isOptional": true},
+        {"name": "salt", "quantity": "1", "unit": "tsp", "isOptional": false},
+        {"name": "sugar", "quantity": "0.5", "unit": "tsp", "isOptional": true}
+      ],
+      "steps": [
+        "Dice tomatoes roughly.",
+        "Heat olive oil and sauté garlic until fragrant.",
+        "Add tomatoes and cook for 15-20 minutes, stirring occasionally.",
+        "Mash tomatoes as they cook to create sauce.",
+        "Season with salt and sugar.",
+        "Toss with pasta or use as pizza sauce."
+      ],
+      "prepTimeMinutes": 5,
+      "cookTimeMinutes": 20,
+      "servings": 4,
+      "cuisine": "Italian",
+      "tags": ["VEGAN", "VEGETARIAN", "WASTE_BUSTER", "USE_SOON", "PASTA"],
+      "estimatedCost": 2.50,
+      "estimatedSaving": 5.00,
+      "wasteRescueScore": 93
+    },
+    {
+      "id": 14,
+      "name": "Greek Yogurt Parfait",
+      "description": "Layer yogurt with fruits and granola. Perfect for using expiring yogurt and fruits.",
+      "imageUrl": null,
+      "ingredients": [
+        {"name": "yogurt", "quantity": "1", "unit": "cup", "isOptional": false},
+        {"name": "granola", "quantity": "0.5", "unit": "cup", "isOptional": true},
+        {"name": "banana", "quantity": "1", "unit": "medium", "isOptional": false},
+        {"name": "honey", "quantity": "1", "unit": "tbsp", "isOptional": true}
+      ],
+      "steps": [
+        "Slice banana.",
+        "Layer yogurt in a glass or bowl.",
+        "Add a layer of granola.",
+        "Top with banana slices.",
+        "Drizzle with honey."
+      ],
+      "prepTimeMinutes": 3,
+      "cookTimeMinutes": 0,
+      "servings": 1,
+      "cuisine": "Breakfast",
+      "tags": ["VEGETARIAN", "NO_COOK", "QUICK", "BREAKFAST", "WASTE_BUSTER"],
+      "estimatedCost": 2.00,
+      "estimatedSaving": 2.50,
+      "wasteRescueScore": 88
+    },
+    {
+      "id": 15,
+      "name": "Potato and Egg Hash",
+      "description": "A hearty breakfast or brunch using potatoes and eggs. Uses any leftover potatoes too.",
+      "imageUrl": null,
+      "ingredients": [
+        {"name": "potato", "quantity": "2", "unit": "medium", "isOptional": false},
+        {"name": "egg", "quantity": "3", "unit": "large", "isOptional": false},
+        {"name": "onion", "quantity": "0.5", "unit": "medium", "isOptional": true},
+        {"name": "butter", "quantity": "1", "unit": "tbsp", "isOptional": false},
+        {"name": "salt", "quantity": "0.5", "unit": "tsp", "isOptional": false},
+        {"name": "black pepper", "quantity": "0.25", "unit": "tsp", "isOptional": true}
+      ],
+      "steps": [
+        "Dice potatoes into small cubes.",
+        "Melt butter in a cast iron skillet over medium-high heat.",
+        "Cook potatoes for 10-12 minutes until golden and crispy.",
+        "Add diced onion and cook 3 more minutes.",
+        "Create wells and crack eggs into the pan.",
+        "Cover and cook until eggs are set.",
+        "Season and serve hot."
+      ],
+      "prepTimeMinutes": 10,
+      "cookTimeMinutes": 20,
+      "servings": 2,
+      "cuisine": "Breakfast",
+      "tags": ["VEGETARIAN", "BREAKFAST", "WASTE_BUSTER", "MONEY_SAVER", "USE_SOON"],
+      "estimatedCost": 3.00,
+      "estimatedSaving": 4.00,
+      "wasteRescueScore": 86
+    },
+    {
+      "id": 16,
+      "name": "Spinach and Cheese Omelette",
+      "description": "A classic omelette that turns expiring eggs and wilted spinach into a nutritious meal.",
+      "imageUrl": null,
+      "ingredients": [
+        {"name": "egg", "quantity": "3", "unit": "large", "isOptional": false},
+        {"name": "spinach", "quantity": "1", "unit": "cup", "isOptional": false},
+        {"name": "cheese", "quantity": "0.25", "unit": "cup", "isOptional": false},
+        {"name": "butter", "quantity": "1", "unit": "tbsp", "isOptional": false},
+        {"name": "salt", "quantity": "0.25", "unit": "tsp", "isOptional": false},
+        {"name": "black pepper", "quantity": "0.25", "unit": "tsp", "isOptional": true}
+      ],
+      "steps": [
+        "Beat eggs with salt and pepper.",
+        "Melt butter in a non-stick pan over medium heat.",
+        "Pour in eggs and let set for 1 minute.",
+        "Add spinach and cheese to one half.",
+        "Fold omelette in half and cook 1 more minute.",
+        "Slide onto plate and serve immediately."
+      ],
+      "prepTimeMinutes": 3,
+      "cookTimeMinutes": 5,
+      "servings": 1,
+      "cuisine": "Breakfast",
+      "tags": ["VEGETARIAN", "QUICK", "BREAKFAST", "WASTE_BUSTER", "URGENT"],
+      "estimatedCost": 2.00,
+      "estimatedSaving": 3.00,
+      "wasteRescueScore": 94
+    },
+    {
+      "id": 17,
+      "name": "Chicken Fried Rice",
+      "description": "Turn leftover cooked chicken and rice into a family favorite meal. Uses any vegetables you need to use up.",
+      "imageUrl": null,
+      "ingredients": [
+        {"name": "rice", "quantity": "2", "unit": "cups", "isOptional": false, "notes": "cooked, day-old preferred"},
+        {"name": "chicken", "quantity": "1", "unit": "cup", "isOptional": false, "notes": "cooked, diced"},
+        {"name": "egg", "quantity": "2", "unit": "large", "isOptional": false},
+        {"name": "mixed vegetables", "quantity": "1", "unit": "cup", "isOptional": false},
+        {"name": "soy sauce", "quantity": "2", "unit": "tbsp", "isOptional": false},
+        {"name": "sesame oil", "quantity": "1", "unit": "tsp", "isOptional": true},
+        {"name": "green onion", "quantity": "2", "unit": "stalks", "isOptional": true}
+      ],
+      "steps": [
+        "Heat oil in a large wok over high heat.",
+        "Scramble eggs and set aside.",
+        "Add vegetables and stir fry for 2 minutes.",
+        "Add chicken and rice, break up clumps.",
+        "Stir fry for 4-5 minutes until heated through.",
+        "Add soy sauce and sesame oil, toss well.",
+        "Top with scrambled eggs and green onions."
+      ],
+      "prepTimeMinutes": 5,
+      "cookTimeMinutes": 10,
+      "servings": 3,
+      "cuisine": "Asian",
+      "tags": ["DINNER", "WASTE_BUSTER", "MONEY_SAVER", "USE_SOON", "FAMILY_FAV"],
+      "estimatedCost": 5.00,
+      "estimatedSaving": 6.50,
+      "wasteRescueScore": 82
+    },
+    {
+      "id": 18,
+      "name": "Blender Pancakes",
+      "description": "Throw everything in a blender for the easiest pancakes ever. Uses overripe bananas and expiring milk.",
+      "imageUrl": null,
+      "ingredients": [
+        {"name": "banana", "quantity": "1", "unit": "ripe", "isOptional": false},
+        {"name": "egg", "quantity": "2", "unit": "large", "isOptional": false},
+        {"name": "milk", "quantity": "0.5", "unit": "cup", "isOptional": true},
+        {"name": "oats", "quantity": "0.5", "unit": "cup", "isOptional": false},
+        {"name": "baking powder", "quantity": "1", "unit": "tsp", "isOptional": false},
+        {"name": "cinnamon", "quantity": "0.5", "unit": "tsp", "isOptional": true},
+        {"name": "butter", "quantity": "1", "unit": "tbsp", "isOptional": false}
+      ],
+      "steps": [
+        "Add all ingredients except butter to blender.",
+        "Blend until smooth batter forms.",
+        "Melt butter in a skillet over medium heat.",
+        "Pour batter to form pancakes.",
+        "Cook until bubbles form, flip and cook other side.",
+        "Serve with maple syrup or fresh fruit."
+      ],
+      "prepTimeMinutes": 5,
+      "cookTimeMinutes": 10,
+      "servings": 2,
+      "cuisine": "Breakfast",
+      "tags": ["VEGETARIAN", "BREAKFAST", "QUICK", "WASTE_BUSTER", "FAMILY_FAV"],
+      "estimatedCost": 2.00,
+      "estimatedSaving": 3.50,
+      "wasteRescueScore": 91
+    },
+    {
+      "id": 19,
+      "name": "Minestrone Soup",
+      "description": "A hearty Italian soup that lets you throw in whatever vegetables need to be used. Perfect for clearing out the fridge.",
+      "imageUrl": null,
+      "ingredients": [
+        {"name": "mixed vegetables", "quantity": "3", "unit": "cups", "isOptional": false},
+        {"name": "tomato", "quantity": "2", "unit": "medium", "isOptional": false},
+        {"name": "onion", "quantity": "1", "unit": "large", "isOptional": false},
+        {"name": "garlic", "quantity": "3", "unit": "cloves", "isOptional": false},
+        {"name": "vegetable broth", "quantity": "4", "unit": "cups", "isOptional": false},
+        {"name": "pasta", "quantity": "0.5", "unit": "cup", "isOptional": true},
+        {"name": "olive oil", "quantity": "2", "unit": "tbsp", "isOptional": false},
+        {"name": "italian seasoning", "quantity": "1", "unit": "tsp", "isOptional": false}
+      ],
+      "steps": [
+        "Heat olive oil in a large pot.",
+        "Sauté onion, garlic, and vegetables for 5 minutes.",
+        "Add diced tomatoes and broth.",
+        "Add Italian seasoning and bring to boil.",
+        "Reduce heat and simmer for 20 minutes.",
+        "Add pasta in last 10 minutes if using.",
+        "Season and serve with crusty bread."
+      ],
+      "prepTimeMinutes": 15,
+      "cookTimeMinutes": 30,
+      "servings": 6,
+      "cuisine": "Italian",
+      "tags": ["VEGAN", "VEGETARIAN", "SOUP", "DINNER", "WASTE_BUSTER"],
+      "estimatedCost": 5.50,
+      "estimatedSaving": 7.00,
+      "wasteRescueScore": 88
+    },
+    {
+      "id": 20,
+      "name": "Sautéed Spinach with Garlic",
+      "description": "The simplest side dish that makes expiring spinach taste amazing. Ready in 5 minutes.",
+      "imageUrl": null,
+      "ingredients": [
+        {"name": "spinach", "quantity": "200", "unit": "g", "isOptional": false},
+        {"name": "garlic", "quantity": "2", "unit": "cloves", "isOptional": false},
+        {"name": "olive oil", "quantity": "1", "unit": "tbsp", "isOptional": false},
+        {"name": "lemon juice", "quantity": "1", "unit": "tsp", "isOptional": true},
+        {"name": "salt", "quantity": "0.25", "unit": "tsp", "isOptional": false}
+      ],
+      "steps": [
+        "Heat olive oil in a large pan over medium-high heat.",
+        "Add minced garlic and cook for 30 seconds.",
+        "Add spinach and toss until wilted, about 2 minutes.",
+        "Squeeze lemon juice on top.",
+        "Season with salt and serve."
+      ],
+      "prepTimeMinutes": 2,
+      "cookTimeMinutes": 3,
+      "servings": 2,
+      "cuisine": "Universal",
+      "tags": ["VEGAN", "VEGETARIAN", "QUICK", "WASTE_BUSTER", "URGENT"],
+      "estimatedCost": 1.50,
+      "estimatedSaving": 2.00,
+      "wasteRescueScore": 96
+    }
+  ]
+}

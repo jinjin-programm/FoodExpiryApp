@@ -11,5 +11,7 @@ enum class EventType {
     SCAN_FAILURE,
     SEARCH_QUERY,
     APP_OPENED,
-    SCREEN_VIEW
+    SCREEN_VIEW,
+    RECIPE_VIEWED,
+    RECIPE_COOKED
 }
