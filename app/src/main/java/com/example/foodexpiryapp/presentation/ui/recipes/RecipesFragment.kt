@@ -4,15 +4,20 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.databinding.FragmentRecipesBinding
 import com.example.foodexpiryapp.domain.model.AnalyticsEvent
 import com.example.foodexpiryapp.domain.model.EventType
+import com.example.foodexpiryapp.domain.model.Recipe
 import com.example.foodexpiryapp.domain.repository.AnalyticsRepository
 import com.example.foodexpiryapp.presentation.adapter.RecipeAdapter
 import com.example.foodexpiryapp.presentation.viewmodel.RecipeFilter
@@ -65,13 +70,33 @@ class RecipesFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        recipeAdapter = RecipeAdapter { match ->
-            viewModel.onRecipeCooked(match.recipe, match.matchedInventoryItems)
-        }
+        recipeAdapter = RecipeAdapter(
+            onRecipeClick = { recipe ->
+                // Use the destination ID directly to avoid ViewPager navigation conflicts
+                val bundle = bundleOf("recipeId" to recipe.id)
+                findNavController().navigate(R.id.recipeDetailFragment, bundle)
+            },
+            onRecipeCooked = { match ->
+                viewModel.onRecipeCooked(match.recipe, match.matchedInventoryItems)
+            }
+        )
 
         binding.recipesRecyclerView.apply {
             adapter = recipeAdapter
             layoutManager = LinearLayoutManager(requireContext())
+            
+            addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    super.onScrolled(recyclerView, dx, dy)
+                    val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+                    val totalItemCount = layoutManager.itemCount
+                    val lastVisibleItem = layoutManager.findLastVisibleItemPosition()
+                    
+                    if (totalItemCount <= lastVisibleItem + 2) {
+                        viewModel.onLoadMoreRequested()
+                    }
+                }
+            })
         }
     }
 

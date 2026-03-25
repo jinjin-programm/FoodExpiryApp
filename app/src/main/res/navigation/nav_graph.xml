@@ -33,7 +33,20 @@
     <fragment
         android:id="@+id/navigation_recipes"
         android:name="com.example.foodexpiryapp.presentation.ui.recipes.RecipesFragment"
-        android:label="Recipes" />
+        android:label="Recipes">
+        <action
+            android:id="@+id/action_navigation_recipes_to_recipeDetailFragment"
+            app:destination="@id/recipeDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/recipeDetailFragment"
+        android:name="com.example.foodexpiryapp.presentation.ui.recipes.RecipeDetailFragment"
+        android:label="Recipe Details">
+        <argument
+            android:name="recipeId"
+            app:argType="long" />
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_planner"

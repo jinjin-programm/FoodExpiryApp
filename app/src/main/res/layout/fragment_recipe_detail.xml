@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/app_bar"
+        android:layout_width="match_parent"
+        android:layout_height="250dp"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
+        <com.google.android.material.appbar.CollapsingToolbarLayout
+            android:id="@+id/toolbar_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:contentScrim="?attr/colorPrimary"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed"
+            app:toolbarId="@+id/toolbar">
+
+            <ImageView
+                android:id="@+id/image_recipe_detail"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                app:layout_collapseMode="parallax"
+                tools:src="@tools:sample/backgrounds/scenic" />
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                app:layout_collapseMode="pin"
+                app:navigationIcon="?attr/homeAsUpIndicator" />
+
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/text_recipe_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                tools:text="Delicious Potato Stew" />
+
+            <TextView
+                android:id="@+id/text_recipe_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="?android:attr/textColorSecondary"
+                tools:text="Cuisine: British | Time: 45 min" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_youtube"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Watch on YouTube"
+                app:icon="@android:drawable/ic_menu_slideshow"
+                android:textAllCaps="false" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="16dp"
+                android:background="#EEEEEE" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Ingredients"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Check missing items to add to shopping list"
+                android:textSize="12sp"
+                android:textColor="?android:attr/textColorSecondary" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_ingredients"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:nestedScrollingEnabled="false"
+                tools:itemCount="5"
+                tools:listitem="@android:layout/simple_list_item_multiple_choice" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_add_to_shopping"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Add Selected to Shopping List"
+                android:textAllCaps="false" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="16dp"
+                android:background="#EEEEEE" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Instructions"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black" />
+
+            <TextView
+                android:id="@+id/text_instructions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textSize="15sp"
+                android:lineSpacingExtra="4dp"
+                tools:text="1. Peel the potatoes...\n2. Boil the water..." />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_cooked"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="32dp"
+                android:text="I Cooked This!"
+                app:cornerRadius="24dp" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

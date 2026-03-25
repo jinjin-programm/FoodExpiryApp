@@ -8,18 +8,31 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.foodexpiryapp.data.local.dao.FoodItemDao
 import com.example.foodexpiryapp.data.local.dao.AnalyticsEventDao
 import com.example.foodexpiryapp.data.local.dao.MealPlanDao
+import com.example.foodexpiryapp.data.local.dao.ShoppingItemDao
 
 @Database(
-    entities = [FoodItemEntity::class, AnalyticsEventEntity::class, MealPlanEntity::class],
-    version = 4,
+    entities = [FoodItemEntity::class, AnalyticsEventEntity::class, MealPlanEntity::class, ShoppingItemEntity::class],
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun foodItemDao(): FoodItemDao
     abstract fun analyticsEventDao(): AnalyticsEventDao
     abstract fun mealPlanDao(): MealPlanDao
+    abstract fun shoppingItemDao(): ShoppingItemDao
 
     companion object {
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("""
+                    CREATE TABLE IF NOT EXISTS shopping_items (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        name TEXT NOT NULL,
+                        isChecked INTEGER NOT NULL DEFAULT 0
+                    )
+                """.trimIndent())
+            }
+        }
         val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("""

@@ -2,22 +2,16 @@ package com.example.foodexpiryapp.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.foodexpiryapp.domain.model.AnalyticsEvent
-import com.example.foodexpiryapp.domain.model.EventType
-import com.example.foodexpiryapp.domain.model.FoodItem
-import com.example.foodexpiryapp.domain.model.Recipe
-import com.example.foodexpiryapp.domain.model.RecipeMatch
+import com.example.foodexpiryapp.domain.model.*
 import com.example.foodexpiryapp.domain.repository.AnalyticsRepository
-import com.example.foodexpiryapp.domain.usecase.GetAllFoodItemsUseCase
-import com.example.foodexpiryapp.domain.usecase.GetAllRecipesUseCase
-import com.example.foodexpiryapp.domain.usecase.ScoreRecipesForInventoryUseCase
+import com.example.foodexpiryapp.domain.usecase.*
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class RecipesUiState(
-    val allRecipes: List<Recipe> = emptyList(),
     val recipeMatches: List<RecipeMatch> = emptyList(),
     val expiringItems: List<FoodItem> = emptyList(),
     val isLoading: Boolean = true,
@@ -46,62 +40,90 @@ sealed class RecipesEvent {
     data class RecipeViewed(val recipe: Recipe, val savedAmount: Double) : RecipesEvent()
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class RecipesViewModel @Inject constructor(
     private val getAllRecipes: GetAllRecipesUseCase,
     private val getAllFoodItems: GetAllFoodItemsUseCase,
     private val scoreRecipesForInventory: ScoreRecipesForInventoryUseCase,
+    private val searchRecipes: SearchRecipesUseCase,
+    private val getRecipesMatchingInventory: GetRecipesMatchingInventoryUseCase,
     private val analyticsRepository: AnalyticsRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(RecipesUiState())
-    val uiState: StateFlow<RecipesUiState> = _uiState.asStateFlow()
-
+    private val _searchQuery = MutableStateFlow("")
+    private val _selectedFilter = MutableStateFlow(RecipeFilter.ALL)
+    private val _loadMoreTrigger = MutableStateFlow(0)
+    
     private val _events = MutableSharedFlow<RecipesEvent>()
     val events: SharedFlow<RecipesEvent> = _events.asSharedFlow()
 
-    private val _searchQuery = MutableStateFlow("")
-    private val _selectedFilter = MutableStateFlow(RecipeFilter.ALL)
+    private val allFetchedRecipes = MutableStateFlow<List<Recipe>>(emptyList())
 
-    init {
-        loadData()
+    private val inventoryItems = getAllFoodItems()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    private val recipesFlow = combine(inventoryItems, _searchQuery, _loadMoreTrigger) { items, query, _ ->
+        Pair(items, query)
+    }.flatMapLatest { (items, query) ->
+        if (query.isNotBlank()) {
+            searchRecipes(query)
+        } else {
+            // Use inventory items to get matching recipes
+            getRecipesMatchingInventory(items)
+        }
+    }.onEach { newBatch ->
+        if (_searchQuery.value.isNotBlank()) {
+             allFetchedRecipes.value = newBatch
+        } else {
+             allFetchedRecipes.value = (allFetchedRecipes.value + newBatch).distinctBy { it.id }
+        }
     }
 
-    private fun loadData() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+    init {
+        recipesFlow.launchIn(viewModelScope)
+    }
 
-            combine(
-                getAllRecipes(),
-                getAllFoodItems(),
-                _searchQuery,
-                _selectedFilter
-            ) { recipes, inventoryItems, query, filter ->
-                val expiringItems = inventoryItems.filter { it.daysUntilExpiry <= 3 && !it.isExpired }
-                    .sortedBy { it.daysUntilExpiry }
+    val uiState: StateFlow<RecipesUiState> = combine(
+        allFetchedRecipes,
+        inventoryItems,
+        _searchQuery,
+        _selectedFilter
+    ) { recipes, inventory, query, filter ->
+        
+        val expiringItems = inventory.filter { it.daysUntilExpiry <= 3 && !it.isExpired }
+            .sortedBy { it.daysUntilExpiry }
 
-                val allMatches = scoreRecipesForInventory(recipes, inventoryItems)
+        val allMatches = scoreRecipesForInventory(recipes, inventory)
+        val filteredMatches = applyFilter(allMatches, filter, query)
 
-                val filteredMatches = applyFilter(allMatches, filter, query)
+        val totalSaved = allMatches.sumOf { it.estimatedMoneySaved }
+        val totalWaste = if (allMatches.isNotEmpty()) allMatches.sumOf { it.wasteRescuePercent } / allMatches.size else 0
 
-                val totalSaved = allMatches.sumOf { it.estimatedMoneySaved }
-                val totalWaste = allMatches.sumOf { it.wasteRescuePercent } / (allMatches.size.coerceAtLeast(1))
+        RecipesUiState(
+            recipeMatches = filteredMatches,
+            expiringItems = expiringItems,
+            isLoading = false,
+            searchQuery = query,
+            selectedFilter = filter,
+            totalMoneySaved = totalSaved,
+            totalWasteRescued = totalWaste,
+            errorMessage = null
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RecipesUiState())
 
-                Triple(filteredMatches, expiringItems, Pair(totalSaved, totalWaste))
-            }.collect { (matches, expiring, stats) ->
-                _uiState.update { state ->
-                    state.copy(
-                        allRecipes = state.allRecipes,
-                        recipeMatches = matches,
-                        expiringItems = expiring,
-                        isLoading = false,
-                        totalMoneySaved = stats.first,
-                        totalWasteRescued = stats.second,
-                        errorMessage = null
-                    )
-                }
-            }
-        }
+    fun onSearchQueryChanged(query: String) {
+        _searchQuery.value = query
+        allFetchedRecipes.value = emptyList()
+    }
+
+    fun onFilterChanged(filter: RecipeFilter) {
+        _selectedFilter.value = filter
+    }
+
+    fun onLoadMoreRequested() {
+        if (uiState.value.isLoading) return
+        _loadMoreTrigger.value += 1
     }
 
     private fun applyFilter(
@@ -112,13 +134,13 @@ class RecipesViewModel @Inject constructor(
         var result = when (filter) {
             RecipeFilter.ALL -> matches
             RecipeFilter.BEST_MATCH -> matches.sortedByDescending { it.matchCount * 10 + it.wasteRescuePercent }
-            RecipeFilter.USE_SOON -> matches.filter { it.recipe.tags.any { t -> t == com.example.foodexpiryapp.domain.model.RecipeTag.USE_SOON || t == com.example.foodexpiryapp.domain.model.RecipeTag.URGENT } }
-            RecipeFilter.WASTE_BUSTER -> matches.filter { it.recipe.tags.contains(com.example.foodexpiryapp.domain.model.RecipeTag.WASTE_BUSTER) }
+            RecipeFilter.USE_SOON -> matches.filter { it.recipe.tags.any { t -> t == RecipeTag.USE_SOON || t == RecipeTag.URGENT } }
+            RecipeFilter.WASTE_BUSTER -> matches.filter { it.recipe.tags.contains(RecipeTag.WASTE_BUSTER) }
             RecipeFilter.QUICK -> matches.filter { it.recipe.totalTimeMinutes < 30 }
-            RecipeFilter.VEGETARIAN -> matches.filter { it.recipe.tags.contains(com.example.foodexpiryapp.domain.model.RecipeTag.VEGETARIAN) }
-            RecipeFilter.VEGAN -> matches.filter { it.recipe.tags.contains(com.example.foodexpiryapp.domain.model.RecipeTag.VEGAN) }
-            RecipeFilter.DAIRY_FREE -> matches.filter { it.recipe.tags.contains(com.example.foodexpiryapp.domain.model.RecipeTag.DAIRY_FREE) }
-            RecipeFilter.GLUTEN_FREE -> matches.filter { it.recipe.tags.contains(com.example.foodexpiryapp.domain.model.RecipeTag.GLUTEN_FREE) }
+            RecipeFilter.VEGETARIAN -> matches.filter { it.recipe.tags.contains(RecipeTag.VEGETARIAN) }
+            RecipeFilter.VEGAN -> matches.filter { it.recipe.tags.contains(RecipeTag.VEGAN) }
+            RecipeFilter.DAIRY_FREE -> matches.filter { it.recipe.tags.contains(RecipeTag.DAIRY_FREE) }
+            RecipeFilter.GLUTEN_FREE -> matches.filter { it.recipe.tags.contains(RecipeTag.GLUTEN_FREE) }
         }
 
         if (query.isNotBlank()) {
@@ -131,16 +153,6 @@ class RecipesViewModel @Inject constructor(
         }
 
         return result
-    }
-
-    fun onSearchQueryChanged(query: String) {
-        _searchQuery.value = query
-        _uiState.update { it.copy(searchQuery = query) }
-    }
-
-    fun onFilterChanged(filter: RecipeFilter) {
-        _selectedFilter.value = filter
-        _uiState.update { it.copy(selectedFilter = filter) }
     }
 
     fun onRecipeViewed(recipe: Recipe, matchedItems: List<FoodItem>) {
@@ -183,7 +195,6 @@ class RecipesViewModel @Inject constructor(
                 )
             )
 
-            _uiState.update { it.copy(recipesUsedCount = it.recipesUsedCount + 1) }
             _events.emit(RecipesEvent.ShowMessage("Recipe cooked! Saved ~$${String.format("%.2f", savedAmount)}!"))
         }
     }

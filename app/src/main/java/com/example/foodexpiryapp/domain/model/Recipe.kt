@@ -14,7 +14,8 @@ data class Recipe(
     val tags: Set<RecipeTag> = emptySet(),
     val estimatedCost: Double = 0.0,
     val estimatedSaving: Double = 0.0,
-    val wasteRescueScore: Int = 0
+    val wasteRescueScore: Int = 0,
+    val youtubeUrl: String? = null
 ) {
     val totalTimeMinutes: Int get() = prepTimeMinutes + cookTimeMinutes
 
