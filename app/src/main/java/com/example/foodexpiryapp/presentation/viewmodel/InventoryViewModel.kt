@@ -46,6 +46,7 @@ class InventoryViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
+    private val _selectedCategory = MutableStateFlow<FoodCategory?>(null)
 
     private val _uiState = MutableStateFlow(InventoryUiState())
     val uiState: StateFlow<InventoryUiState> = _uiState.asStateFlow()
@@ -54,26 +55,34 @@ class InventoryViewModel @Inject constructor(
     val events: SharedFlow<InventoryEvent> = _events.asSharedFlow()
 
     init {
-        // React to search query changes: empty query -> all items, otherwise -> search
+        // React to search query and category changes
         viewModelScope.launch {
-            _searchQuery
-                .debounce(300)
-                .flatMapLatest { query ->
-                    if (query.isBlank()) {
-                        getAllFoodItems()
+            combine(_searchQuery.debounce(300), _selectedCategory) { query, category ->
+                Pair(query, category)
+            }
+            .flatMapLatest { (query, category) ->
+                if (query.isBlank()) {
+                    getAllFoodItems()
+                } else {
+                    searchFoodItems(query)
+                }
+                .map { items ->
+                    if (category != null) {
+                        items.filter { it.category == category }
                     } else {
-                        searchFoodItems(query)
+                        items
                     }
                 }
-                .collect { items ->
-                    _uiState.update { state ->
-                        state.copy(
-                            foodItems = items,
-                            isLoading = false,
-                            errorMessage = null
-                        )
-                    }
+            }
+            .collect { items ->
+                _uiState.update { state ->
+                    state.copy(
+                        foodItems = items,
+                        isLoading = false,
+                        errorMessage = null
+                    )
                 }
+            }
         }
     }
 
@@ -90,6 +99,11 @@ class InventoryViewModel @Inject constructor(
                 )
             )
         }
+    }
+
+    fun onCategorySelected(category: FoodCategory?) {
+        _selectedCategory.value = category
+        _uiState.update { it.copy(selectedCategory = category) }
     }
 
     fun onAddFoodItem(foodItem: FoodItem) {
