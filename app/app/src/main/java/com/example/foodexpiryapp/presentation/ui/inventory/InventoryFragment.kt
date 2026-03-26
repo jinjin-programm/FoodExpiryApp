@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.children
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
@@ -27,14 +28,17 @@ import com.example.foodexpiryapp.databinding.FragmentInventoryBinding
 import com.example.foodexpiryapp.domain.model.FoodCategory
 import com.example.foodexpiryapp.domain.model.FoodItem
 import com.example.foodexpiryapp.domain.model.StorageLocation
+import com.example.foodexpiryapp.domain.model.AnalyticsEvent
+import com.example.foodexpiryapp.domain.model.EventType
+import com.example.foodexpiryapp.domain.repository.AnalyticsRepository
 import com.example.foodexpiryapp.presentation.adapter.FoodItemAdapter
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryEvent
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryViewModel
 import com.example.foodexpiryapp.util.ShelfLifeEstimator
+import com.google.android.material.chip.Chip
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.leinardi.android.speeddial.SpeedDialActionItem
-import com.leinardi.android.speeddial.SpeedDialView
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -54,6 +58,9 @@ class InventoryFragment : Fragment() {
     lateinit var barcodeRepository: BarcodeRepository
 
     private lateinit var foodAdapter: FoodItemAdapter
+
+    @Inject
+    lateinit var analyticsRepository: AnalyticsRepository
 
     private val displayFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
 
@@ -75,6 +82,7 @@ class InventoryFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
         setupSearch()
+        setupCategoryFilter()
         setupSpeedDial()
         observeState()
         observeEvents()
@@ -91,6 +99,17 @@ class InventoryFragment : Fragment() {
                     barcodeRepository.scanBarcode(barcode).fold(
                         onSuccess = { result ->
                             binding.loadingProgress.visibility = View.GONE
+                            
+                            // Track analytics
+                            analyticsRepository.trackEvent(
+                                AnalyticsEvent(
+                                    eventName = "scan_success",
+                                    eventType = EventType.SCAN_SUCCESS,
+                                    itemName = result.name,
+                                    additionalData = mapOf("scan_type" to "barcode")
+                                )
+                            )
+
                             val newItem = FoodItem(
                                 name = result.name,
                                 barcode = barcode,
@@ -105,6 +124,16 @@ class InventoryFragment : Fragment() {
                         },
                         onFailure = { error ->
                             binding.loadingProgress.visibility = View.GONE
+                            
+                            // Track analytics
+                            analyticsRepository.trackEvent(
+                                AnalyticsEvent(
+                                    eventName = "scan_failure",
+                                    eventType = EventType.SCAN_FAILURE,
+                                    additionalData = mapOf("scan_type" to "barcode", "error" to (error.message ?: "unknown"))
+                                )
+                            )
+
                             // Fallback to manual entry
                             val newItem = FoodItem(
                                 name = "Scanned Item",
@@ -143,6 +172,17 @@ class InventoryFragment : Fragment() {
         // Listen for YOLO scan results
         setFragmentResultListener("YOLO_SCAN_RESULT") { _, bundle ->
             val label = bundle.getString("yolo_label") ?: "Unknown Item"
+            
+            // Track analytics
+            analyticsRepository.trackEvent(
+                AnalyticsEvent(
+                    eventName = "scan_success",
+                    eventType = EventType.SCAN_SUCCESS,
+                    itemName = label,
+                    additionalData = mapOf("scan_type" to "yolo")
+                )
+            )
+
             val categoryName = bundle.getString("yolo_category")
             val category = categoryName?.let { name ->
                 FoodCategory.values().find { it.name == name }
@@ -177,6 +217,17 @@ class InventoryFragment : Fragment() {
         // Listen for LLM AI scan results (Qwen3.5)
         setFragmentResultListener("llm_scan_result") { _, bundle ->
             val foodName = bundle.getString("food_name") ?: "Unknown"
+            
+            // Track analytics
+            analyticsRepository.trackEvent(
+                AnalyticsEvent(
+                    eventName = "scan_success",
+                    eventType = EventType.SCAN_SUCCESS,
+                    itemName = foodName,
+                    additionalData = mapOf("scan_type" to "llm")
+                )
+            )
+
             val expiryDateStr = bundle.getString("expiry_date")
             val confidence = bundle.getString("confidence") ?: "medium"
 
@@ -204,9 +255,37 @@ class InventoryFragment : Fragment() {
             showAddEditDialog(newItem)
             Snackbar.make(binding.root, "AI Detected: $foodName", Snackbar.LENGTH_SHORT).show()
         }
-}
+    }
 
-private fun setupSpeedDial() {
+    private fun setupCategoryFilter() {
+        val chipGroup = binding.categoryChipGroup
+
+        // Add chips for each category
+        FoodCategory.values().forEach { category ->
+            val chip = layoutInflater.inflate(R.layout.layout_filter_chip, chipGroup, false) as Chip
+            chip.text = category.displayName
+            chip.id = View.generateViewId()
+            chip.tag = category
+            chipGroup.addView(chip)
+        }
+
+        chipGroup.setOnCheckedStateChangeListener { group, checkedIds ->
+            if (checkedIds.isEmpty()) {
+                viewModel.onCategorySelected(null)
+            } else {
+                val checkedId = checkedIds.first()
+                if (checkedId == R.id.chip_all) {
+                    viewModel.onCategorySelected(null)
+                } else {
+                    val chip = group.findViewById<Chip>(checkedId)
+                    val category = chip.tag as? FoodCategory
+                    viewModel.onCategorySelected(category)
+                }
+            }
+        }
+    }
+
+    private fun setupSpeedDial() {
         val speedDial = binding.speedDial
         
         speedDial.addActionItem(
@@ -268,9 +347,16 @@ private fun setupSpeedDial() {
     }
 
     private fun setupRecyclerView() {
-        foodAdapter = FoodItemAdapter { item ->
-            showAddEditDialog(item)
-        }
+        foodAdapter = FoodItemAdapter(
+            onItemClick = { item ->
+                showAddEditDialog(item)
+            },
+            onEatenToggle = { item, isEaten ->
+                if (isEaten) {
+                    viewModel.onMarkAsEaten(item)
+                }
+            }
+        )
 
         binding.foodItemsRecyclerView.apply {
             adapter = foodAdapter
@@ -292,6 +378,17 @@ private fun setupSpeedDial() {
             }
         }
         ItemTouchHelper(swipeCallback).attachToRecyclerView(binding.foodItemsRecyclerView)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        analyticsRepository.trackEvent(
+            AnalyticsEvent(
+                eventName = "screen_view",
+                eventType = EventType.SCREEN_VIEW,
+                additionalData = mapOf("screen_name" to "inventory")
+            )
+        )
     }
 
     private fun setupSearch() {
@@ -317,6 +414,23 @@ private fun setupSpeedDial() {
                         if (!state.isLoading && state.foodItems.isNotEmpty()) View.VISIBLE else View.GONE
 
                     foodAdapter.submitList(state.foodItems)
+
+                    // Update chip selection if needed
+                    updateChipSelection(state.selectedCategory)
+                }
+            }
+        }
+    }
+
+    private fun updateChipSelection(selectedCategory: FoodCategory?) {
+        val chipGroup = binding.categoryChipGroup
+        if (selectedCategory == null) {
+            chipGroup.check(R.id.chip_all)
+        } else {
+            for (chip in chipGroup.children) {
+                if (chip is Chip && chip.tag == selectedCategory) {
+                    chipGroup.check(chip.id)
+                    break
                 }
             }
         }
