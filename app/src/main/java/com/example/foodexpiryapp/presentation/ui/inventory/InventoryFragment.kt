@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.children
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
@@ -34,10 +35,10 @@ import com.example.foodexpiryapp.presentation.adapter.FoodItemAdapter
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryEvent
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryViewModel
 import com.example.foodexpiryapp.util.ShelfLifeEstimator
+import com.google.android.material.chip.Chip
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.leinardi.android.speeddial.SpeedDialActionItem
-import com.leinardi.android.speeddial.SpeedDialView
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -81,6 +82,7 @@ class InventoryFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
         setupSearch()
+        setupCategoryFilter()
         setupSpeedDial()
         observeState()
         observeEvents()
@@ -253,9 +255,37 @@ class InventoryFragment : Fragment() {
             showAddEditDialog(newItem)
             Snackbar.make(binding.root, "AI Detected: $foodName", Snackbar.LENGTH_SHORT).show()
         }
-}
+    }
 
-private fun setupSpeedDial() {
+    private fun setupCategoryFilter() {
+        val chipGroup = binding.categoryChipGroup
+
+        // Add chips for each category
+        FoodCategory.values().forEach { category ->
+            val chip = layoutInflater.inflate(R.layout.layout_filter_chip, chipGroup, false) as Chip
+            chip.text = category.displayName
+            chip.id = View.generateViewId()
+            chip.tag = category
+            chipGroup.addView(chip)
+        }
+
+        chipGroup.setOnCheckedStateChangeListener { group, checkedIds ->
+            if (checkedIds.isEmpty()) {
+                viewModel.onCategorySelected(null)
+            } else {
+                val checkedId = checkedIds.first()
+                if (checkedId == R.id.chip_all) {
+                    viewModel.onCategorySelected(null)
+                } else {
+                    val chip = group.findViewById<Chip>(checkedId)
+                    val category = chip.tag as? FoodCategory
+                    viewModel.onCategorySelected(category)
+                }
+            }
+        }
+    }
+
+    private fun setupSpeedDial() {
         val speedDial = binding.speedDial
         
         speedDial.addActionItem(
@@ -384,6 +414,23 @@ private fun setupSpeedDial() {
                         if (!state.isLoading && state.foodItems.isNotEmpty()) View.VISIBLE else View.GONE
 
                     foodAdapter.submitList(state.foodItems)
+
+                    // Update chip selection if needed
+                    updateChipSelection(state.selectedCategory)
+                }
+            }
+        }
+    }
+
+    private fun updateChipSelection(selectedCategory: FoodCategory?) {
+        val chipGroup = binding.categoryChipGroup
+        if (selectedCategory == null) {
+            chipGroup.check(R.id.chip_all)
+        } else {
+            for (chip in chipGroup.children) {
+                if (chip is Chip && chip.tag == selectedCategory) {
+                    chipGroup.check(chip.id)
+                    break
                 }
             }
         }
