@@ -10,3 +10,4 @@
     app:chipBackgroundColor="@color/chip_background_color_selector"
     app:chipIconVisible="false"
     app:closeIconVisible="false" />
+
