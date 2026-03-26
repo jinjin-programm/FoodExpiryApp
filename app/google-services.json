@@ -1,1 +1,29 @@
-
+{
+  "project_info": {
+    "project_number": "277288206253",
+    "project_id": "foodexpiryapp-68181",
+    "storage_bucket": "foodexpiryapp-68181.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:277288206253:android:0a89dd7d6a6bd46dcdeb24",
+        "android_client_info": {
+          "package_name": "com.example.foodexpiryapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRgTo4FyKCnEuhvZRDV_q0IAl9RnFCcus"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
