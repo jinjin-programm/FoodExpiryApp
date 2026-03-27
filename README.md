@@ -143,9 +143,33 @@ app/src/main/java/com/freshalert/
 3. **Sync Gradle** and build
 
 4. **Add placeholder drawable icons** for bottom navigation:
-   - `ic_home.xml`, `ic_pantry.xml`, `ic_scan.xml`, `ic_recipe.xml`, `ic_profile.xml`
+    - `ic_home.xml`, `ic_pantry.xml`, `ic_scan.xml`, `ic_recipe.xml`, `ic_profile.xml`
 
 5. **Create Fragment classes** for each navigation destination (stubs provided in nav_graph)
+
+---
+
+## Release Build
+
+To create a signed release:
+
+1. Create a keystore file, for example `release.keystore`.
+2. Add these values to `local.properties`:
+   ```properties
+   RELEASE_STORE_FILE=release.keystore
+   RELEASE_STORE_PASSWORD=your_store_password
+   RELEASE_KEY_ALIAS=your_key_alias
+   RELEASE_KEY_PASSWORD=your_key_password
+   ```
+3. Build the release package:
+   ```bash
+   ./gradlew assembleRelease
+   ```
+4. Or build an Android App Bundle for Play Store:
+   ```bash
+   ./gradlew bundleRelease
+   ```
+5. Find outputs in `app/build/outputs/`.
 
 ---
 
