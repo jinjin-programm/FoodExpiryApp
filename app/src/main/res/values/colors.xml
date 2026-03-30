@@ -8,9 +8,47 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <!-- Stat Card Colors -->
-    <color name="stat_added_bg">#E8F5E9</color>      <!-- Light Green -->
-    <color name="stat_eaten_bg">#FFF3E0</color>      <!-- Light Orange -->
-    <color name="stat_expired_bg">#FFEBEE</color>    <!-- Light Red -->
+    <!-- New UI Colors -->
+    <color name="primary">#4D644F</color>
+    <color name="on_primary">#FFFFFF</color>
+    <color name="primary_container">#8DA68E</color>
+    <color name="on_primary_container">#263C29</color>
+    <color name="primary_fixed">#CFE9CF</color>
+    <color name="on_primary_fixed">#0A2010</color>
+    <color name="on_primary_fixed_variant">#364C39</color>
+
+    <color name="secondary">#556157</color>
+    <color name="on_secondary">#FFFFFF</color>
+    <color name="secondary_container">#D6E3D6</color>
+    <color name="on_secondary_container">#59665B</color>
+
+    <color name="tertiary">#705A49</color>
+    <color name="on_tertiary">#FFFFFF</color>
+    <color name="tertiary_container">#B59B87</color>
+    <color name="on_tertiary_container">#463324</color>
+    <color name="tertiary_fixed">#FBDDC7</color>
+
+    <color name="surface">#FBF9F5</color>
+    <color name="on_surface">#1B1C1A</color>
+    <color name="surface_variant">#E4E2DE</color>
+    <color name="on_surface_variant">#434842</color>
+    <color name="outline_variant">#C3C8C0</color>
+
+    <color name="surface_container">#EFEEEA</color>
+    <color name="surface_container_low">#F5F3EF</color>
+    <color name="surface_container_lowest">#FFFFFF</color>
+    <color name="surface_container_high">#EAE8E4</color>
+    <color name="surface_container_highest">#E4E2DE</color>
+
+    <color name="error">#BA1A1A</color>
+    <color name="on_error">#FFFFFF</color>
+    <color name="error_container">#FFDAD6</color>
+
+    <color name="outline">#737972</color>
+
+    <!-- Legacy / Other -->
+    <color name="stat_added_bg">#E8F5E9</color>
+    <color name="stat_eaten_bg">#FFF3E0</color>
+    <color name="stat_expired_bg">#FFEBEE</color>
     <color name="green_500">#4CAF50</color>
 </resources>

@@ -126,7 +126,7 @@ class ProfileFragment : Fragment() {
         binding.sliderHouseholdSize.addOnChangeListener { _, value, _ ->
             val size = value.toInt()
             if (size != viewModel.uiState.value.userProfile.householdSize) {
-                binding.textHouseholdDesc.text = "Household size: $size person${if (size > 1) "s" else ""}"
+                binding.textHouseholdDesc.text = "$size person${if (size > 1) "s" else ""}"
                 viewModel.updateHouseholdSize(size)
             }
         }
@@ -138,19 +138,12 @@ class ProfileFragment : Fragment() {
         
         binding.sliderDaysBefore.addOnChangeListener { _, value, _ ->
             val days = value.toInt()
-            binding.textDaysBeforeLabel.text = "Notify days before expiry: $days day${if (days > 1) "s" else ""}"
+            binding.textDaysBeforeLabel.text = "$days Days"
             viewModel.updateDefaultDaysBefore(days)
         }
         
         binding.btnSetTime.setOnClickListener {
             showTimePicker()
-        }
-
-        binding.btnTestNotification.setOnClickListener {
-            val workRequest = OneTimeWorkRequestBuilder<ExpiryNotificationWorker>()
-                .build()
-            WorkManager.getInstance(requireContext()).enqueue(workRequest)
-            Snackbar.make(binding.root, "Test notification triggered!", Snackbar.LENGTH_SHORT).show()
         }
         
         binding.btnSave.setOnClickListener {
@@ -182,27 +175,12 @@ class ProfileFragment : Fragment() {
                     if (state.isGoogleSignIn) {
                         binding.btnGoogleSignIn.visibility = View.GONE
                         binding.btnGoogleSignOut.visibility = View.VISIBLE
-                        binding.textGoogleUserName.visibility = View.VISIBLE
-                        binding.textGoogleUserEmail.visibility = View.VISIBLE
-                        binding.textGoogleUserName.text = state.googleUserName
-                        binding.textGoogleUserEmail.text = state.googleUserEmail
-                        
-                        if (state.googleUserPhotoUrl != null) {
-                            binding.imgGooglePhoto.visibility = View.VISIBLE
-                            Glide.with(this@ProfileFragment)
-                                .load(state.googleUserPhotoUrl)
-                                .circleCrop()
-                                .into(binding.imgGooglePhoto)
-                        }
                         
                         // Disable manual email editing when signed in with Google
                         binding.editEmail.isEnabled = false
                     } else {
                         binding.btnGoogleSignIn.visibility = View.VISIBLE
                         binding.btnGoogleSignOut.visibility = View.GONE
-                        binding.textGoogleUserName.visibility = View.GONE
-                        binding.textGoogleUserEmail.visibility = View.GONE
-                        binding.imgGooglePhoto.visibility = View.GONE
                         binding.editEmail.isEnabled = true
                     }
                     
@@ -218,7 +196,7 @@ class ProfileFragment : Fragment() {
                     if (binding.sliderHouseholdSize.value != householdSize) {
                         binding.sliderHouseholdSize.value = householdSize
                     }
-                    binding.textHouseholdDesc.text = "Household size: ${state.userProfile.householdSize} person${if (state.userProfile.householdSize > 1) "s" else ""}"
+                    binding.textHouseholdDesc.text = "${state.userProfile.householdSize} person${if (state.userProfile.householdSize > 1) "s" else ""}"
 
                     // Update chips
                     for (i in 0 until binding.chipGroupDiet.childCount) {
@@ -240,13 +218,12 @@ class ProfileFragment : Fragment() {
                     if (binding.sliderDaysBefore.value != daysBefore) {
                         binding.sliderDaysBefore.value = daysBefore
                     }
-                    binding.textDaysBeforeLabel.text = "Notify days before expiry: ${settings.defaultDaysBefore} day${if (settings.defaultDaysBefore > 1) "s" else ""}"
+                    binding.textDaysBeforeLabel.text = "${settings.defaultDaysBefore} Days"
                     
                     val timeText = formatTime(settings.notificationHour, settings.notificationMinute)
-                    binding.textNotificationTimeLabel.text = "Daily reminder time: $timeText"
+                    binding.textNotificationTimeLabel.text = timeText
 
                     // Progress
-                    binding.progressIndicator.visibility = if (state.isSaving || state.isLoading) View.VISIBLE else View.GONE
                     binding.btnSave.isEnabled = !state.isSaving
                 }
             }

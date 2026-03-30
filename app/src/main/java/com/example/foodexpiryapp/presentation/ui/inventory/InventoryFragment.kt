@@ -2,14 +2,11 @@ package com.example.foodexpiryapp.presentation.ui.inventory
 
 import android.app.DatePickerDialog
 import android.os.Bundle
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
-import androidx.core.content.res.ResourcesCompat
-import androidx.core.view.children
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
@@ -31,20 +28,21 @@ import com.example.foodexpiryapp.domain.model.StorageLocation
 import com.example.foodexpiryapp.domain.model.AnalyticsEvent
 import com.example.foodexpiryapp.domain.model.EventType
 import com.example.foodexpiryapp.domain.repository.AnalyticsRepository
-import com.example.foodexpiryapp.presentation.adapter.FoodItemAdapter
+import com.example.foodexpiryapp.presentation.adapter.FoodCardAdapter
+import com.example.foodexpiryapp.presentation.adapter.FoodListAdapter
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryEvent
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryViewModel
 import com.example.foodexpiryapp.util.ShelfLifeEstimator
 import com.google.android.material.chip.Chip
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
-import com.leinardi.android.speeddial.SpeedDialActionItem
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
+import java.util.Locale
 
 @AndroidEntryPoint
 class InventoryFragment : Fragment() {
@@ -57,16 +55,16 @@ class InventoryFragment : Fragment() {
     @Inject
     lateinit var barcodeRepository: BarcodeRepository
 
-    private lateinit var foodAdapter: FoodItemAdapter
-
     @Inject
     lateinit var analyticsRepository: AnalyticsRepository
 
+    private lateinit var expiringSoonAdapter: FoodCardAdapter
+    private lateinit var freshStockAdapter: FoodListAdapter
+
     private val displayFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
+    private val headerDateFormatter = DateTimeFormatter.ofPattern("EEEE, MMM d", Locale.getDefault())
 
     private var currentDialog: androidx.appcompat.app.AlertDialog? = null
-
-    // Holds the state of the item being edited when navigating away to scan expiry date
     private var draftFoodItem: FoodItem? = null
 
     override fun onCreateView(
@@ -80,290 +78,34 @@ class InventoryFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupRecyclerView()
+        setupHeader()
+        setupRecyclerViews()
         setupSearch()
         setupCategoryFilter()
-        setupSpeedDial()
+        setupActionButtons()
         observeState()
         observeEvents()
-
-        setFragmentResultListener("SCAN_RESULT") { _, bundle ->
-            val barcode = bundle.getString("barcode")
-            val dateString = bundle.getString("date")
-
-            if (barcode != null) {
-                draftFoodItem = null
-                // Fetch product info from API
-                viewLifecycleOwner.lifecycleScope.launch {
-                    binding.loadingProgress.visibility = View.VISIBLE
-                    barcodeRepository.scanBarcode(barcode).fold(
-                        onSuccess = { result ->
-                            binding.loadingProgress.visibility = View.GONE
-                            
-                            // Track analytics
-                            analyticsRepository.trackEvent(
-                                AnalyticsEvent(
-                                    eventName = "scan_success",
-                                    eventType = EventType.SCAN_SUCCESS,
-                                    itemName = result.name,
-                                    additionalData = mapOf("scan_type" to "barcode")
-                                )
-                            )
-
-                            val newItem = FoodItem(
-                                name = result.name,
-                                barcode = barcode,
-                                expiryDate = result.estimatedExpiryDate,
-                                category = result.category,
-                                location = StorageLocation.FRIDGE,
-                                quantity = 1,
-                                dateAdded = LocalDate.now(),
-                                notes = result.brand?.let { "Brand: $it" } ?: ""
-                            )
-                            showAddEditDialog(newItem)
-                        },
-                        onFailure = { error ->
-                            binding.loadingProgress.visibility = View.GONE
-                            
-                            // Track analytics
-                            analyticsRepository.trackEvent(
-                                AnalyticsEvent(
-                                    eventName = "scan_failure",
-                                    eventType = EventType.SCAN_FAILURE,
-                                    additionalData = mapOf("scan_type" to "barcode", "error" to (error.message ?: "unknown"))
-                                )
-                            )
-
-                            // Fallback to manual entry
-                            val newItem = FoodItem(
-                                name = "Scanned Item",
-                                barcode = barcode,
-                                expiryDate = LocalDate.now().plusDays(7),
-                                category = FoodCategory.OTHER,
-                                location = StorageLocation.FRIDGE,
-                                quantity = 1,
-                                dateAdded = LocalDate.now(),
-                                notes = ""
-                            )
-                            showAddEditDialog(newItem)
-                            Snackbar.make(binding.root, "Could not fetch product info: ${error.message}", Snackbar.LENGTH_LONG).show()
-                        }
-                    )
-                }
-            } else if (dateString != null) {
-                val expiryDate = parseDate(dateString) ?: LocalDate.now().plusDays(7)
-                
-                val itemToShow = draftFoodItem?.copy(expiryDate = expiryDate) ?: FoodItem(
-                    name = "",
-                    category = FoodCategory.OTHER,
-                    expiryDate = expiryDate,
-                    quantity = 1,
-                    location = StorageLocation.FRIDGE,
-                    notes = "",
-                    barcode = null,
-                    dateAdded = LocalDate.now()
-                )
-                
-                draftFoodItem = null
-                showAddEditDialog(itemToShow)
-            }
-        }
-
-        // Listen for YOLO scan results
-        setFragmentResultListener("YOLO_SCAN_RESULT") { _, bundle ->
-            val label = bundle.getString("yolo_label") ?: "Unknown Item"
-            
-            // Track analytics
-            analyticsRepository.trackEvent(
-                AnalyticsEvent(
-                    eventName = "scan_success",
-                    eventType = EventType.SCAN_SUCCESS,
-                    itemName = label,
-                    additionalData = mapOf("scan_type" to "yolo")
-                )
-            )
-
-            val categoryName = bundle.getString("yolo_category")
-            val category = categoryName?.let { name ->
-                FoodCategory.values().find { it.name == name }
-            } ?: FoodCategory.OTHER
-
-            // Estimate smart expiry date based on the specific item label
-            val shelfLife = ShelfLifeEstimator.estimateShelfLife(listOf(label))
-            val calculatedExpiryDate = ShelfLifeEstimator.calculateExpiryDate(shelfLife.days)
-
-            draftFoodItem = null
-            
-            // Format label for display (e.g. "tomato_sauce" -> "Tomato Sauce")
-            val formattedName = label.replace("_", " ").split(" ").joinToString(" ") { 
-                it.replaceFirstChar { char -> if (char.isLowerCase()) char.titlecase() else char.toString() } 
-            }
-            
-            val newItem = FoodItem(
-                name = formattedName,
-                category = category,
-                expiryDate = calculatedExpiryDate,
-                quantity = 1,
-                location = StorageLocation.FRIDGE,
-                notes = "",
-                barcode = null,
-                dateAdded = LocalDate.now()
-            )
-            
-            showAddEditDialog(newItem)
-            Snackbar.make(binding.root, "Detected: $formattedName (${shelfLife.days} days)", Snackbar.LENGTH_SHORT).show()
-        }
-
-        // Listen for LLM AI scan results (Qwen3.5)
-        setFragmentResultListener("llm_scan_result") { _, bundle ->
-            val foodName = bundle.getString("food_name") ?: "Unknown"
-            
-            // Track analytics
-            analyticsRepository.trackEvent(
-                AnalyticsEvent(
-                    eventName = "scan_success",
-                    eventType = EventType.SCAN_SUCCESS,
-                    itemName = foodName,
-                    additionalData = mapOf("scan_type" to "llm")
-                )
-            )
-
-            val expiryDateStr = bundle.getString("expiry_date")
-            val confidence = bundle.getString("confidence") ?: "medium"
-
-            val expiryDate = if (!expiryDateStr.isNullOrBlank() && expiryDateStr != "not visible") {
-                parseDate(expiryDateStr) ?: LocalDate.now().plusDays(7)
-            } else {
-                // Estimate based on food type
-                val shelfLife = ShelfLifeEstimator.estimateShelfLife(listOf(foodName.lowercase()))
-                ShelfLifeEstimator.calculateExpiryDate(shelfLife.days)
-            }
-
-            draftFoodItem = null
-
-            val newItem = FoodItem(
-                name = foodName,
-                barcode = null,
-                expiryDate = expiryDate,
-                category = FoodCategory.OTHER,
-                location = StorageLocation.FRIDGE,
-                quantity = 1,
-                dateAdded = LocalDate.now(),
-                notes = "AI Scan (Confidence: $confidence)"
-            )
-
-            showAddEditDialog(newItem)
-            Snackbar.make(binding.root, "AI Detected: $foodName", Snackbar.LENGTH_SHORT).show()
-        }
+        setupFragmentResultListeners()
     }
 
-    private fun setupCategoryFilter() {
-        val chipGroup = binding.categoryChipGroup
-
-        // Add chips for each category
-        FoodCategory.values().forEach { category ->
-            val chip = layoutInflater.inflate(R.layout.layout_filter_chip, chipGroup, false) as Chip
-            chip.text = category.displayName
-            chip.id = View.generateViewId()
-            chip.tag = category
-            chipGroup.addView(chip)
-        }
-
-        chipGroup.setOnCheckedStateChangeListener { group, checkedIds ->
-            if (checkedIds.isEmpty()) {
-                viewModel.onCategorySelected(null)
-            } else {
-                val checkedId = checkedIds.first()
-                if (checkedId == R.id.chip_all) {
-                    viewModel.onCategorySelected(null)
-                } else {
-                    val chip = group.findViewById<Chip>(checkedId)
-                    val category = chip.tag as? FoodCategory
-                    viewModel.onCategorySelected(category)
-                }
-            }
-        }
+    private fun setupHeader() {
+        binding.textCurrentDate.text = LocalDate.now().format(headerDateFormatter)
     }
 
-    private fun setupSpeedDial() {
-        val speedDial = binding.speedDial
-        
-        speedDial.addActionItem(
-            SpeedDialActionItem.Builder(R.id.btn_vision_scan, android.R.drawable.ic_menu_gallery)
-                .setLabel("Vision Scan (AI)")
-                .setFabBackgroundColor(ResourcesCompat.getColor(resources, R.color.purple_500, null))
-                .setFabImageTintColor(Color.WHITE)
-                .create()
-        )
-        
-        speedDial.addActionItem(
-            SpeedDialActionItem.Builder(R.id.btn_photo, android.R.drawable.ic_menu_camera)
-                .setLabel("Photo Scan")
-                .setFabBackgroundColor(ResourcesCompat.getColor(resources, R.color.purple_500, null))
-                .setFabImageTintColor(Color.WHITE)
-                .create()
-        )
-        
-        speedDial.addActionItem(
-            SpeedDialActionItem.Builder(R.id.btn_barcode, R.drawable.ic_barcode)
-                .setLabel("Barcode")
-                .setFabBackgroundColor(ResourcesCompat.getColor(resources, R.color.purple_500, null))
-                .setFabImageTintColor(Color.WHITE)
-                .create()
-        )
-        
-        speedDial.addActionItem(
-            SpeedDialActionItem.Builder(R.id.btn_write, android.R.drawable.ic_menu_edit)
-                .setLabel("Manual Entry")
-                .setFabBackgroundColor(ResourcesCompat.getColor(resources, R.color.purple_500, null))
-                .setFabImageTintColor(Color.WHITE)
-                .create()
-        )
-        
-        speedDial.setOnActionSelectedListener { actionItem ->
-            when (actionItem.id) {
-                R.id.btn_vision_scan -> {
-                    findNavController().navigate(R.id.action_inventory_to_vision_scan)
-                }
-                R.id.btn_photo -> {
-                    draftFoodItem = null
-                    findNavController().navigate(R.id.action_inventory_to_yolo_scan)
-                }
-                R.id.btn_barcode -> {
-                    draftFoodItem = null
-                    val bundle = android.os.Bundle().apply {
-                        putString("scan_mode", "barcode")
-                    }
-                    findNavController().navigate(R.id.action_inventory_to_scan, bundle)
-                }
-                R.id.btn_write -> {
-                    draftFoodItem = null
-                    showAddEditDialog(null)
-                }
-            }
-            speedDial.close()
-            true
+    private fun setupRecyclerViews() {
+        expiringSoonAdapter = FoodCardAdapter { item -> showAddEditDialog(item) }
+        binding.recyclerExpiringSoon.apply {
+            adapter = expiringSoonAdapter
+            layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         }
-    }
 
-    private fun setupRecyclerView() {
-        foodAdapter = FoodItemAdapter(
-            onItemClick = { item ->
-                showAddEditDialog(item)
-            },
-            onEatenToggle = { item, isEaten ->
-                if (isEaten) {
-                    viewModel.onMarkAsEaten(item)
-                }
-            }
-        )
-
+        freshStockAdapter = FoodListAdapter { item -> showAddEditDialog(item) }
         binding.foodItemsRecyclerView.apply {
-            adapter = foodAdapter
+            adapter = freshStockAdapter
             layoutManager = LinearLayoutManager(requireContext())
         }
 
-        // Swipe to delete
+        // Swipe to delete logic
         val swipeCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
             override fun onMove(
                 recyclerView: RecyclerView,
@@ -372,23 +114,48 @@ class InventoryFragment : Fragment() {
             ): Boolean = false
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                val position = viewHolder.adapterPosition
-                val item = foodAdapter.currentList[position]
+                val position = viewHolder.bindingAdapterPosition
+                val item = freshStockAdapter.currentList[position]
                 viewModel.onDeleteFoodItem(item)
             }
         }
         ItemTouchHelper(swipeCallback).attachToRecyclerView(binding.foodItemsRecyclerView)
     }
 
-    override fun onResume() {
-        super.onResume()
-        analyticsRepository.trackEvent(
-            AnalyticsEvent(
-                eventName = "screen_view",
-                eventType = EventType.SCREEN_VIEW,
-                additionalData = mapOf("screen_name" to "inventory")
-            )
-        )
+    private fun setupActionButtons() {
+        binding.cardVisionScan.setOnClickListener {
+            findNavController().navigate(R.id.action_inventory_to_vision_scan)
+        }
+        binding.btnBarcodeScan.setOnClickListener {
+            val bundle = Bundle().apply { putString("scan_mode", "barcode") }
+            findNavController().navigate(R.id.action_inventory_to_scan, bundle)
+        }
+        binding.btnManualEntry.setOnClickListener {
+            showAddEditDialog(null)
+        }
+        binding.btnPhotoScan.setOnClickListener {
+            findNavController().navigate(R.id.action_inventory_to_yolo_scan)
+        }
+    }
+
+    private fun setupCategoryFilter() {
+        val chipGroup = binding.categoryChipGroup
+        FoodCategory.values().forEach { category ->
+            val chip = layoutInflater.inflate(R.layout.layout_filter_chip, chipGroup, false) as Chip
+            chip.text = category.displayName
+            chip.tag = category
+            chipGroup.addView(chip)
+        }
+
+        chipGroup.setOnCheckedStateChangeListener { group, checkedIds ->
+            val checkedId = checkedIds.firstOrNull()
+            if (checkedId == null || checkedId == R.id.chip_all) {
+                viewModel.onCategorySelected(null)
+            } else {
+                val chip = group.findViewById<Chip>(checkedId)
+                viewModel.onCategorySelected(chip.tag as? FoodCategory)
+            }
+        }
     }
 
     private fun setupSearch() {
@@ -401,36 +168,11 @@ class InventoryFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
-                    // Loading
-                    binding.loadingProgress.visibility =
-                        if (state.isLoading) View.VISIBLE else View.GONE
-
-                    // Empty state
-                    binding.emptyStateLayout.visibility =
-                        if (!state.isLoading && state.foodItems.isEmpty()) View.VISIBLE else View.GONE
-
-                    // List
-                    binding.foodItemsRecyclerView.visibility =
-                        if (!state.isLoading && state.foodItems.isNotEmpty()) View.VISIBLE else View.GONE
-
-                    foodAdapter.submitList(state.foodItems)
-
-                    // Update chip selection if needed
-                    updateChipSelection(state.selectedCategory)
-                }
-            }
-        }
-    }
-
-    private fun updateChipSelection(selectedCategory: FoodCategory?) {
-        val chipGroup = binding.categoryChipGroup
-        if (selectedCategory == null) {
-            chipGroup.check(R.id.chip_all)
-        } else {
-            for (chip in chipGroup.children) {
-                if (chip is Chip && chip.tag == selectedCategory) {
-                    chipGroup.check(chip.id)
-                    break
+                    val expiringSoon = state.foodItems.filter { it.daysUntilExpiry <= 3 }.sortedBy { it.daysUntilExpiry }
+                    expiringSoonAdapter.submitList(expiringSoon)
+                    
+                    val otherItems = state.foodItems.sortedByDescending { it.dateAdded }
+                    freshStockAdapter.submitList(otherItems)
                 }
             }
         }
@@ -446,9 +188,7 @@ class InventoryFragment : Fragment() {
                         }
                         is InventoryEvent.ItemDeleted -> {
                             Snackbar.make(binding.root, "${event.item.name} deleted", Snackbar.LENGTH_LONG)
-                                .setAction("UNDO") {
-                                    viewModel.onUndoDelete(event.item)
-                                }
+                                .setAction("UNDO") { viewModel.onUndoDelete(event.item) }
                                 .show()
                         }
                     }
@@ -457,43 +197,99 @@ class InventoryFragment : Fragment() {
         }
     }
 
-    /**
-     * Shows a dialog to add a new food item or edit an existing one.
-     * @param existingItem null for add mode, non-null for edit mode.
-     */
+    private fun setupFragmentResultListeners() {
+        setFragmentResultListener("SCAN_RESULT") { _, bundle ->
+            val barcode = bundle.getString("barcode")
+            val dateString = bundle.getString("date")
+            if (barcode != null) {
+                handleBarcodeResult(barcode)
+            } else if (dateString != null) {
+                val expiryDate = parseDate(dateString) ?: LocalDate.now().plusDays(7)
+                showAddEditDialog(draftFoodItem?.copy(expiryDate = expiryDate))
+                draftFoodItem = null
+            }
+        }
+
+        setFragmentResultListener("YOLO_SCAN_RESULT") { _, bundle ->
+            val label = bundle.getString("yolo_label") ?: "Unknown Item"
+            val category = FoodCategory.values().find { it.name == bundle.getString("yolo_category") } ?: FoodCategory.OTHER
+            val shelfLife = ShelfLifeEstimator.estimateShelfLife(listOf(label))
+            showAddEditDialog(FoodItem(
+                name = label.replace("_", " ").capitalize(),
+                category = category,
+                expiryDate = ShelfLifeEstimator.calculateExpiryDate(shelfLife.days),
+                quantity = 1,
+                location = StorageLocation.FRIDGE,
+                dateAdded = LocalDate.now()
+            ))
+        }
+
+        setFragmentResultListener("llm_scan_result") { _, bundle ->
+            val foodName = bundle.getString("food_name") ?: "Unknown"
+            val expiryDateStr = bundle.getString("expiry_date")
+            val expiryDate = parseDate(expiryDateStr) ?: ShelfLifeEstimator.calculateExpiryDate(ShelfLifeEstimator.estimateShelfLife(listOf(foodName.lowercase())).days)
+            showAddEditDialog(FoodItem(
+                name = foodName,
+                expiryDate = expiryDate,
+                category = FoodCategory.OTHER,
+                location = StorageLocation.FRIDGE,
+                quantity = 1,
+                dateAdded = LocalDate.now(),
+                notes = "AI Scan (Confidence: ${bundle.getString("confidence") ?: "medium"})"
+            ))
+        }
+    }
+
+    private fun handleBarcodeResult(barcode: String) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            barcodeRepository.scanBarcode(barcode).fold(
+                onSuccess = { result ->
+                    showAddEditDialog(FoodItem(
+                        name = result.name,
+                        barcode = barcode,
+                        expiryDate = result.estimatedExpiryDate,
+                        category = result.category,
+                        location = StorageLocation.FRIDGE,
+                        quantity = 1,
+                        dateAdded = LocalDate.now(),
+                        notes = result.brand?.let { "Brand: $it" } ?: ""
+                    ))
+                },
+                onFailure = {
+                    showAddEditDialog(FoodItem(
+                        name = "Scanned Item",
+                        barcode = barcode,
+                        expiryDate = LocalDate.now().plusDays(7),
+                        category = FoodCategory.OTHER,
+                        location = StorageLocation.FRIDGE,
+                        quantity = 1,
+                        dateAdded = LocalDate.now()
+                    ))
+                }
+            )
+        }
+    }
+
     private fun showAddEditDialog(existingItem: FoodItem?) {
         val dialogBinding = DialogAddFoodBinding.inflate(layoutInflater)
         var selectedDate: LocalDate = existingItem?.expiryDate ?: LocalDate.now().plusDays(7)
 
-        // Set up category dropdown
-        val categoryAdapter = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_dropdown_item_1line,
-            FoodCategory.values().map { it.displayName }
-        )
+        val categoryAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, FoodCategory.values().map { it.displayName })
         (dialogBinding.dropdownCategory as AutoCompleteTextView).apply {
             setAdapter(categoryAdapter)
-            setText(
-                existingItem?.category?.displayName ?: FoodCategory.OTHER.displayName,
-                false
-            )
+            setText(existingItem?.category?.displayName ?: FoodCategory.OTHER.displayName, false)
+            // Ensure dropdown shows when clicked
+            setOnClickListener { showDropDown() }
         }
 
-        // Set up location dropdown
-        val locationAdapter = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_dropdown_item_1line,
-            StorageLocation.values().map { it.displayName }
-        )
+        val locationAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, StorageLocation.values().map { it.displayName })
         (dialogBinding.dropdownLocation as AutoCompleteTextView).apply {
             setAdapter(locationAdapter)
-            setText(
-                existingItem?.location?.displayName ?: StorageLocation.FRIDGE.displayName,
-                false
-            )
+            setText(existingItem?.location?.displayName ?: StorageLocation.FRIDGE.displayName, false)
+            // Ensure dropdown shows when clicked
+            setOnClickListener { showDropDown() }
         }
 
-        // Pre-fill fields if editing or scanned
         if (existingItem != null) {
             dialogBinding.editFoodName.setText(existingItem.name)
             dialogBinding.editQuantity.setText(existingItem.quantity.toString())
@@ -501,147 +297,66 @@ class InventoryFragment : Fragment() {
             dialogBinding.editBarcode.setText(existingItem.barcode)
         }
 
-        // Expiry date display
         dialogBinding.editExpiryDate.setText(selectedDate.format(displayFormatter))
-
-        // Date picker on click
         dialogBinding.editExpiryDate.setOnClickListener {
             val cal = Calendar.getInstance()
             cal.set(selectedDate.year, selectedDate.monthValue - 1, selectedDate.dayOfMonth)
-
-            DatePickerDialog(
-                requireContext(),
-                { _, year, month, dayOfMonth ->
-                    selectedDate = LocalDate.of(year, month + 1, dayOfMonth)
-                    dialogBinding.editExpiryDate.setText(selectedDate.format(displayFormatter))
-                },
-                cal.get(Calendar.YEAR),
-                cal.get(Calendar.MONTH),
-                cal.get(Calendar.DAY_OF_MONTH)
-            ).show()
+            DatePickerDialog(requireContext(), { _, year, month, dayOfMonth ->
+                selectedDate = LocalDate.of(year, month + 1, dayOfMonth)
+                dialogBinding.editExpiryDate.setText(selectedDate.format(displayFormatter))
+            }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
         }
 
-        // Also trigger date picker from the end icon
-        dialogBinding.inputLayoutExpiry.setEndIconOnClickListener {
-            dialogBinding.editExpiryDate.performClick()
-        }
-
-        // Scan Expiry Button
         dialogBinding.btnScanExpiry.setOnClickListener {
-            val name = dialogBinding.editFoodName.text?.toString()?.trim() ?: ""
-            val categoryName = dialogBinding.dropdownCategory.text.toString()
-            val category = FoodCategory.values().find { it.displayName == categoryName }
-                ?: FoodCategory.OTHER
-
-            val locationName = dialogBinding.dropdownLocation.text.toString()
-            val location = StorageLocation.values().find { it.displayName == locationName }
-                ?: StorageLocation.FRIDGE
-
-            val quantity = dialogBinding.editQuantity.text?.toString()?.toIntOrNull() ?: 1
-            val notes = dialogBinding.editNotes.text?.toString()?.trim() ?: ""
-            val barcode = dialogBinding.editBarcode.text?.toString()?.trim()
-
-            draftFoodItem = FoodItem(
-                id = existingItem?.id ?: 0,
-                name = name,
-                category = category,
-                expiryDate = selectedDate,
-                quantity = quantity,
-                location = location,
-                notes = notes,
-                barcode = barcode,
-                dateAdded = existingItem?.dateAdded ?: LocalDate.now()
-            )
-
+            draftFoodItem = existingItem?.copy(name = dialogBinding.editFoodName.text.toString())
             currentDialog?.dismiss()
-            val bundle = android.os.Bundle().apply {
-                putString("scan_mode", "date")
-            }
-            findNavController().navigate(R.id.action_inventory_to_scan, bundle)
+            findNavController().navigate(R.id.action_inventory_to_scan, Bundle().apply { putString("scan_mode", "date") })
         }
 
-        val title = if (existingItem != null && existingItem.id != 0L) "Edit Food Item" else "Add Food Item"
-        
         currentDialog = MaterialAlertDialogBuilder(requireContext())
-            .setTitle(title)
+            .setTitle(if (existingItem?.id != 0L) "Edit Item" else "Add Item")
             .setView(dialogBinding.root)
             .setPositiveButton("Save") { _, _ ->
-                val name = dialogBinding.editFoodName.text?.toString()?.trim() ?: ""
-                if (name.isBlank()) {
-                    Snackbar.make(binding.root, "Name is required", Snackbar.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
-
                 val categoryName = dialogBinding.dropdownCategory.text.toString()
-                val category = FoodCategory.values().find { it.displayName == categoryName }
-                    ?: FoodCategory.OTHER
-
+                val category = FoodCategory.values().find { it.displayName == categoryName } ?: FoodCategory.OTHER
+                
                 val locationName = dialogBinding.dropdownLocation.text.toString()
-                val location = StorageLocation.values().find { it.displayName == locationName }
-                    ?: StorageLocation.FRIDGE
+                val location = StorageLocation.values().find { it.displayName == locationName } ?: StorageLocation.FRIDGE
 
-                val quantity = dialogBinding.editQuantity.text?.toString()?.toIntOrNull() ?: 1
-                val notes = dialogBinding.editNotes.text?.toString()?.trim() ?: ""
-                val barcode = dialogBinding.editBarcode.text?.toString()?.trim()
-
-                val foodItem = FoodItem(
-                    id = existingItem?.id ?: 0,
-                    name = name,
+                val item = (existingItem ?: FoodItem(name = "", category = category, expiryDate = selectedDate, quantity = 1, location = location, dateAdded = LocalDate.now())).copy(
+                    name = dialogBinding.editFoodName.text.toString(),
                     category = category,
-                    expiryDate = selectedDate,
-                    quantity = quantity,
                     location = location,
-                    notes = notes,
-                    barcode = barcode,
-                    dateAdded = existingItem?.dateAdded ?: LocalDate.now()
+                    quantity = dialogBinding.editQuantity.text.toString().toIntOrNull() ?: 1,
+                    expiryDate = selectedDate,
+                    notes = dialogBinding.editNotes.text.toString()
                 )
-
-                if (existingItem != null && existingItem.id != 0L) {
-                    viewModel.onUpdateFoodItem(foodItem)
-                } else {
-                    viewModel.onAddFoodItem(foodItem)
-                }
+                if (item.id != 0L) viewModel.onUpdateFoodItem(item) else viewModel.onAddFoodItem(item)
             }
             .setNegativeButton("Cancel", null)
             .create()
-        
         currentDialog?.show()
     }
 
     private fun parseDate(dateString: String?): LocalDate? {
         if (dateString.isNullOrEmpty()) return null
-        
-        // Try to handle dd/MM/yyyy, MM/dd/yyyy, yyyy-MM-dd
-        // Also handle separators - / .
         val cleanDate = dateString.replace(".", "/").replace("-", "/")
-        
         val formats = listOf(
-            DateTimeFormatter.ofPattern("d/M/yyyy"),
-            DateTimeFormatter.ofPattern("M/d/yyyy"),
-            DateTimeFormatter.ofPattern("yyyy/M/d"),
-            DateTimeFormatter.ofPattern("dd/MM/yyyy"),
-            DateTimeFormatter.ofPattern("MM/dd/yyyy"),
-            DateTimeFormatter.ofPattern("yyyy/MM/dd")
+            DateTimeFormatter.ofPattern("d/M/yyyy"), DateTimeFormatter.ofPattern("M/d/yyyy"),
+            DateTimeFormatter.ofPattern("yyyy/M/d"), DateTimeFormatter.ofPattern("dd/MM/yyyy"),
+            DateTimeFormatter.ofPattern("MM/dd/yyyy"), DateTimeFormatter.ofPattern("yyyy/MM/dd")
         )
-        
         for (format in formats) {
-            try {
-                return LocalDate.parse(cleanDate, format)
-            } catch (e: Exception) {
-                // Continue
-            }
+            try { return LocalDate.parse(cleanDate, format) } catch (e: Exception) {}
         }
         return null
     }
+
+    private fun String.capitalize() = replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
         currentDialog = null
     }
-}
-
-// Extension function to capitalize first letter
-private fun String.capitalize(): String {
-    return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
 }

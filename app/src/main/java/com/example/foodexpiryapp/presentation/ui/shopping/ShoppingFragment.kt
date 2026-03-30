@@ -4,16 +4,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.databinding.FragmentShoppingBinding
-import com.example.foodexpiryapp.databinding.ItemStatCardBinding
 import com.example.foodexpiryapp.domain.model.AnalyticsEvent
 import com.example.foodexpiryapp.domain.model.EventType
 import com.example.foodexpiryapp.domain.repository.AnalyticsRepository
@@ -47,7 +44,6 @@ class ShoppingFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupStatCards()
         setupRecyclerView()
         observeStats()
         observeShoppingItems()
@@ -60,29 +56,6 @@ class ShoppingFragment : Fragment() {
                 additionalData = mapOf("screen_name" to "shopping")
             )
         )
-    }
-
-    private fun setupStatCards() {
-        // Setup Added Card (Green)
-        val addedCard = ItemStatCardBinding.bind(binding.cardAdded.root)
-        addedCard.textStatIcon.text = "🟢"
-        addedCard.textStatLabel.text = "Added"
-        addedCard.textStatCount.text = "0"
-        addedCard.root.setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.stat_added_bg))
-
-        // Setup Eaten Card (Orange)
-        val eatenCard = ItemStatCardBinding.bind(binding.cardEaten.root)
-        eatenCard.textStatIcon.text = "✅"
-        eatenCard.textStatLabel.text = "Eaten"
-        eatenCard.textStatCount.text = "0"
-        eatenCard.root.setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.stat_eaten_bg))
-
-        // Setup Expired Card (Red)
-        val expiredCard = ItemStatCardBinding.bind(binding.cardExpired.root)
-        expiredCard.textStatIcon.text = "❌"
-        expiredCard.textStatLabel.text = "Expired"
-        expiredCard.textStatCount.text = "0"
-        expiredCard.root.setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.stat_expired_bg))
     }
 
     private fun setupRecyclerView() {
@@ -100,10 +73,9 @@ class ShoppingFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.weeklyStats.collect { stats ->
-                    ItemStatCardBinding.bind(binding.cardAdded.root).textStatCount.text = stats.itemsAdded.toString()
-                    ItemStatCardBinding.bind(binding.cardEaten.root).textStatCount.text = stats.itemsEaten.toString()
-                    ItemStatCardBinding.bind(binding.cardExpired.root).textStatCount.text = stats.itemsExpired.toString()
-                    binding.textNotificationsCount.text = stats.notificationsSent.toString()
+                    binding.textStatAdded.text = stats.itemsAdded.toString()
+                    binding.textStatEaten.text = stats.itemsEaten.toString()
+                    binding.textStatExpired.text = stats.itemsExpired.toString()
                 }
             }
         }
