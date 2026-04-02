@@ -78,7 +78,9 @@ This is my **first Android app**, built as a learning project to master modern A
 **Medium-term**
 - [x] Camera scanning (barcode/OCR)
 - [x] YOLO Object Detection (FoodVision v8)
-- [ ] Expiry notifications with WorkManager
+- [x] LLM local inference (Qwen3.5-0.8B) for chat and vision
+- [x] Expiry notifications with WorkManager
+- [x] Bug fixes: Navigation crash guards & Camera resource leak fixes (ERROR_MAX_CAMERAS_IN_USE)
 - [ ] Recipe API integration (TheMealDB, local-first + cache)
 - [ ] Shopping list management
 - [ ] Meal planner calendar view

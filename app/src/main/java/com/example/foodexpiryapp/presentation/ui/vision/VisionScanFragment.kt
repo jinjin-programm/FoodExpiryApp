@@ -178,7 +178,15 @@ class VisionScanFragment : Fragment() {
                 .build()
                 .also {
                     it.setAnalyzer(cameraExecutor) { imageProxy ->
-                        latestBitmap = imageProxy.toBitmap()
+                        val bm = imageProxy.toBitmap()
+                        val rotation = imageProxy.imageInfo.rotationDegrees
+                        if (bm != null && rotation != 0) {
+                            val matrix = android.graphics.Matrix()
+                            matrix.postRotate(rotation.toFloat())
+                            latestBitmap = Bitmap.createBitmap(bm, 0, 0, bm.width, bm.height, matrix, true)
+                        } else {
+                            latestBitmap = bm
+                        }
                         imageProxy.close()
                     }
                 }
@@ -202,11 +210,14 @@ class VisionScanFragment : Fragment() {
     private fun captureAndAnalyze() {
         if (isProcessing) return
 
-        val bitmap = latestBitmap
+        var bitmap = latestBitmap
         if (bitmap == null) {
             Toast.makeText(context, "No image captured", Toast.LENGTH_SHORT).show()
             return
         }
+        
+        // Crop the bitmap to exactly what's inside the UI bounding box
+        bitmap = cropToBoundingBox(bitmap)
 
         // Quick Scan Flow
         if (foodClassifier.isInitialized()) {
@@ -219,6 +230,52 @@ class VisionScanFragment : Fragment() {
         
         // Fallback to Ask AI if Quick Scan fails or not initialized
         runAskAiInference(bitmap)
+    }
+
+    private fun cropToBoundingBox(bitmap: Bitmap): Bitmap {
+        try {
+            val previewWidth = binding.previewView.width.toFloat()
+            val previewHeight = binding.previewView.height.toFloat()
+            if (previewWidth == 0f || previewHeight == 0f) return bitmap
+
+            // UI Bounding box coordinates and dimensions
+            val boxX = binding.simulatedBox.x
+            val boxY = binding.simulatedBox.y
+            val boxWidth = binding.simulatedBox.width.toFloat()
+            val boxHeight = binding.simulatedBox.height.toFloat()
+
+            // Captured upright bitmap dimensions
+            val bitmapWidth = bitmap.width.toFloat()
+            val bitmapHeight = bitmap.height.toFloat()
+
+            // PreviewView defaults to FILL_CENTER. We calculate the scale factor.
+            val scale = maxOf(previewWidth / bitmapWidth, previewHeight / bitmapHeight)
+
+            // Scaled bitmap dimensions
+            val scaledBitmapWidth = bitmapWidth * scale
+            val scaledBitmapHeight = bitmapHeight * scale
+
+            // Calculate offset of the scaled bitmap relative to the preview (since it's centered)
+            val offsetX = (scaledBitmapWidth - previewWidth) / 2f
+            val offsetY = (scaledBitmapHeight - previewHeight) / 2f
+
+            // Map box coordinates to scaled bitmap coordinates
+            val mappedBoxX = boxX + offsetX
+            val mappedBoxY = boxY + offsetY
+
+            // Map back to original bitmap coordinates
+            val cropX = (mappedBoxX / scale).toInt().coerceAtLeast(0)
+            val cropY = (mappedBoxY / scale).toInt().coerceAtLeast(0)
+            val cropWidth = (boxWidth / scale).toInt().coerceAtMost(bitmap.width - cropX)
+            val cropHeight = (boxHeight / scale).toInt().coerceAtMost(bitmap.height - cropY)
+
+            if (cropWidth <= 0 || cropHeight <= 0) return bitmap
+
+            return Bitmap.createBitmap(bitmap, cropX, cropY, cropWidth, cropHeight)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to crop bitmap", e)
+            return bitmap
+        }
     }
 
     private fun displayQuickScanResult(result: com.example.foodexpiryapp.domain.vision.ClassificationResult) {
@@ -278,6 +335,9 @@ class VisionScanFragment : Fragment() {
             try {
                 val startTime = System.currentTimeMillis()
                 
+                // Print the raw image dimensions to debug what was actually passed
+                Log.d(TAG, "Running AI inference on image size: ${resizedBitmap.width}x${resizedBitmap.height}")
+
                 val prompt = "Identify the food item and its expiry date. Answer ONLY in this format:\nFOOD: [name]\nEXPIRY: [date or \"not visible\"]"
                 
                 val report = withContext(Dispatchers.IO) {
@@ -287,7 +347,7 @@ class VisionScanFragment : Fragment() {
                 val elapsed = (System.currentTimeMillis() - startTime) / 1000.0
                 Log.d(
                     TAG,
-                    "Total time: ${elapsed}s, preprocess=${report.pixelPackingMs}ms, native=${report.nativeInferenceMs}ms, approx_tps=${"%.2f".format(report.approxTokensPerSecond)}"
+                    "Total time: ${elapsed}s, preprocess=${report.pixelPackingMs}ms, native=${report.nativeInferenceMs}ms, approx_tps=${"%.2f".format(report.approxTokensPerSecond)}\nRaw Response: ${report.response}"
                 )
                 
                 val result = parseFoodResponse(report.response)
@@ -393,8 +453,17 @@ class VisionScanFragment : Fragment() {
             it.isNotBlank() 
         }
         
+        // Improve fallback parsing if regex fails but response has content
         if (foodName == "Unknown" || foodName.isBlank()) {
-            foodName = response.take(50).ifEmpty { "Unknown" }
+            val lines = response.lines().map { it.trim() }.filter { it.isNotEmpty() }
+            if (lines.isNotEmpty()) {
+                val firstLine = lines.first()
+                if (firstLine.length < 30 && !firstLine.contains("sorry", ignoreCase = true)) {
+                    foodName = firstLine
+                } else {
+                    foodName = response.take(50).ifEmpty { "Unknown" }
+                }
+            }
         }
         
         return FoodResult(foodName, cleanExpiry, response)
@@ -436,6 +505,7 @@ class VisionScanFragment : Fragment() {
         modelLoadJob?.cancel()
         progressTickerJob?.cancel()
         scope.cancel()
+        cameraProvider?.unbindAll()
         cameraExecutor.shutdown()
         if (::foodClassifier.isInitialized) {
             foodClassifier.close()

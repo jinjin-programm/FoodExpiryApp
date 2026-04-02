@@ -85,7 +85,12 @@ app/src/main/java/com/example/foodexpiryapp/
 - 2026-03-11: speed-dial UI update
 - 2026-03-17: initial project baseline with LLM support and notifications
 - 2026-03-19: analytics system, mark-as-eaten flow, and swipe navigation
+- 2026-04-02: Fix Navigation crash (IllegalArgumentException) in InventoryFragment when repeatedly clicking scan actions. Added findNavController().currentDestination?.getAction guard.
+- 2026-04-02: Fix camera ERROR_MAX_CAMERAS_IN_USE issue. Added cameraProvider?.unbindAll() to onDestroyView across all scanner fragments (VisionScanFragment, ScanFragment, YoloScanFragment).
+- 2026-04-02: Redesigned barcode scan UI (`fragment_scan.xml`) for a cleaner card-based look.
+- 2026-04-02: Fixed YOLO scan UI constraints (`fragment_yolo_scan.xml`) by breaking the vertical constraint chain. Moved top controls just below the status bar (`24dp` margin), and adjusted the scanning frame's bias (`0.2`) to pull the frame and its attached instruction text cleanly upward, ensuring no overlap with bottom camera controls. Updated YOLO instruction text color to a vibrant red for better visibility.
 
 ## Short Version For Team
 
 The app is organized by Clean Architecture: UI in `presentation/`, business rules in `domain/`, and storage/API/native integration in `data/`. The current work is centered on scan/LLM features, analytics, and keeping the inventory and notification flows stable.
+

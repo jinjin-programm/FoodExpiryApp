@@ -124,17 +124,23 @@ class InventoryFragment : Fragment() {
 
     private fun setupActionButtons() {
         binding.cardVisionScan.setOnClickListener {
-            findNavController().navigate(R.id.action_inventory_to_vision_scan)
+            findNavController().currentDestination?.getAction(R.id.action_inventory_to_vision_scan)?.let {
+                findNavController().navigate(R.id.action_inventory_to_vision_scan)
+            }
         }
         binding.btnBarcodeScan.setOnClickListener {
-            val bundle = Bundle().apply { putString("scan_mode", "barcode") }
-            findNavController().navigate(R.id.action_inventory_to_scan, bundle)
+            findNavController().currentDestination?.getAction(R.id.action_inventory_to_scan)?.let {
+                val bundle = Bundle().apply { putString("scan_mode", "barcode") }
+                findNavController().navigate(R.id.action_inventory_to_scan, bundle)
+            }
         }
         binding.btnManualEntry.setOnClickListener {
             showAddEditDialog(null)
         }
         binding.btnPhotoScan.setOnClickListener {
-            findNavController().navigate(R.id.action_inventory_to_yolo_scan)
+            findNavController().currentDestination?.getAction(R.id.action_inventory_to_yolo_scan)?.let {
+                findNavController().navigate(R.id.action_inventory_to_yolo_scan)
+            }
         }
     }
 
@@ -310,7 +316,9 @@ class InventoryFragment : Fragment() {
         dialogBinding.btnScanExpiry.setOnClickListener {
             draftFoodItem = existingItem?.copy(name = dialogBinding.editFoodName.text.toString())
             currentDialog?.dismiss()
-            findNavController().navigate(R.id.action_inventory_to_scan, Bundle().apply { putString("scan_mode", "date") })
+            findNavController().currentDestination?.getAction(R.id.action_inventory_to_scan)?.let {
+                findNavController().navigate(R.id.action_inventory_to_scan, Bundle().apply { putString("scan_mode", "date") })
+            }
         }
 
         currentDialog = MaterialAlertDialogBuilder(requireContext())

@@ -114,6 +114,13 @@ class YoloScanFragment : Fragment() {
         }
 
         binding.btnManualSelect.visibility = View.VISIBLE
+        
+        // Auto fade-out unnecessary text
+        binding.tvInstruction.animate()
+            .alpha(0f)
+            .setStartDelay(2000)
+            .setDuration(500)
+            .start()
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -273,6 +280,7 @@ class YoloScanFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        cameraProvider?.unbindAll()
         cameraExecutor.shutdown()
         yoloDetector?.close()
         _binding = null

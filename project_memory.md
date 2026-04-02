@@ -115,7 +115,7 @@ app/src/main/java/com/example/foodexpiryapp/
 
 ### 🚧 In Progress
 - UI polishing across screens
-- Scan/chat/inventory flow stabilization
+- Scan/chat/inventory flow stabilization (Fixed recent Navigation crashes and Camera lock issues)
 - Test coverage expansion
 - Planning TheMealDB integration for richer recipe search/suggestions
 

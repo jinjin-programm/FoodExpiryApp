@@ -7,44 +7,13 @@
     android:layout_height="match_parent"
     android:background="@color/surface">
 
-    <!-- Header -->
-    <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/surface"
-        app:elevation="0dp"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            app:contentInsetStart="0dp">
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:paddingHorizontal="24dp">
-
-                <ImageView
-                    android:id="@+id/btn_close"
-                    android:layout_width="32dp"
-                    android:layout_height="match_parent"
-                    android:adjustViewBounds="true"
-                    android:src="@drawable/ic_launcher_foreground"
-                    tools:src="@android:drawable/ic_menu_gallery" />
-            </RelativeLayout>
-        </androidx.appcompat.widget.Toolbar>
-    </com.google.android.material.appbar.AppBarLayout>
-
     <!-- Camera Viewport -->
     <androidx.camera.view.PreviewView
         android:id="@+id/viewFinder"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/appBar" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <!-- Detection overlay -->
     <com.example.foodexpiryapp.presentation.ui.yolo.DetectionOverlayView
@@ -52,7 +21,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/appBar" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <!-- Scanning Guides Overlay -->
     <View
@@ -61,99 +30,89 @@
         android:layout_height="0dp"
         android:background="#261B1C1A"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/appBar" />
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Top Controls (Close & Mode) -->
+    <LinearLayout
+        android:id="@+id/top_controls"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:paddingHorizontal="24dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/shape_leaf_chip"
+                android:fontFamily="sans-serif-medium"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="8dp"
+                android:text="Single Item"
+                android:textColor="@color/on_primary_fixed"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:background="@drawable/shape_pill_glass"
+                android:fontFamily="sans-serif-medium"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="8dp"
+                android:text="Multi-Scan"
+                android:textColor="@color/white"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btn_close"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/shape_circle"
+            android:backgroundTint="#33FFFFFF"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            app:tint="@color/white" />
+    </LinearLayout>
 
     <com.google.android.material.card.MaterialCardView
+        android:id="@+id/frame_card"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="16dp"
         app:cardBackgroundColor="@android:color/transparent"
-        app:cardCornerRadius="16dp"
+        app:cardCornerRadius="24dp"
         app:cardElevation="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/bottom_controls"
         app:layout_constraintDimensionRatio="3:4"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/appBar"
+        app:layout_constraintTop_toBottomOf="@id/top_controls"
+        app:layout_constraintVertical_bias="0.2"
         app:layout_constraintWidth_percent="0.8"
-        app:strokeColor="#4DFFFFFF"
+        app:strokeColor="#FFFFFF"
         app:strokeWidth="2dp">
 
-        <FrameLayout
+        <View
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <View
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_gravity="top|start"
-                android:layout_margin="-2dp"
-                android:background="@drawable/shape_corner_tl" />
-
-            <View
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_gravity="top|end"
-                android:layout_margin="-2dp"
-                android:background="@drawable/shape_corner_tr" />
-
-            <View
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_gravity="bottom|start"
-                android:layout_margin="-2dp"
-                android:background="@drawable/shape_corner_bl" />
-
-            <View
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_gravity="bottom|end"
-                android:layout_margin="-2dp"
-                android:background="@drawable/shape_corner_br" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="2dp"
-                android:background="@drawable/shape_scanning_line" />
-        </FrameLayout>
+            android:layout_height="2dp"
+            android:layout_gravity="center"
+            android:background="@drawable/shape_scanning_line" />
     </com.google.android.material.card.MaterialCardView>
-
-    <!-- Mode Selector -->
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:gravity="center"
-        android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/appBar">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/shape_leaf_chip"
-            android:fontFamily="sans-serif-medium"
-            android:paddingHorizontal="20dp"
-            android:paddingVertical="8dp"
-            android:text="Single Item"
-            android:textColor="@color/on_primary_fixed"
-            android:textSize="14sp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:background="@drawable/shape_pill_glass"
-            android:fontFamily="sans-serif-medium"
-            android:paddingHorizontal="20dp"
-            android:paddingVertical="8dp"
-            android:text="Multi-Scan"
-            android:textColor="@color/white"
-            android:textSize="14sp" />
-    </LinearLayout>
 
     <!-- Bottom Controls -->
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/bottom_controls"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingHorizontal="32dp"
@@ -252,7 +211,7 @@
         android:id="@+id/tv_instruction"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="144dp"
+        android:layout_marginTop="24dp"
         android:gravity="center"
         android:paddingHorizontal="48dp"
         android:shadowColor="#80000000"
@@ -260,10 +219,10 @@
         android:shadowDy="2"
         android:shadowRadius="4"
         android:text="Align the item within the frame for auto-detection"
-        android:textColor="#CCFFFFFF"
+        android:textColor="#FF5252"
         android:textSize="14sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/frame_card" />
 
     <!-- Legacy / Hidden elements -->
     <TextView android:id="@+id/tv_detection_status" android:layout_width="wrap_content" android:layout_height="wrap_content" android:visibility="gone" app:layout_constraintTop_toTopOf="parent" />

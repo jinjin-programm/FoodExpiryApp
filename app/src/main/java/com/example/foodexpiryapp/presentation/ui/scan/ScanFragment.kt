@@ -231,6 +231,7 @@ class ScanFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        cameraProvider?.unbindAll()
         cameraExecutor.shutdown()
         _binding = null
     }

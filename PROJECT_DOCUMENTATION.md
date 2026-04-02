@@ -334,3 +334,11 @@ Currently shows stats but shopping list is not functional:
 - **Camera:** CameraX
 - **ML:** TensorFlow Lite, ML Kit, llama.cpp
 - **Auth:** Firebase Auth + Google Sign-In
+
+---
+
+## 📝 Update Log
+
+| Date | Update Description |
+|------|--------------------|
+| 2026-04-02 | Completely removed the top "Scan Barcode" app bar from `fragment_scan.xml` to free up more screen space for a cleaner, full-screen scanning experience. Updated local project documentation. |
