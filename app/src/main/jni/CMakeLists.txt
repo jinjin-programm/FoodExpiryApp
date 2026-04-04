@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.22.1)
-
 project("llamajni")
 
 set(CMAKE_CXX_STANDARD 17)
@@ -24,6 +23,9 @@ endif()
 
 set(jniLibsDir ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/${ANDROID_ABI})
 
+# ──────────────────────────────────────────────
+# llama.cpp / mtmd libraries (existing)
+# ──────────────────────────────────────────────
 add_library(llama SHARED IMPORTED)
 set_target_properties(llama PROPERTIES IMPORTED_LOCATION ${jniLibsDir}/libllama.so)
 
@@ -36,7 +38,6 @@ set_target_properties(ggml-base PROPERTIES IMPORTED_LOCATION ${jniLibsDir}/libgg
 add_library(ggml-cpu SHARED IMPORTED)
 set_target_properties(ggml-cpu PROPERTIES IMPORTED_LOCATION ${jniLibsDir}/libggml-cpu.so)
 
-# Multimodal tool library
 add_library(mtmd SHARED IMPORTED)
 set_target_properties(mtmd PROPERTIES IMPORTED_LOCATION ${jniLibsDir}/libmtmd.so)
 
@@ -59,6 +60,40 @@ target_link_libraries(llama_jni
     ggml-base
     ggml-cpu
     mtmd
+    android
+    log
+)
+
+# ──────────────────────────────────────────────
+# MNN LLM libraries (new)
+# ──────────────────────────────────────────────
+set(MNN_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../../../MNN-Engine)
+
+add_library(mnn SHARED IMPORTED)
+set_target_properties(mnn PROPERTIES IMPORTED_LOCATION ${jniLibsDir}/libMNN.so)
+
+add_library(mnn_express SHARED IMPORTED)
+set_target_properties(mnn_express PROPERTIES IMPORTED_LOCATION ${jniLibsDir}/libMNN_Express.so)
+
+add_library(mnn_cl SHARED IMPORTED)
+set_target_properties(mnn_cl PROPERTIES IMPORTED_LOCATION ${jniLibsDir}/libMNN_CL.so)
+
+add_library(mnn_llm SHARED IMPORTED)
+set_target_properties(mnn_llm PROPERTIES IMPORTED_LOCATION ${jniLibsDir}/libllm.so)
+
+add_library(mnn_jni SHARED mnn_jni.cpp)
+
+target_include_directories(mnn_jni PRIVATE
+    ${MNN_ROOT}/include
+    ${MNN_ROOT}/include/MNN
+    ${MNN_ROOT}/transformers/llm/engine/include
+)
+
+target_link_libraries(mnn_jni
+    mnn
+    mnn_express
+    mnn_cl
+    mnn_llm
     android
     log
 )

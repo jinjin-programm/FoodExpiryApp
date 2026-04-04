@@ -342,3 +342,4 @@ Currently shows stats but shopping list is not functional:
 | Date | Update Description |
 |------|--------------------|
 | 2026-04-02 | Completely removed the top "Scan Barcode" app bar from `fragment_scan.xml` to free up more screen space for a cleaner, full-screen scanning experience. Updated local project documentation. |
+| 2026-04-04 | **Migrated Vision AI from llama.cpp to MNN Engine**: Compiled MNN 3.4.1 Android library with LLM + OpenCL + Vision support. Downloaded Qwen3.5-0.8B-MNN model (548MB) from HuggingFace. Created `MnnBridge.kt` and `mnn_jni.cpp` as replacement for `LlamaBridge`. Configured OpenCL backend (`thread_num=68`, `precision=low`) for GPU-accelerated inference on Samsung S10. Expected speedup: ~3-5x faster prefill, ~30x faster decode vs llama.cpp CPU. |

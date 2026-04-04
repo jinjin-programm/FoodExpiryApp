@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -22,6 +23,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.material.chip.Chip
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
@@ -38,6 +40,12 @@ class ProfileFragment : Fragment() {
     private val viewModel: ProfileViewModel by viewModels()
 
     private lateinit var googleSignInClient: GoogleSignInClient
+
+    private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            viewModel.updateProfilePhoto(uri.toString())
+        }
+    }
 
     companion object {
         private const val RC_GOOGLE_SIGN_IN = 9001
@@ -111,6 +119,10 @@ class ProfileFragment : Fragment() {
             signOutFromGoogle()
         }
         
+        binding.btnEditProfile.setOnClickListener {
+            pickImage.launch("image/*")
+        }
+        
         binding.editName.doAfterTextChanged { text ->
             val newName = text?.toString() ?: ""
             if (newName != viewModel.uiState.value.userProfile.name) {
@@ -147,7 +159,17 @@ class ProfileFragment : Fragment() {
         }
         
         binding.btnSave.setOnClickListener {
-            viewModel.saveProfile()
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Confirm Changes")
+                .setMessage("Are you sure you want to save your profile changes?")
+                .setPositiveButton("Confirm") { dialog, _ ->
+                    viewModel.saveProfile()
+                    dialog.dismiss()
+                }
+                .setNegativeButton("Cancel") { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .show()
         }
     }
     
@@ -210,6 +232,18 @@ class ProfileFragment : Fragment() {
                     
                     // Update notification settings UI
                     val settings = state.notificationSettings
+                    
+                    // Update profile photo
+                    val photoUri = state.userProfile.profilePhotoUri
+                    if (!photoUri.isNullOrEmpty()) {
+                        Glide.with(this@ProfileFragment)
+                            .load(photoUri)
+                            .centerCrop()
+                            .into(binding.imgProfile)
+                    } else {
+                        binding.imgProfile.setImageResource(android.R.drawable.ic_menu_gallery)
+                    }
+                    
                     if (binding.switchNotifications.isChecked != settings.notificationsEnabled) {
                         binding.switchNotifications.isChecked = settings.notificationsEnabled
                     }

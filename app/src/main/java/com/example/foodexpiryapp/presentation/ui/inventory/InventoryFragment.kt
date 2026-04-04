@@ -33,6 +33,7 @@ import com.example.foodexpiryapp.presentation.adapter.FoodListAdapter
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryEvent
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryViewModel
 import com.example.foodexpiryapp.util.ShelfLifeEstimator
+import com.bumptech.glide.Glide
 import com.google.android.material.chip.Chip
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -276,16 +277,49 @@ class InventoryFragment : Fragment() {
         }
     }
 
+    private fun getCategoryDrawable(category: FoodCategory): Int {
+        return when (category) {
+            FoodCategory.DAIRY -> R.drawable.cat_dairy
+            FoodCategory.MEAT -> R.drawable.cat_meat
+            FoodCategory.VEGETABLES -> R.drawable.cat_vegetables
+            FoodCategory.FRUITS -> R.drawable.cat_fruits
+            FoodCategory.GRAINS -> R.drawable.cat_grains
+            FoodCategory.BEVERAGES -> R.drawable.cat_beverages
+            FoodCategory.SNACKS -> R.drawable.cat_snacks
+            FoodCategory.CONDIMENTS -> R.drawable.cat_condiments
+            FoodCategory.FROZEN -> R.drawable.cat_frozen
+            FoodCategory.LEFTOVERS -> R.drawable.cat_leftovers
+            FoodCategory.OTHER -> R.drawable.cat_other
+        }
+    }
+
+    private fun updateCategoryImage(dialogBinding: DialogAddFoodBinding, category: FoodCategory) {
+        Glide.with(requireContext())
+            .load(getCategoryDrawable(category))
+            .centerCrop()
+            .into(dialogBinding.imgFoodCategory)
+    }
+
     private fun showAddEditDialog(existingItem: FoodItem?) {
         val dialogBinding = DialogAddFoodBinding.inflate(layoutInflater)
         var selectedDate: LocalDate = existingItem?.expiryDate ?: LocalDate.now().plusDays(7)
+        
+        val initialCategory = existingItem?.category ?: FoodCategory.OTHER
+        updateCategoryImage(dialogBinding, initialCategory)
 
         val categoryAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, FoodCategory.values().map { it.displayName })
         (dialogBinding.dropdownCategory as AutoCompleteTextView).apply {
             setAdapter(categoryAdapter)
-            setText(existingItem?.category?.displayName ?: FoodCategory.OTHER.displayName, false)
+            setText(initialCategory.displayName, false)
             // Ensure dropdown shows when clicked
             setOnClickListener { showDropDown() }
+            
+            // Update image dynamically when category is changed
+            setOnItemClickListener { parent, _, position, _ ->
+                val selectedName = parent.getItemAtPosition(position).toString()
+                val newCategory = FoodCategory.values().find { it.displayName == selectedName } ?: FoodCategory.OTHER
+                updateCategoryImage(dialogBinding, newCategory)
+            }
         }
 
         val locationAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, StorageLocation.values().map { it.displayName })

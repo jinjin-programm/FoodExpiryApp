@@ -47,3 +47,9 @@ runs/
 # Local model assets (large files)
 app/src/main/assets/llm/*.gguf
 analytics-branch-backup/
+# MNN models
+app/src/main/assets/mnn/**/*.mnn
+app/src/main/assets/mnn/**/*.weight
+app/src/main/assets/mnn/**/*.json
+app/src/main/assets/mnn/**/*.txt
+app/src/main/assets/mnn/**/*.mtok

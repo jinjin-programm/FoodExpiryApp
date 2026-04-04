@@ -23,7 +23,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.databinding.FragmentVisionScanBinding
 import com.example.foodexpiryapp.domain.vision.FoodClassifier
-import com.example.foodexpiryapp.presentation.ui.llm.LlamaBridge
+import com.example.foodexpiryapp.presentation.ui.llm.MnnBridge
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
@@ -61,8 +61,7 @@ class VisionScanFragment : Fragment() {
     private var progressTickerJob: Job? = null
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-    private val llamaBridge = LlamaBridge.getInstance()
-    private val modelConfig = LlamaBridge.recommendedVisionConfig()
+    private val mnnBridge = MnnBridge()
     private lateinit var foodClassifier: FoodClassifier
 
     // ML Kit processors removed for true vision
@@ -93,7 +92,7 @@ class VisionScanFragment : Fragment() {
         foodClassifier = FoodClassifier(requireContext())
         foodClassifier.initialize()
 
-        updateStatus("Loading Qwen3.5-0.8B...", Status.INITIALIZING)
+        updateStatus("Loading Qwen3-VL-2B...", Status.INITIALIZING)
         binding.progressBar.visibility = View.VISIBLE
         binding.tvProgressDetail.text = "Preparing model..."
 
@@ -114,15 +113,13 @@ class VisionScanFragment : Fragment() {
             updateProgress("Optimizing for your device...")
 
             try {
-                val report = withContext(Dispatchers.IO) {
-                    llamaBridge.ensureModelLoaded(requireContext().applicationContext, modelConfig)
+                val success = withContext(Dispatchers.IO) {
+                    mnnBridge.loadModel(requireContext().applicationContext)
                 }
 
-                if (report.success) {
+                if (success) {
                     updateStatus("Vision model ready - tap capture", Status.READY)
-                    updateProgress(
-                        "Ready (${report.loadTimeMs}ms, ctx=${report.contextSize}, threads=${report.threads})"
-                    )
+                    updateProgress("Ready (MNN OpenCL)")
                 } else {
                     updateStatus("Failed to load model", Status.ERROR)
                     Toast.makeText(context, "Failed to load model", Toast.LENGTH_LONG).show()
@@ -301,8 +298,8 @@ class VisionScanFragment : Fragment() {
     private fun runAskAiInference(customBitmap: Bitmap? = null) {
         if (isProcessing) return
 
-        if (!llamaBridge.isLoaded()) {
-            Toast.makeText(context, "Model not loaded yet", Toast.LENGTH_SHORT).show()
+        if (!mnnBridge.loadModel(requireContext())) {
+            Toast.makeText(context, "Failed to load MNN model", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -335,13 +332,12 @@ class VisionScanFragment : Fragment() {
             try {
                 val startTime = System.currentTimeMillis()
                 
-                // Print the raw image dimensions to debug what was actually passed
-                Log.d(TAG, "Running AI inference on image size: ${resizedBitmap.width}x${resizedBitmap.height}")
+                Log.d(TAG, "Running MNN inference on image size: ${resizedBitmap.width}x${resizedBitmap.height}")
 
-                val prompt = "Identify the food item and its expiry date. Answer ONLY in this format:\nFOOD: [name]\nEXPIRY: [date or \"not visible\"]"
+                val prompt = "<img>image0</img>\nIdentify the food in this image. Reply with 'FOOD: ' followed by the actual food name, and 'EXPIRY: ' followed by the expiration date."
                 
                 val report = withContext(Dispatchers.IO) {
-                    llamaBridge.generateWithImageDetailed(prompt, resizedBitmap, maxTokens = MAX_TOKENS)
+                    mnnBridge.generateWithImageDetailed(prompt, resizedBitmap, maxTokens = MAX_TOKENS)
                 }
                 
                 val elapsed = (System.currentTimeMillis() - startTime) / 1000.0
@@ -510,6 +506,7 @@ class VisionScanFragment : Fragment() {
         if (::foodClassifier.isInitialized) {
             foodClassifier.close()
         }
+        mnnBridge.release()
         
         _binding = null
     }
