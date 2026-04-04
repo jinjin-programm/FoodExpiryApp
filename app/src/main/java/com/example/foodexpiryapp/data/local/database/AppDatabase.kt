@@ -9,10 +9,12 @@ import com.example.foodexpiryapp.data.local.dao.FoodItemDao
 import com.example.foodexpiryapp.data.local.dao.AnalyticsEventDao
 import com.example.foodexpiryapp.data.local.dao.MealPlanDao
 import com.example.foodexpiryapp.data.local.dao.ShoppingItemDao
+import com.example.foodexpiryapp.data.local.dao.CookedRecipeDao
+import com.example.foodexpiryapp.data.local.dao.LocalRecipeDao
 
 @Database(
-    entities = [FoodItemEntity::class, AnalyticsEventEntity::class, MealPlanEntity::class, ShoppingItemEntity::class],
-    version = 5,
+    entities = [FoodItemEntity::class, AnalyticsEventEntity::class, MealPlanEntity::class, ShoppingItemEntity::class, CookedRecipeEntity::class, LocalRecipeEntity::class],
+    version = 7,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -20,6 +22,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun analyticsEventDao(): AnalyticsEventDao
     abstract fun mealPlanDao(): MealPlanDao
     abstract fun shoppingItemDao(): ShoppingItemDao
+    abstract fun cookedRecipeDao(): CookedRecipeDao
+    abstract fun localRecipeDao(): LocalRecipeDao
 
     companion object {
         val MIGRATION_4_5 = object : Migration(4, 5) {
@@ -62,6 +66,45 @@ abstract class AppDatabase : RoomDatabase() {
                         recipeName TEXT,
                         productName TEXT,
                         inventoryItemId INTEGER
+                    )
+                """.trimIndent())
+            }
+        }
+
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("""
+                    CREATE TABLE IF NOT EXISTS cooked_recipes (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        recipeId INTEGER NOT NULL,
+                        recipeName TEXT NOT NULL,
+                        cookedAt INTEGER NOT NULL,
+                        moneySaved REAL NOT NULL,
+                        wasteRescuedPercent INTEGER NOT NULL,
+                        matchedIngredients TEXT NOT NULL,
+                        imageUrl TEXT
+                    )
+                """.trimIndent())
+            }
+        }
+
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("""
+                    CREATE TABLE IF NOT EXISTS local_recipes (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        name TEXT NOT NULL,
+                        description TEXT NOT NULL,
+                        imageUrl TEXT,
+                        ingredients TEXT NOT NULL,
+                        steps TEXT NOT NULL,
+                        prepTimeMinutes INTEGER NOT NULL DEFAULT 0,
+                        cookTimeMinutes INTEGER NOT NULL DEFAULT 0,
+                        servings INTEGER NOT NULL DEFAULT 2,
+                        cuisine TEXT NOT NULL DEFAULT '',
+                        tags TEXT NOT NULL DEFAULT '',
+                        estimatedCost REAL NOT NULL DEFAULT 0.0,
+                        createdAt INTEGER NOT NULL
                     )
                 """.trimIndent())
             }

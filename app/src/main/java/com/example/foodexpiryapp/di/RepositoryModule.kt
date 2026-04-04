@@ -1,12 +1,16 @@
 package com.example.foodexpiryapp.di
 
+import com.example.foodexpiryapp.data.repository.CookedRecipeRepositoryImpl
 import com.example.foodexpiryapp.data.repository.FoodRepositoryImpl
+import com.example.foodexpiryapp.data.repository.LocalRecipeRepositoryImpl
 import com.example.foodexpiryapp.data.repository.MealPlanRepositoryImpl
 import com.example.foodexpiryapp.data.repository.NotificationSettingsRepositoryImpl
 import com.example.foodexpiryapp.data.repository.RecipeRepositoryImpl
 import com.example.foodexpiryapp.data.repository.ShoppingRepositoryImpl
 import com.example.foodexpiryapp.data.repository.UserRepositoryImpl
+import com.example.foodexpiryapp.domain.repository.CookedRecipeRepository
 import com.example.foodexpiryapp.domain.repository.FoodRepository
+import com.example.foodexpiryapp.domain.repository.LocalRecipeRepository
 import com.example.foodexpiryapp.domain.repository.MealPlanRepository
 import com.example.foodexpiryapp.domain.repository.NotificationSettingsRepository
 import com.example.foodexpiryapp.domain.repository.RecipeRepository
@@ -45,4 +49,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindMealPlanRepository(impl: MealPlanRepositoryImpl): MealPlanRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCookedRecipeRepository(impl: CookedRecipeRepositoryImpl): CookedRecipeRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindLocalRecipeRepository(impl: LocalRecipeRepositoryImpl): LocalRecipeRepository
 }

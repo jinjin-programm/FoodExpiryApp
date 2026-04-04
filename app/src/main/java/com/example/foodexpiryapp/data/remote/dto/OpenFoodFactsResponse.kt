@@ -3,42 +3,22 @@ package com.example.foodexpiryapp.data.remote.dto
 import com.google.gson.annotations.SerializedName
 
 data class OpenFoodFactsResponse(
-    @SerializedName("code")
-    val code: String?,
-    @SerializedName("product")
-    val product: OpenFoodFactsProduct?,
-    @SerializedName("status")
-    val status: Int,
-    @SerializedName("status_verbose")
-    val statusVerbose: String?
+    @SerializedName("status") val status: Int,
+    @SerializedName("status_verbose") val statusVerbose: String?,
+    @SerializedName("product") val product: ProductDto?
 )
 
-data class OpenFoodFactsProduct(
-    @SerializedName("product_name")
-    val productName: String?,
-    @SerializedName("brands")
-    val brands: String?,
-    @SerializedName("categories")
-    val categories: String?,
-    @SerializedName("categories_tags")
-    val categoriesTags: List<String>?,
-    @SerializedName("image_url")
-    val imageUrl: String?,
-    @SerializedName("quantity")
-    val quantity: String?,
-    @SerializedName("serving_quantity")
-    val servingQuantity: String?,
-    @SerializedName("nutriments")
-    val nutriments: Nutriments?
-)
-
-data class Nutriments(
-    @SerializedName("energy-kcal_100g")
-    val energyKcal: Double?,
-    @SerializedName("proteins_100g")
-    val proteins: Double?,
-    @SerializedName("carbohydrates_100g")
-    val carbohydrates: Double?,
-    @SerializedName("fat_100g")
-    val fat: Double?
+data class ProductDto(
+    @SerializedName("product_name") val productName: String?,
+    @SerializedName("brands") val brands: String?,
+    @SerializedName("categories") val categories: String?,
+    @SerializedName("price") val price: String?,
+    @SerializedName("price_debug") val priceDebug: String?,
+    @SerializedName("serving_size") val servingSize: String?,
+    @SerializedName("nutriscore_grade") val nutriscoreGrade: String?,
+    @SerializedName("image_url") val imageUrl: String?,
+    @SerializedName("image_front_url") val imageFrontUrl: String?,
+    @SerializedName("quantity") val quantity: String?,
+    @SerializedName("unit") val unit: String?,
+    @SerializedName("ingredients_text") val ingredientsText: String?
 )

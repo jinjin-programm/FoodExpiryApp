@@ -17,6 +17,7 @@ static llama_model* g_model = nullptr;
 static llama_context* g_context = nullptr;
 static const llama_vocab* g_vocab = nullptr;
 static mtmd_context* g_mtmd_ctx = nullptr;
+static int g_threads = 4;
 
 extern "C" {
 
@@ -82,6 +83,10 @@ Java_com_example_foodexpiryapp_presentation_ui_llm_LlamaBridge_nativeLoadModel(
     ctx_params.n_threads = threads;
     ctx_params.n_threads_batch = threads;
     ctx_params.rope_scaling_type = LLAMA_ROPE_SCALING_TYPE_UNSPECIFIED;
+    ctx_params.n_batch = 512;
+#if defined(LLAMA_USE_FLASH_ATTN) || defined(GGML_USE_FLASH_ATTN)
+    ctx_params.flash_attn = true;
+#endif
     
     g_context = llama_init_from_model(g_model, ctx_params);
     
@@ -100,6 +105,8 @@ Java_com_example_foodexpiryapp_presentation_ui_llm_LlamaBridge_nativeLoadModel(
     uint32_t n_embd = llama_model_n_embd(g_model);
     uint32_t n_layer = llama_model_n_layer(g_model);
     LOGI("Model loaded successfully: n_ctx=%u, n_embd=%u, n_layer=%u", n_ctx, n_embd, n_layer);
+    
+    g_threads = threads;
     
     return 0;
 }
@@ -228,7 +235,7 @@ Java_com_example_foodexpiryapp_presentation_ui_llm_LlamaBridge_nativeLoadMmproj(
     LOGI("Loading mmproj from: %s", path);
     
     struct mtmd_context_params m_params = mtmd_context_params_default();
-    m_params.n_threads = 4;
+    m_params.n_threads = g_threads;
     m_params.use_gpu = false;
     
     g_mtmd_ctx = mtmd_init_from_file(path, g_model, m_params);

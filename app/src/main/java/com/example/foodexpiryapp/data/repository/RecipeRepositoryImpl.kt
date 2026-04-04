@@ -54,7 +54,25 @@ class RecipeRepositoryImpl @Inject constructor(
 
     override fun getRecipesByTag(tag: String): Flow<List<Recipe>> = flow {
         try {
-            val response = theMealDbApi.searchMeals(tag) 
+            val response = theMealDbApi.searchMeals(tag)
+            emit(response.meals?.map { it.toDomain() } ?: emptyList())
+        } catch (e: Exception) {
+            emit(emptyList())
+        }
+    }.flowOn(Dispatchers.IO)
+
+    override fun getRecipesByCategory(category: String): Flow<List<Recipe>> = flow {
+        try {
+            val response = theMealDbApi.filterByCategory(category)
+            emit(response.meals?.map { it.toDomain() } ?: emptyList())
+        } catch (e: Exception) {
+            emit(emptyList())
+        }
+    }.flowOn(Dispatchers.IO)
+
+    override fun getRecipesByArea(area: String): Flow<List<Recipe>> = flow {
+        try {
+            val response = theMealDbApi.filterByArea(area)
             emit(response.meals?.map { it.toDomain() } ?: emptyList())
         } catch (e: Exception) {
             emit(emptyList())
@@ -65,7 +83,6 @@ class RecipeRepositoryImpl @Inject constructor(
         val allMatchingRecipes = mutableListOf<Recipe>()
         val seenIds = mutableSetOf<Long>()
 
-        // Take top ingredients and normalize them (Capitalize first letter)
         val topIngredients = inventoryItemNames
             .map { it.trim().lowercase().replaceFirstChar { char -> char.titlecase() } }
             .take(5)
@@ -79,7 +96,6 @@ class RecipeRepositoryImpl @Inject constructor(
             try {
                 var response = theMealDbApi.filterByIngredient(ingredient)
                 
-                // Fallback: If no results for ingredient filter, try a general search
                 if (response.meals.isNullOrEmpty()) {
                     response = theMealDbApi.searchMeals(ingredient)
                 }

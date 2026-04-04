@@ -20,6 +20,16 @@ interface TheMealDbApi {
         @Query("i") ingredient: String
     ): MealResponseDto
 
+    @GET("filter.php")
+    suspend fun filterByCategory(
+        @Query("c") category: String
+    ): MealResponseDto
+
+    @GET("filter.php")
+    suspend fun filterByArea(
+        @Query("a") area: String
+    ): MealResponseDto
+
     @GET("lookup.php")
     suspend fun getMealDetails(
         @Query("i") id: String

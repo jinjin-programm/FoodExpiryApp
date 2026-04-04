@@ -64,36 +64,4 @@ target_link_libraries(llama_jni
     log
 )
 
-# ──────────────────────────────────────────────
-# MNN LLM libraries (new)
-# ──────────────────────────────────────────────
-set(MNN_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../../../MNN-Engine)
 
-add_library(mnn SHARED IMPORTED)
-set_target_properties(mnn PROPERTIES IMPORTED_LOCATION ${jniLibsDir}/libMNN.so)
-
-add_library(mnn_express SHARED IMPORTED)
-set_target_properties(mnn_express PROPERTIES IMPORTED_LOCATION ${jniLibsDir}/libMNN_Express.so)
-
-add_library(mnn_cl SHARED IMPORTED)
-set_target_properties(mnn_cl PROPERTIES IMPORTED_LOCATION ${jniLibsDir}/libMNN_CL.so)
-
-add_library(mnn_llm SHARED IMPORTED)
-set_target_properties(mnn_llm PROPERTIES IMPORTED_LOCATION ${jniLibsDir}/libllm.so)
-
-add_library(mnn_jni SHARED mnn_jni.cpp)
-
-target_include_directories(mnn_jni PRIVATE
-    ${MNN_ROOT}/include
-    ${MNN_ROOT}/include/MNN
-    ${MNN_ROOT}/transformers/llm/engine/include
-)
-
-target_link_libraries(mnn_jni
-    mnn
-    mnn_express
-    mnn_cl
-    mnn_llm
-    android
-    log
-)

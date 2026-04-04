@@ -1,24 +1,18 @@
 package com.example.foodexpiryapp.data.remote
 
 import com.example.foodexpiryapp.data.remote.dto.OpenFoodFactsResponse
-import javax.inject.Inject
-import javax.inject.Singleton
+import retrofit2.http.GET
+import retrofit2.http.Query
 
-@Singleton
-class OpenFoodFactsService @Inject constructor(
-    private val api: OpenFoodFactsApi
-) {
-    
-    suspend fun getProductInfo(barcode: String): Result<OpenFoodFactsResponse> {
-        return try {
-            val response = api.getProductByBarcode(barcode)
-            if (response.isSuccessful && response.body()?.status == 1) {
-                Result.success(response.body()!!)
-            } else {
-                Result.failure(Exception("Product not found"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+interface OpenFoodFactsService {
+
+    companion object {
+        const val BASE_URL = "https://world.openfoodfacts.org/api/v2/"
     }
+
+    @GET("product/")
+    suspend fun getProduct(
+        @Query("code") barcode: String,
+        @Query("fields") fields: String = "product_name,brands,categories,price,price_debug,serving_size,nutriscore_grade,image_url,image_front_url,quantity,unit,ingredients_text"
+    ): OpenFoodFactsResponse
 }

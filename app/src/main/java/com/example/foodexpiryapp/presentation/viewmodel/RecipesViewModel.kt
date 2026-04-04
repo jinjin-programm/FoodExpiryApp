@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.foodexpiryapp.domain.model.*
 import com.example.foodexpiryapp.domain.repository.AnalyticsRepository
+import com.example.foodexpiryapp.data.local.database.CookedRecipeEntity
+import com.example.foodexpiryapp.domain.repository.CookedRecipeRepository
 import com.example.foodexpiryapp.domain.usecase.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -32,7 +34,14 @@ enum class RecipeFilter(val displayName: String) {
     VEGETARIAN("Vegetarian"),
     VEGAN("Vegan"),
     DAIRY_FREE("Dairy Free"),
-    GLUTEN_FREE("Gluten Free")
+    GLUTEN_FREE("Gluten Free"),
+    BREAKFAST("Breakfast"),
+    DESSERT("Dessert"),
+    CHINESE("Chinese"),
+    MEXICAN("Mexican"),
+    JAPANESE("Japanese"),
+    INDIAN("Indian"),
+    ITALIAN("Italian")
 }
 
 sealed class RecipesEvent {
@@ -48,6 +57,10 @@ class RecipesViewModel @Inject constructor(
     private val scoreRecipesForInventory: ScoreRecipesForInventoryUseCase,
     private val searchRecipes: SearchRecipesUseCase,
     private val getRecipesMatchingInventory: GetRecipesMatchingInventoryUseCase,
+    private val getRecipesByCategory: GetRecipesByCategoryUseCase,
+    private val getRecipesByArea: GetRecipesByAreaUseCase,
+    private val consumeIngredients: ConsumeIngredientsUseCase,
+    private val cookedRecipeRepository: CookedRecipeRepository,
     private val analyticsRepository: AnalyticsRepository
 ) : ViewModel() {
 
@@ -63,17 +76,31 @@ class RecipesViewModel @Inject constructor(
     private val inventoryItems = getAllFoodItems()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    private val recipesFlow = combine(inventoryItems, _searchQuery, _loadMoreTrigger) { items, query, _ ->
-        Pair(items, query)
-    }.flatMapLatest { (items, query) ->
-        if (query.isNotBlank()) {
-            searchRecipes(query)
-        } else {
-            // Use inventory items to get matching recipes
-            getRecipesMatchingInventory(items)
+    private val cookedStats = combine(
+        cookedRecipeRepository.getCookedRecipesCount(),
+        cookedRecipeRepository.getTotalMoneySaved(),
+        cookedRecipeRepository.getAverageWasteRescued()
+    ) { count, money, waste ->
+        Triple(count, money, waste)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, Triple(0, 0.0, 0))
+
+    private val recipesFlow = combine(inventoryItems, _searchQuery, _selectedFilter, _loadMoreTrigger) { items, query, filter, _ ->
+        Triple(items, query, filter)
+    }.flatMapLatest { (items, query, filter) ->
+        when {
+            query.isNotBlank() -> searchRecipes(query)
+            filter == RecipeFilter.ALL -> getRecipesMatchingInventory(items)
+            filter == RecipeFilter.BREAKFAST -> getRecipesByCategory("Breakfast")
+            filter == RecipeFilter.DESSERT -> getRecipesByCategory("Dessert")
+            filter == RecipeFilter.CHINESE -> getRecipesByArea("Chinese")
+            filter == RecipeFilter.MEXICAN -> getRecipesByArea("Mexican")
+            filter == RecipeFilter.JAPANESE -> getRecipesByArea("Japanese")
+            filter == RecipeFilter.INDIAN -> getRecipesByArea("Indian")
+            filter == RecipeFilter.ITALIAN -> getRecipesByArea("Italian")
+            else -> getRecipesMatchingInventory(items)
         }
     }.onEach { newBatch ->
-        if (_searchQuery.value.isNotBlank()) {
+        if (_searchQuery.value.isNotBlank() || _selectedFilter.value != RecipeFilter.ALL) {
              allFetchedRecipes.value = newBatch
         } else {
              allFetchedRecipes.value = (allFetchedRecipes.value + newBatch).distinctBy { it.id }
@@ -88,17 +115,15 @@ class RecipesViewModel @Inject constructor(
         allFetchedRecipes,
         inventoryItems,
         _searchQuery,
-        _selectedFilter
-    ) { recipes, inventory, query, filter ->
+        _selectedFilter,
+        cookedStats
+    ) { recipes, inventory, query, filter, stats ->
         
         val expiringItems = inventory.filter { it.daysUntilExpiry <= 3 && !it.isExpired }
             .sortedBy { it.daysUntilExpiry }
 
         val allMatches = scoreRecipesForInventory(recipes, inventory)
-        val filteredMatches = applyFilter(allMatches, filter, query)
-
-        val totalSaved = allMatches.sumOf { it.estimatedMoneySaved }
-        val totalWaste = if (allMatches.isNotEmpty()) allMatches.sumOf { it.wasteRescuePercent } / allMatches.size else 0
+        val filteredMatches = applyFilter(allMatches, filter, query, inventory)
 
         RecipesUiState(
             recipeMatches = filteredMatches,
@@ -106,8 +131,9 @@ class RecipesViewModel @Inject constructor(
             isLoading = false,
             searchQuery = query,
             selectedFilter = filter,
-            totalMoneySaved = totalSaved,
-            totalWasteRescued = totalWaste,
+            totalMoneySaved = stats.second,
+            totalWasteRescued = stats.third,
+            recipesUsedCount = stats.first,
             errorMessage = null
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RecipesUiState())
@@ -119,6 +145,7 @@ class RecipesViewModel @Inject constructor(
 
     fun onFilterChanged(filter: RecipeFilter) {
         _selectedFilter.value = filter
+        allFetchedRecipes.value = emptyList()
     }
 
     fun onLoadMoreRequested() {
@@ -129,7 +156,8 @@ class RecipesViewModel @Inject constructor(
     private fun applyFilter(
         matches: List<RecipeMatch>,
         filter: RecipeFilter,
-        query: String
+        query: String,
+        inventory: List<FoodItem>
     ): List<RecipeMatch> {
         var result = when (filter) {
             RecipeFilter.ALL -> matches
@@ -141,6 +169,13 @@ class RecipesViewModel @Inject constructor(
             RecipeFilter.VEGAN -> matches.filter { it.recipe.tags.contains(RecipeTag.VEGAN) }
             RecipeFilter.DAIRY_FREE -> matches.filter { it.recipe.tags.contains(RecipeTag.DAIRY_FREE) }
             RecipeFilter.GLUTEN_FREE -> matches.filter { it.recipe.tags.contains(RecipeTag.GLUTEN_FREE) }
+            RecipeFilter.BREAKFAST,
+            RecipeFilter.DESSERT,
+            RecipeFilter.CHINESE,
+            RecipeFilter.MEXICAN,
+            RecipeFilter.JAPANESE,
+            RecipeFilter.INDIAN,
+            RecipeFilter.ITALIAN -> matches
         }
 
         if (query.isNotBlank()) {
@@ -180,6 +215,21 @@ class RecipesViewModel @Inject constructor(
     fun onRecipeCooked(recipe: Recipe, matchedItems: List<FoodItem>) {
         viewModelScope.launch {
             val savedAmount = recipe.estimatedSaving * (matchedItems.size.toDouble() / recipe.ingredients.size.coerceAtLeast(1))
+            val wastePercent = if (matchedItems.isNotEmpty()) {
+                ((matchedItems.size.toDouble() / recipe.ingredients.size) * 100).toInt().coerceAtMost(100)
+            } else 0
+
+            consumeIngredients(matchedItems)
+
+            val cookedRecipe = CookedRecipeEntity(
+                recipeId = recipe.id,
+                recipeName = recipe.name,
+                moneySaved = savedAmount,
+                wasteRescuedPercent = wastePercent,
+                matchedIngredients = matchedItems.joinToString(",") { it.name },
+                imageUrl = recipe.imageUrl
+            )
+            cookedRecipeRepository.saveCookedRecipe(cookedRecipe)
 
             analyticsRepository.trackEvent(
                 AnalyticsEvent(
@@ -190,7 +240,7 @@ class RecipesViewModel @Inject constructor(
                         "recipe_id" to recipe.id.toString(),
                         "items_rescued" to matchedItems.joinToString(",") { it.name },
                         "estimated_money_saved" to savedAmount.toString(),
-                        "waste_rescue_percent" to recipe.wasteRescueScore.toString()
+                        "waste_rescue_percent" to wastePercent.toString()
                     )
                 )
             )

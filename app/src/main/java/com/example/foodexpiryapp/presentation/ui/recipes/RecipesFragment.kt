@@ -111,6 +111,15 @@ class RecipesFragment : Fragment() {
                 binding.chipQuick.id -> RecipeFilter.QUICK
                 binding.chipVegetarian.id -> RecipeFilter.VEGETARIAN
                 binding.chipVegan.id -> RecipeFilter.VEGAN
+                binding.chipDairyFree.id -> RecipeFilter.DAIRY_FREE
+                binding.chipGlutenFree.id -> RecipeFilter.GLUTEN_FREE
+                binding.chipBreakfast.id -> RecipeFilter.BREAKFAST
+                binding.chipDessert.id -> RecipeFilter.DESSERT
+                binding.chipChinese.id -> RecipeFilter.CHINESE
+                binding.chipMexican.id -> RecipeFilter.MEXICAN
+                binding.chipJapanese.id -> RecipeFilter.JAPANESE
+                binding.chipIndian.id -> RecipeFilter.INDIAN
+                binding.chipItalian.id -> RecipeFilter.ITALIAN
                 else -> RecipeFilter.ALL
             }
             viewModel.onFilterChanged(filter)
@@ -158,8 +167,15 @@ class RecipesFragment : Fragment() {
             RecipeFilter.QUICK -> binding.chipQuick
             RecipeFilter.VEGETARIAN -> binding.chipVegetarian
             RecipeFilter.VEGAN -> binding.chipVegan
-            RecipeFilter.DAIRY_FREE -> binding.chipVegetarian
-            RecipeFilter.GLUTEN_FREE -> binding.chipVegetarian
+            RecipeFilter.DAIRY_FREE -> binding.chipDairyFree
+            RecipeFilter.GLUTEN_FREE -> binding.chipGlutenFree
+            RecipeFilter.BREAKFAST -> binding.chipBreakfast
+            RecipeFilter.DESSERT -> binding.chipDessert
+            RecipeFilter.CHINESE -> binding.chipChinese
+            RecipeFilter.MEXICAN -> binding.chipMexican
+            RecipeFilter.JAPANESE -> binding.chipJapanese
+            RecipeFilter.INDIAN -> binding.chipIndian
+            RecipeFilter.ITALIAN -> binding.chipItalian
         }
         if (!chipToSelect.isChecked) {
             chipToSelect.isChecked = true

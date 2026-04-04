@@ -1,6 +1,6 @@
 package com.example.foodexpiryapp.data.repository
 
-import com.example.foodexpiryapp.data.remote.OpenFoodFactsService
+import com.example.foodexpiryapp.data.remote.OpenFoodFactsApi
 import com.example.foodexpiryapp.domain.model.FoodCategory
 import com.example.foodexpiryapp.util.ShelfLifeEstimator
 import java.time.LocalDate
@@ -19,34 +19,29 @@ data class BarcodeScanResult(
 
 @Singleton
 class BarcodeRepository @Inject constructor(
-    private val openFoodFactsService: OpenFoodFactsService
+    private val openFoodFactsApi: OpenFoodFactsApi
 ) {
     
     suspend fun scanBarcode(barcode: String): Result<BarcodeScanResult> {
-        return openFoodFactsService.getProductInfo(barcode).map { response ->
-            val product = response.product
+        return try {
+            val response = openFoodFactsApi.getProductByBarcode(barcode)
+            if (!response.isSuccessful) {
+                return Result.failure(Exception("API error: ${response.code()}"))
+            }
+            val body = response.body()
+            val product = body?.product
             
-            // Extract product name
             val name = product?.productName ?: "Unknown Product"
             
-            // Parse categories
-            val categoryTags = product?.categoriesTags ?: emptyList()
             val categoriesList = product?.categories?.let {
                 ShelfLifeEstimator.parseCategories(it)
             } ?: emptyList()
             
-            val allCategories = categoryTags + categoriesList
-            
-            // Estimate shelf life
-            val shelfLife = ShelfLifeEstimator.estimateShelfLife(allCategories)
-            
-            // Map to FoodCategory enum
+            val shelfLife = ShelfLifeEstimator.estimateShelfLife(categoriesList)
             val foodCategory = mapToFoodCategory(shelfLife.category)
-            
-            // Calculate expiry date
             val expiryDate = ShelfLifeEstimator.calculateExpiryDate(shelfLife.days)
             
-            BarcodeScanResult(
+            Result.success(BarcodeScanResult(
                 name = name,
                 brand = product?.brands,
                 category = foodCategory,
@@ -54,7 +49,9 @@ class BarcodeRepository @Inject constructor(
                 shelfLifeDays = shelfLife.days,
                 imageUrl = product?.imageUrl,
                 barcode = barcode
-            )
+            ))
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
     
@@ -63,8 +60,7 @@ class BarcodeRepository @Inject constructor(
             "dairy", "milk", "cheese", "yogurt", "butter", "cream" -> FoodCategory.DAIRY
             "meat", "beef", "chicken", "pork", "sausage", "fish", "seafood" -> FoodCategory.MEAT
             "fruit", "apple", "banana", "orange", "grape", "berry" -> FoodCategory.FRUITS
-            "vegetable", "tomato", "lettuce", "carrot", "potato", "onion", 
-            "cucumber", "pepper", "broccoli", "spinach" -> FoodCategory.VEGETABLES
+            "vegetable", "tomato", "lettuce", "carrot", "potato", "onion", "cucumber", "pepper", "broccoli", "spinach" -> FoodCategory.VEGETABLES
             "bread", "baguette", "croissant", "cake", "cookie", "pasta", "rice", "cereal", "grains" -> FoodCategory.GRAINS
             "frozen", "ice-cream" -> FoodCategory.FROZEN
             "snack", "chocolate", "candy" -> FoodCategory.SNACKS

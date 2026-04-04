@@ -23,7 +23,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.databinding.FragmentVisionScanBinding
 import com.example.foodexpiryapp.domain.vision.FoodClassifier
-import com.example.foodexpiryapp.presentation.ui.llm.MnnBridge
+import com.example.foodexpiryapp.presentation.ui.llm.LlamaBridge
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
@@ -44,8 +44,8 @@ class VisionScanFragment : Fragment() {
 
     companion object {
         private const val TAG = "VisionScanFragment"
-        private const val MAX_TOKENS = 96
-        private const val TARGET_IMAGE_MAX_SIDE = 512
+        private const val MAX_TOKENS = 24
+        private const val TARGET_IMAGE_MAX_SIDE = 224
         private const val PROGRESS_TICK_MS = 400L
     }
 
@@ -61,7 +61,7 @@ class VisionScanFragment : Fragment() {
     private var progressTickerJob: Job? = null
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-    private val mnnBridge = MnnBridge()
+    private val llamaBridge = LlamaBridge.getInstance()
     private lateinit var foodClassifier: FoodClassifier
 
     // ML Kit processors removed for true vision
@@ -113,13 +113,13 @@ class VisionScanFragment : Fragment() {
             updateProgress("Optimizing for your device...")
 
             try {
-                val success = withContext(Dispatchers.IO) {
-                    mnnBridge.loadModel(requireContext().applicationContext)
+                val report = withContext(Dispatchers.IO) {
+                    llamaBridge.ensureModelLoaded(requireContext().applicationContext, LlamaBridge.recommendedVisionConfig())
                 }
 
-                if (success) {
+                if (report.success) {
                     updateStatus("Vision model ready - tap capture", Status.READY)
-                    updateProgress("Ready (MNN OpenCL)")
+                    updateProgress("Ready (Local AI)")
                 } else {
                     updateStatus("Failed to load model", Status.ERROR)
                     Toast.makeText(context, "Failed to load model", Toast.LENGTH_LONG).show()
@@ -298,8 +298,9 @@ class VisionScanFragment : Fragment() {
     private fun runAskAiInference(customBitmap: Bitmap? = null) {
         if (isProcessing) return
 
-        if (!mnnBridge.loadModel(requireContext())) {
-            Toast.makeText(context, "Failed to load MNN model", Toast.LENGTH_SHORT).show()
+        val loadReport = llamaBridge.ensureModelLoaded(requireContext(), LlamaBridge.recommendedVisionConfig())
+        if (!loadReport.success || !llamaBridge.hasVisionSupport()) {
+            Toast.makeText(context, "Failed to load LLM model or vision support", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -332,12 +333,12 @@ class VisionScanFragment : Fragment() {
             try {
                 val startTime = System.currentTimeMillis()
                 
-                Log.d(TAG, "Running MNN inference on image size: ${resizedBitmap.width}x${resizedBitmap.height}")
+                Log.d(TAG, "Running Llama inference on image size: ${resizedBitmap.width}x${resizedBitmap.height}")
 
-                val prompt = "<|im_start|>system\nYou are a helpful AI assistant. Do not output your thinking process. Output directly your final answer.<|im_end|>\n<|im_start|>user\n<img>image0</img>\nIdentify the food in this image. Reply strictly in this format without any other words or thoughts:\nFOOD: [food name]\nEXPIRY: [expiration date]<|im_end|>\n<|im_start|>assistant\n"
+                val prompt = "<img>image0</img>\nWhat food is this? Reply with only the food name, nothing else."
                 
                 val report = withContext(Dispatchers.IO) {
-                    mnnBridge.generateWithImageDetailed(prompt, resizedBitmap, maxTokens = MAX_TOKENS)
+                    llamaBridge.generateWithImageDetailed(prompt, resizedBitmap, maxTokens = MAX_TOKENS)
                 }
                 
                 val elapsed = (System.currentTimeMillis() - startTime) / 1000.0
@@ -380,9 +381,9 @@ class VisionScanFragment : Fragment() {
             while (isActive && isProcessing) {
                 val elapsedSec = (System.currentTimeMillis() - start) / 1000.0
                 val etaSec = when {
-                    elapsedSec < 5 -> 18.0
-                    elapsedSec < 12 -> 14.0
-                    else -> max(4.0, 20.0 - elapsedSec)
+                    elapsedSec < 3 -> 8.0
+                    elapsedSec < 8 -> 5.0
+                    else -> max(2.0, 10.0 - elapsedSec)
                 }
                 updateProgress("Processing... ${"%.1f".format(elapsedSec)}s elapsed, ~${"%.0f".format(etaSec)}s remaining")
                 delay(PROGRESS_TICK_MS)
@@ -435,34 +436,34 @@ class VisionScanFragment : Fragment() {
 
     private fun parseFoodResponse(response: String): FoodResult {
         val foodRegex = Regex("""FOOD:\s*\[?([^\[\]\n]+)\]?"?""", RegexOption.IGNORE_CASE)
-        val expiryRegex = Regex("""EXPIRY:\s*\[?([^\[\]\n]+)\]?"?""", RegexOption.IGNORE_CASE)
-        
-        val foodMatches = foodRegex.findAll(response).toList()
-        val expiryMatches = expiryRegex.findAll(response).toList()
-        
-        var foodName = foodMatches.lastOrNull()?.groupValues?.get(1)?.trim() ?: "Unknown"
-        val expiryDate = expiryMatches.lastOrNull()?.groupValues?.get(1)?.trim()
-        
-        val cleanExpiry = expiryDate?.takeIf { 
-            !it.equals("not visible", ignoreCase = true) && 
-            !it.equals("not shown", ignoreCase = true) &&
-            it.isNotBlank() 
-        }
-        
-        // Improve fallback parsing if regex fails but response has content
-        if (foodName == "Unknown" || foodName.isBlank()) {
-            val lines = response.lines().map { it.trim() }.filter { it.isNotEmpty() }
-            if (lines.isNotEmpty()) {
-                val firstLine = lines.first()
-                if (firstLine.length < 30 && !firstLine.contains("sorry", ignoreCase = true)) {
-                    foodName = firstLine
-                } else {
-                    foodName = response.take(50).ifEmpty { "Unknown" }
-                }
+        val foodMatch = foodRegex.find(response)
+        if (foodMatch != null) {
+            val foodName = foodMatch.groupValues[1].trim()
+            val expiryRegex = Regex("""EXPIRY:\s*\[?([^\[\]\n]+)\]?"?""", RegexOption.IGNORE_CASE)
+            val expiryMatch = expiryRegex.find(response)
+            val expiryDate = expiryMatch?.groupValues?.get(1)?.trim()
+            val cleanExpiry = expiryDate?.takeIf { 
+                !it.equals("not visible", ignoreCase = true) && 
+                !it.equals("not shown", ignoreCase = true) &&
+                it.isNotBlank() 
             }
+            return FoodResult(foodName, cleanExpiry, response)
         }
         
-        return FoodResult(foodName, cleanExpiry, response)
+        val clean = response.trim()
+        val foodName = if (clean.length < 40 && clean.isNotBlank()) {
+            clean.removeSuffix(".").removeSuffix("!").trim()
+        } else {
+            val lines = response.lines().map { it.trim() }.filter { it.isNotEmpty() }
+            val firstLine = lines.firstOrNull()
+            if (firstLine != null && firstLine.length < 40) {
+                firstLine.removeSuffix(".").removeSuffix("!").trim()
+            } else {
+                response.take(30).trim()
+            }
+        }.ifBlank { "Unknown" }
+        
+        return FoodResult(foodName, null, response)
     }
 
     private fun displayAiResult(foodName: String, expiryDate: String?, rawResponse: String) {
@@ -506,7 +507,7 @@ class VisionScanFragment : Fragment() {
         if (::foodClassifier.isInitialized) {
             foodClassifier.close()
         }
-        mnnBridge.release()
+        llamaBridge.freeModel()
         
         _binding = null
     }

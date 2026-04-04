@@ -87,3 +87,15 @@ class ConsumeIngredientsUseCase @Inject constructor(
         }
     }
 }
+
+class GetRecipesByCategoryUseCase @Inject constructor(
+    private val repository: RecipeRepository
+) {
+    operator fun invoke(category: String): Flow<List<Recipe>> = repository.getRecipesByCategory(category)
+}
+
+class GetRecipesByAreaUseCase @Inject constructor(
+    private val repository: RecipeRepository
+) {
+    operator fun invoke(area: String): Flow<List<Recipe>> = repository.getRecipesByArea(area)
+}

@@ -9,6 +9,8 @@ interface RecipeRepository {
     suspend fun getRecipeById(id: Long): Recipe?
     fun searchRecipes(query: String): Flow<List<Recipe>>
     fun getRecipesByTag(tag: String): Flow<List<Recipe>>
+    fun getRecipesByCategory(category: String): Flow<List<Recipe>>
+    fun getRecipesByArea(area: String): Flow<List<Recipe>>
     fun getRecipesMatchingInventory(inventoryItemNames: List<String>): Flow<List<Recipe>>
     fun getRandomRecipes(count: Int = 10): Flow<List<Recipe>>
 }
