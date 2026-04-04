@@ -89,6 +89,7 @@ app/src/main/java/com/example/foodexpiryapp/
 - 2026-04-02: Fix camera ERROR_MAX_CAMERAS_IN_USE issue. Added cameraProvider?.unbindAll() to onDestroyView across all scanner fragments (VisionScanFragment, ScanFragment, YoloScanFragment).
 - 2026-04-02: Redesigned barcode scan UI (`fragment_scan.xml`) for a cleaner card-based look.
 - 2026-04-02: Fixed YOLO scan UI constraints (`fragment_yolo_scan.xml`) by breaking the vertical constraint chain. Moved top controls just below the status bar (`24dp` margin), and adjusted the scanning frame's bias (`0.2`) to pull the frame and its attached instruction text cleanly upward, ensuring no overlap with bottom camera controls. Updated YOLO instruction text color to a vibrant red for better visibility.
+- 2026-04-05: Reverted LLM inference model to GGUF (Qwen3-VL-2B-Instruct) from MNN due to previous experiments. Addressed "thinking mode" leakage by enforcing strict ChatML prompt (`<|im_start|>system...`) to suppress internal reasoning output and guarantee direct structured answers (`FOOD: xxx \n EXPIRY: xxx`).
 
 ## Short Version For Team
 

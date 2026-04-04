@@ -334,7 +334,7 @@ class VisionScanFragment : Fragment() {
                 
                 Log.d(TAG, "Running MNN inference on image size: ${resizedBitmap.width}x${resizedBitmap.height}")
 
-                val prompt = "<img>image0</img>\nIdentify the food in this image. Reply with 'FOOD: ' followed by the actual food name, and 'EXPIRY: ' followed by the expiration date."
+                val prompt = "<|im_start|>system\nYou are a helpful AI assistant. Do not output your thinking process. Output directly your final answer.<|im_end|>\n<|im_start|>user\n<img>image0</img>\nIdentify the food in this image. Reply strictly in this format without any other words or thoughts:\nFOOD: [food name]\nEXPIRY: [expiration date]<|im_end|>\n<|im_start|>assistant\n"
                 
                 val report = withContext(Dispatchers.IO) {
                     mnnBridge.generateWithImageDetailed(prompt, resizedBitmap, maxTokens = MAX_TOKENS)
