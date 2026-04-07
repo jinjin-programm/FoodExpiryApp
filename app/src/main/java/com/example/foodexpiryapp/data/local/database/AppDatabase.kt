@@ -14,7 +14,7 @@ import com.example.foodexpiryapp.data.local.dao.LocalRecipeDao
 
 @Database(
     entities = [FoodItemEntity::class, AnalyticsEventEntity::class, MealPlanEntity::class, ShoppingItemEntity::class, CookedRecipeEntity::class, LocalRecipeEntity::class],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -107,6 +107,16 @@ abstract class AppDatabase : RoomDatabase() {
                         createdAt INTEGER NOT NULL
                     )
                 """.trimIndent())
+            }
+        }
+        
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE food_items ADD COLUMN purchaseDate TEXT")
+                database.execSQL("ALTER TABLE food_items ADD COLUMN scanSource TEXT NOT NULL DEFAULT 'MANUAL'")
+                database.execSQL("ALTER TABLE food_items ADD COLUMN confidence REAL NOT NULL DEFAULT 1.0")
+                database.execSQL("ALTER TABLE food_items ADD COLUMN riskLevel TEXT NOT NULL DEFAULT 'LOW'")
+                database.execSQL("ALTER TABLE food_items ADD COLUMN recipeRelevance REAL NOT NULL DEFAULT 0.0")
             }
         }
     }
