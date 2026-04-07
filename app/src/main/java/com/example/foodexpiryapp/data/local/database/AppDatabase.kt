@@ -11,10 +11,11 @@ import com.example.foodexpiryapp.data.local.dao.MealPlanDao
 import com.example.foodexpiryapp.data.local.dao.ShoppingItemDao
 import com.example.foodexpiryapp.data.local.dao.CookedRecipeDao
 import com.example.foodexpiryapp.data.local.dao.LocalRecipeDao
+import com.example.foodexpiryapp.data.local.dao.ShoppingTemplateDao
 
 @Database(
-    entities = [FoodItemEntity::class, AnalyticsEventEntity::class, MealPlanEntity::class, ShoppingItemEntity::class, CookedRecipeEntity::class, LocalRecipeEntity::class],
-    version = 8,
+    entities = [FoodItemEntity::class, AnalyticsEventEntity::class, MealPlanEntity::class, ShoppingItemEntity::class, CookedRecipeEntity::class, LocalRecipeEntity::class, ShoppingTemplateEntity::class],
+    version = 9,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -24,6 +25,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun shoppingItemDao(): ShoppingItemDao
     abstract fun cookedRecipeDao(): CookedRecipeDao
     abstract fun localRecipeDao(): LocalRecipeDao
+    abstract fun shoppingTemplateDao(): ShoppingTemplateDao
 
     companion object {
         val MIGRATION_4_5 = object : Migration(4, 5) {
@@ -117,6 +119,19 @@ abstract class AppDatabase : RoomDatabase() {
                 database.execSQL("ALTER TABLE food_items ADD COLUMN confidence REAL NOT NULL DEFAULT 1.0")
                 database.execSQL("ALTER TABLE food_items ADD COLUMN riskLevel TEXT NOT NULL DEFAULT 'LOW'")
                 database.execSQL("ALTER TABLE food_items ADD COLUMN recipeRelevance REAL NOT NULL DEFAULT 0.0")
+            }
+        }
+
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("""
+                    CREATE TABLE IF NOT EXISTS shopping_templates (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        name TEXT NOT NULL,
+                        description TEXT NOT NULL,
+                        itemNames TEXT NOT NULL DEFAULT '[]'
+                    )
+                """.trimIndent())
             }
         }
     }

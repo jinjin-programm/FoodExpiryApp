@@ -1,6 +1,7 @@
 package com.example.foodexpiryapp.domain.usecase
 
 import com.example.foodexpiryapp.domain.model.ShoppingItem
+import com.example.foodexpiryapp.domain.model.ShoppingTemplate
 import com.example.foodexpiryapp.domain.repository.ShoppingRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -35,4 +36,22 @@ class ClearCompletedShoppingItemsUseCase @Inject constructor(
     private val repository: ShoppingRepository
 ) {
     suspend operator fun invoke() = repository.clearCompletedItems()
+}
+
+class GetAllShoppingTemplatesUseCase @Inject constructor(
+    private val repository: ShoppingRepository
+) {
+    operator fun invoke(): Flow<List<ShoppingTemplate>> = repository.getAllTemplates()
+}
+
+class ApplyShoppingTemplateUseCase @Inject constructor(
+    private val repository: ShoppingRepository
+) {
+    suspend operator fun invoke(template: ShoppingTemplate) = repository.applyTemplate(template)
+}
+
+class GetInventoryItemNamesUseCase @Inject constructor(
+    private val repository: ShoppingRepository
+) {
+    operator fun invoke(): Flow<List<String>> = repository.getInventoryItemNames()
 }

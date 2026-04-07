@@ -6,6 +6,7 @@ import androidx.room.migration.Migration
 import com.example.foodexpiryapp.data.local.dao.FoodItemDao
 import com.example.foodexpiryapp.data.local.dao.MealPlanDao
 import com.example.foodexpiryapp.data.local.dao.ShoppingItemDao
+import com.example.foodexpiryapp.data.local.dao.ShoppingTemplateDao
 import com.example.foodexpiryapp.data.local.dao.CookedRecipeDao
 import com.example.foodexpiryapp.data.local.dao.LocalRecipeDao
 import com.example.foodexpiryapp.data.local.database.AppDatabase
@@ -41,7 +42,8 @@ object DatabaseModule {
             AppDatabase.MIGRATION_4_5,
             AppDatabase.MIGRATION_5_6,
             AppDatabase.MIGRATION_6_7,
-            AppDatabase.MIGRATION_7_8
+            AppDatabase.MIGRATION_7_8,
+            AppDatabase.MIGRATION_8_9
         ).build()
     }
 
@@ -61,6 +63,12 @@ object DatabaseModule {
     @Singleton
     fun provideShoppingItemDao(database: AppDatabase): ShoppingItemDao {
         return database.shoppingItemDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideShoppingTemplateDao(database: AppDatabase): ShoppingTemplateDao {
+        return database.shoppingTemplateDao()
     }
 
     @Provides
