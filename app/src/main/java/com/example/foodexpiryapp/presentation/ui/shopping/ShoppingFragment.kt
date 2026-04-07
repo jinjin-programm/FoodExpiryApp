@@ -15,7 +15,9 @@ import com.example.foodexpiryapp.domain.model.AnalyticsEvent
 import com.example.foodexpiryapp.domain.model.EventType
 import com.example.foodexpiryapp.domain.repository.AnalyticsRepository
 import com.example.foodexpiryapp.presentation.adapter.ShoppingItemAdapter
+import com.example.foodexpiryapp.presentation.adapter.ShoppingTemplateAdapter
 import com.example.foodexpiryapp.presentation.viewmodel.ShoppingViewModel
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -27,11 +29,12 @@ class ShoppingFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: ShoppingViewModel by viewModels()
-    
+
     @Inject
     lateinit var analyticsRepository: AnalyticsRepository
 
     private lateinit var shoppingAdapter: ShoppingItemAdapter
+    private lateinit var templateAdapter: ShoppingTemplateAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -43,12 +46,13 @@ class ShoppingFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        setupRecyclerView()
+        setupRecyclerViews()
+        setupQuickAdd()
         observeStats()
         observeShoppingItems()
-        
-        // Track screen view
+        observeTemplates()
+        observeInventoryStatus()
+
         analyticsRepository.trackEvent(
             AnalyticsEvent(
                 eventName = "screen_view",
@@ -58,7 +62,7 @@ class ShoppingFragment : Fragment() {
         )
     }
 
-    private fun setupRecyclerView() {
+    private fun setupRecyclerViews() {
         shoppingAdapter = ShoppingItemAdapter(
             onToggle = { viewModel.onToggleItem(it) },
             onDelete = { viewModel.onDeleteItem(it) }
@@ -66,6 +70,27 @@ class ShoppingFragment : Fragment() {
         binding.shoppingListRecyclerView.apply {
             adapter = shoppingAdapter
             layoutManager = LinearLayoutManager(requireContext())
+        }
+
+        templateAdapter = ShoppingTemplateAdapter(
+            onApplyTemplate = { template ->
+                viewModel.applyTemplate(template)
+                Snackbar.make(binding.root, "Added ${template.itemNames.size} items from ${template.name}", Snackbar.LENGTH_SHORT).show()
+            }
+        )
+        binding.recyclerTemplates.apply {
+            adapter = templateAdapter
+            layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        }
+    }
+
+    private fun setupQuickAdd() {
+        binding.btnAddQuick.setOnClickListener {
+            val name = binding.editQuickAdd.text.toString().trim()
+            if (name.isNotEmpty()) {
+                viewModel.onAddItem(name)
+                binding.editQuickAdd.text.clear()
+            }
         }
     }
 
@@ -87,6 +112,29 @@ class ShoppingFragment : Fragment() {
                 viewModel.shoppingItems.collect { items ->
                     shoppingAdapter.submitList(items)
                     binding.textEmpty.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
+                    val uncheckedCount = items.count { !it.isChecked }
+                    binding.textRemainingInfo.text = "$uncheckedCount item${if (uncheckedCount != 1) "s" else ""} remaining for your weekly pantry restock."
+                }
+            }
+        }
+    }
+
+    private fun observeTemplates() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.templates.collect { templates ->
+                    templateAdapter.submitList(templates)
+                }
+            }
+        }
+    }
+
+    private fun observeInventoryStatus() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.inventoryItemNames.collect { names ->
+                    shoppingAdapter.updateInventoryStatus(names)
+                    shoppingAdapter.notifyDataSetChanged()
                 }
             }
         }

@@ -14,6 +14,12 @@ class ShoppingItemAdapter(
     private val onDelete: (ShoppingItem) -> Unit
 ) : ListAdapter<ShoppingItem, ShoppingItemAdapter.ViewHolder>(ShoppingDiffCallback()) {
 
+    private var inventoryItemNames: Set<String> = emptySet()
+
+    fun updateInventoryStatus(names: Set<String>) {
+        inventoryItemNames = names
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = ItemShoppingBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ViewHolder(binding)
@@ -27,7 +33,14 @@ class ShoppingItemAdapter(
         fun bind(item: ShoppingItem) {
             binding.checkboxShopping.isChecked = item.isChecked
             binding.textItemName.text = item.name
-            
+
+            val isInInventory = item.name.lowercase().trim() in inventoryItemNames.map { it.lowercase().trim() }
+            binding.textInventoryStatus.visibility = if (isInInventory && !item.isChecked) {
+                android.view.View.VISIBLE
+            } else {
+                android.view.View.GONE
+            }
+
             if (item.isChecked) {
                 binding.textItemName.paintFlags = binding.textItemName.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
                 binding.textItemName.alpha = 0.5f
