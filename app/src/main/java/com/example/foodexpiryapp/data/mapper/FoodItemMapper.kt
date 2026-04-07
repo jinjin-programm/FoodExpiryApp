@@ -3,6 +3,8 @@ package com.example.foodexpiryapp.data.mapper
 import com.example.foodexpiryapp.data.local.database.FoodItemEntity
 import com.example.foodexpiryapp.domain.model.FoodCategory
 import com.example.foodexpiryapp.domain.model.FoodItem
+import com.example.foodexpiryapp.domain.model.RiskLevel
+import com.example.foodexpiryapp.domain.model.ScanSource
 import com.example.foodexpiryapp.domain.model.StorageLocation
 import java.time.LocalDate
 
@@ -31,7 +33,20 @@ object FoodItemMapper {
             barcode = entity.barcode,
             dateAdded = LocalDate.parse(entity.dateAdded),
             notifyEnabled = entity.notifyEnabled,
-            notifyDaysBefore = entity.notifyDaysBefore
+            notifyDaysBefore = entity.notifyDaysBefore,
+            purchaseDate = entity.purchaseDate?.let { LocalDate.parse(it) },
+            scanSource = try {
+                ScanSource.valueOf(entity.scanSource)
+            } catch (e: IllegalArgumentException) {
+                ScanSource.MANUAL
+            },
+            confidence = entity.confidence,
+            riskLevel = try {
+                RiskLevel.valueOf(entity.riskLevel)
+            } catch (e: IllegalArgumentException) {
+                RiskLevel.LOW
+            },
+            recipeRelevance = entity.recipeRelevance
         )
     }
 
@@ -47,7 +62,12 @@ object FoodItemMapper {
             barcode = domain.barcode,
             dateAdded = domain.dateAdded.toString(),
             notifyEnabled = domain.notifyEnabled,
-            notifyDaysBefore = domain.notifyDaysBefore
+            notifyDaysBefore = domain.notifyDaysBefore,
+            purchaseDate = domain.purchaseDate?.toString(),
+            scanSource = domain.scanSource.name,
+            confidence = domain.confidence,
+            riskLevel = domain.riskLevel.name,
+            recipeRelevance = domain.recipeRelevance
         )
     }
 }

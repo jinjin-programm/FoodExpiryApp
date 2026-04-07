@@ -21,5 +21,10 @@ data class FoodItemEntity(
     val barcode: String? = null,
     val dateAdded: String,
     val notifyEnabled: Boolean = true,
-    val notifyDaysBefore: Int? = null
+    val notifyDaysBefore: Int? = null,
+    val purchaseDate: String? = null,
+    val scanSource: String = "MANUAL",
+    val confidence: Float = 1.0f,
+    val riskLevel: String = "LOW",
+    val recipeRelevance: Float = 0.0f
 )
