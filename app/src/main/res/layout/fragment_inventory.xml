@@ -506,11 +506,15 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- Hidden legacy speed dial -->
-    <com.leinardi.android.speeddial.SpeedDialView
-        android:id="@+id/speed_dial"
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_quick_actions"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="gone" />
+        android:layout_gravity="bottom|end"
+        android:layout_margin="24dp"
+        app:srcCompat="@android:drawable/ic_input_add"
+        app:tint="@color/on_primary"
+        app:backgroundTint="@color/primary"
+        android:contentDescription="Quick Actions" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

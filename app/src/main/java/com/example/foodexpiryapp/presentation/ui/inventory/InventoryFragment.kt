@@ -1,5 +1,7 @@
 package com.example.foodexpiryapp.presentation.ui.inventory
 
+import android.widget.PopupMenu
+import android.widget.Toast
 import android.app.DatePickerDialog
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -148,6 +150,35 @@ class InventoryFragment : Fragment() {
                 val bundle = Bundle().apply { putString("scan_mode", "barcode") }
                 findNavController().navigate(R.id.action_inventory_to_scan, bundle)
             }
+        }
+        
+        binding.fabQuickActions.setOnClickListener { view ->
+            val popup = PopupMenu(requireContext(), view)
+            popup.menuInflater.inflate(R.menu.inventory_quick_actions, popup.menu)
+            popup.setOnMenuItemClickListener { menuItem ->
+                when (menuItem.itemId) {
+                    R.id.action_photo_scan -> {
+                        findNavController().currentDestination?.getAction(R.id.action_inventory_to_yolo_scan)?.let {
+                            findNavController().navigate(R.id.action_inventory_to_yolo_scan)
+                        }
+                        true
+                    }
+                    R.id.action_manual_entry -> {
+                        showAddEditDialog(null)
+                        true
+                    }
+                    R.id.action_view_expiring -> {
+                        Toast.makeText(requireContext(), "View Expiring Not Implemented", Toast.LENGTH_SHORT).show()
+                        true
+                    }
+                    R.id.action_view_analysis -> {
+                        Toast.makeText(requireContext(), "View Analysis Not Implemented", Toast.LENGTH_SHORT).show()
+                        true
+                    }
+                    else -> false
+                }
+            }
+            popup.show()
         }
     }
 
