@@ -84,15 +84,16 @@ class ProfileAccountFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
-                    // Update Google Sign-In UI
                     if (state.isGoogleSignIn) {
+                        binding.cardLocalAccount.visibility = View.GONE
                         binding.btnGoogleSignIn.visibility = View.GONE
+                        binding.textGoogleSignInHint.visibility = View.GONE
                         binding.btnGoogleSignOut.visibility = View.VISIBLE
                         binding.textGoogleUserName.visibility = View.VISIBLE
                         binding.textGoogleUserEmail.visibility = View.VISIBLE
                         binding.textGoogleUserName.text = state.googleUserName
                         binding.textGoogleUserEmail.text = state.googleUserEmail
-                        
+
                         if (state.googleUserPhotoUrl != null) {
                             binding.imgGooglePhoto.visibility = View.VISIBLE
                             Glide.with(this@ProfileAccountFragment)
@@ -101,7 +102,9 @@ class ProfileAccountFragment : Fragment() {
                                 .into(binding.imgGooglePhoto)
                         }
                     } else {
+                        binding.cardLocalAccount.visibility = View.VISIBLE
                         binding.btnGoogleSignIn.visibility = View.VISIBLE
+                        binding.textGoogleSignInHint.visibility = View.VISIBLE
                         binding.btnGoogleSignOut.visibility = View.GONE
                         binding.textGoogleUserName.visibility = View.GONE
                         binding.textGoogleUserEmail.visibility = View.GONE
