@@ -17,7 +17,12 @@ data class FoodItem(
     val barcode: String? = null,
     val dateAdded: LocalDate = LocalDate.now(),
     val notifyEnabled: Boolean = true,
-    val notifyDaysBefore: Int? = null
+    val notifyDaysBefore: Int? = null,
+    val purchaseDate: LocalDate? = null,
+    val scanSource: ScanSource = ScanSource.MANUAL,
+    val confidence: Float = 1.0f,
+    val riskLevel: RiskLevel = RiskLevel.LOW,
+    val recipeRelevance: Float = 0.0f
 ) {
     /** True if this item has already expired. */
     val isExpired: Boolean
@@ -53,4 +58,23 @@ enum class StorageLocation(val displayName: String) {
     FREEZER("Freezer"),
     PANTRY("Pantry"),
     COUNTER("Counter")
+}
+
+/**
+ * Source from which the food item was added.
+ */
+enum class ScanSource {
+    MANUAL,
+    BARCODE,
+    RECEIPT,
+    INGREDIENT_LIST
+}
+
+/**
+ * Risk level associated with the food item (e.g. high risk for meat).
+ */
+enum class RiskLevel {
+    LOW,
+    MEDIUM,
+    HIGH
 }
