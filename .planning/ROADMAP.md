@@ -40,6 +40,10 @@
 ### Phase 3: Polish & Trust
 **Goal:** Finalize the replenishment loop and build user trust through transparency.
 **Requirements:** SHOP-01, SHOP-02, PROF-01, PROF-02, PROF-03
+**Plans:** 3 plans
+- [ ] 03-01-PLAN.md — Shopping Templates &amp; Inventory Status Integration
+- [ ] 03-02-PLAN.md — Privacy &amp; Data Usage Copy + Optional Google Sign-In
+- [ ] 03-03-PLAN.md — Move Notification Settings to Top of Profile
 **Success criteria:**
 1. Shopping module provides at least 3 common templates for quick addition.
 2. Shopping items accurately reflect inventory status (items added/remaining).
