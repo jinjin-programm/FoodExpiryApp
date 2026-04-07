@@ -55,6 +55,16 @@
                 android:textSize="12sp"
                 tools:text="Pasta, Eggs, Bacon, Cheese" />
 
+            <TextView
+                android:id="@+id/text_match_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textSize="11sp"
+                android:textColor="#2E7D32"
+                android:visibility="gone"
+                tools:text="Rescues 3 expiring items" />
+
         </LinearLayout>
 
     </LinearLayout>

@@ -1,16 +1,18 @@
 package com.example.foodexpiryapp.presentation.adapter
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.foodexpiryapp.databinding.ItemRecipePickerBinding
 import com.example.foodexpiryapp.domain.model.Recipe
+import com.example.foodexpiryapp.domain.model.RecipeMatch
 
 class RecipePickerAdapter(
-    private val onRecipeSelected: (Recipe) -> Unit
-) : ListAdapter<Recipe, RecipePickerAdapter.RecipeViewHolder>(RecipeDiffCallback()) {
+    private val onRecipeSelected: (RecipeMatch) -> Unit
+) : ListAdapter<RecipeMatch, RecipePickerAdapter.RecipeViewHolder>(RecipeDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecipeViewHolder {
         val binding = ItemRecipePickerBinding.inflate(
@@ -29,15 +31,19 @@ class RecipePickerAdapter(
         private val binding: ItemRecipePickerBinding
     ) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(recipe: Recipe) {
+        fun bind(match: RecipeMatch) {
+            val recipe = match.recipe
+
             binding.textRecipeName.text = recipe.name
 
-            val ingredientsText = recipe.ingredients.take(4).joinToString(", ") { it.name }
-            val moreCount = recipe.ingredients.size - 4
-            binding.textIngredients.text = if (moreCount > 0) {
-                "$ingredientsText +$moreCount more"
+            val ingredientsText = recipe.ingredients.take(3).joinToString(", ") { it.name }
+            binding.textIngredients.text = ingredientsText
+
+            if (match.matchCount > 0) {
+                binding.textMatchInfo.text = "${match.matchCount} ingredients rescued"
+                binding.textMatchInfo.visibility = View.VISIBLE
             } else {
-                ingredientsText
+                binding.textMatchInfo.visibility = View.GONE
             }
 
             val emoji = when {
@@ -54,17 +60,17 @@ class RecipePickerAdapter(
             binding.textEmoji.text = emoji
 
             binding.root.setOnClickListener {
-                onRecipeSelected(recipe)
+                onRecipeSelected(match)
             }
         }
     }
 
-    private class RecipeDiffCallback : DiffUtil.ItemCallback<Recipe>() {
-        override fun areItemsTheSame(oldItem: Recipe, newItem: Recipe): Boolean {
-            return oldItem.id == newItem.id
+    private class RecipeDiffCallback : DiffUtil.ItemCallback<RecipeMatch>() {
+        override fun areItemsTheSame(oldItem: RecipeMatch, newItem: RecipeMatch): Boolean {
+            return oldItem.recipe.id == newItem.recipe.id
         }
 
-        override fun areContentsTheSame(oldItem: Recipe, newItem: Recipe): Boolean {
+        override fun areContentsTheSame(oldItem: RecipeMatch, newItem: RecipeMatch): Boolean {
             return oldItem == newItem
         }
     }

@@ -23,6 +23,7 @@ import com.example.foodexpiryapp.domain.model.FoodItem
 import com.example.foodexpiryapp.domain.model.MealPlan
 import com.example.foodexpiryapp.domain.model.MealSlot
 import com.example.foodexpiryapp.domain.model.Recipe
+import com.example.foodexpiryapp.domain.model.RecipeMatch
 import com.example.foodexpiryapp.domain.repository.AnalyticsRepository
 import com.example.foodexpiryapp.presentation.adapter.MealSlotDisplayItem
 import com.example.foodexpiryapp.presentation.adapter.ProductSearchAdapter
@@ -201,8 +202,8 @@ class PlannerFragment : Fragment() {
     private fun showRecipePicker(slot: MealSlot) {
         val dialogBinding = DialogRecipePickerBinding.inflate(layoutInflater)
 
-        recipePickerAdapter = RecipePickerAdapter { recipe ->
-            viewModel.onAddRecipe(slot, recipe)
+        recipePickerAdapter = RecipePickerAdapter { match ->
+            viewModel.onAddRecipe(slot, match.recipe)
             recipePickerDialog?.dismiss()
         }
 
@@ -211,15 +212,51 @@ class PlannerFragment : Fragment() {
             layoutManager = LinearLayoutManager(requireContext())
         }
 
-        val allRecipes = viewModel.uiState.value.allRecipes
-        recipePickerAdapter?.submitList(allRecipes)
+        val suggestedRecipes = viewModel.getFilteredRecipesWithMatchInfo("")
+        if (suggestedRecipes.isNotEmpty()) {
+            recipePickerAdapter?.submitList(suggestedRecipes)
+        } else {
+            val allRecipes = viewModel.getFilteredRecipes("")
+            val fallbackMatches = allRecipes.map { recipe ->
+                RecipeMatch(
+                    recipe = recipe,
+                    matchCount = 0,
+                    matchedIngredients = emptyList(),
+                    matchedInventoryItems = emptyList(),
+                    estimatedMoneySaved = 0.0,
+                    wasteRescuePercent = 0,
+                    urgencyLevel = 0,
+                    dietaryFlags = emptyList()
+                )
+            }
+            recipePickerAdapter?.submitList(fallbackMatches)
+        }
 
         dialogBinding.searchInput.doOnTextChanged { text, _, _, _ ->
             val query = text?.toString() ?: ""
-            val filtered = viewModel.getFilteredRecipes(query)
-            recipePickerAdapter?.submitList(filtered)
-            dialogBinding.emptyStateLayout.visibility =
-                if (filtered.isEmpty()) View.VISIBLE else View.GONE
+            val suggested = viewModel.getFilteredRecipesWithMatchInfo(query)
+            if (suggested.isNotEmpty()) {
+                recipePickerAdapter?.submitList(suggested)
+                dialogBinding.emptyStateLayout.visibility =
+                    if (suggested.isEmpty()) View.VISIBLE else View.GONE
+            } else {
+                val allFiltered = viewModel.getFilteredRecipes(query)
+                val fallbackMatches = allFiltered.map { recipe ->
+                    RecipeMatch(
+                        recipe = recipe,
+                        matchCount = 0,
+                        matchedIngredients = emptyList(),
+                        matchedInventoryItems = emptyList(),
+                        estimatedMoneySaved = 0.0,
+                        wasteRescuePercent = 0,
+                        urgencyLevel = 0,
+                        dietaryFlags = emptyList()
+                    )
+                }
+                recipePickerAdapter?.submitList(fallbackMatches)
+                dialogBinding.emptyStateLayout.visibility =
+                    if (fallbackMatches.isEmpty()) View.VISIBLE else View.GONE
+            }
         }
 
         dialogBinding.btnClose.setOnClickListener {

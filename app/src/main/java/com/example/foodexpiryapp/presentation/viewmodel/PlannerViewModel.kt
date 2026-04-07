@@ -7,11 +7,13 @@ import com.example.foodexpiryapp.domain.model.MealItemType
 import com.example.foodexpiryapp.domain.model.MealPlan
 import com.example.foodexpiryapp.domain.model.MealSlot
 import com.example.foodexpiryapp.domain.model.Recipe
+import com.example.foodexpiryapp.domain.model.RecipeMatch
 import com.example.foodexpiryapp.domain.usecase.DeleteMealPlanUseCase
 import com.example.foodexpiryapp.domain.usecase.GetAllFoodItemsUseCase
 import com.example.foodexpiryapp.domain.usecase.GetAllRecipesUseCase
 import com.example.foodexpiryapp.domain.usecase.GetMealPlansForDateUseCase
 import com.example.foodexpiryapp.domain.usecase.SaveMealPlanUseCase
+import com.example.foodexpiryapp.domain.usecase.ScoreRecipesForInventoryUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +32,7 @@ data class PlannerUiState(
     val mealPlans: Map<MealSlot, MealPlan?> = emptyMap(),
     val allRecipes: List<Recipe> = emptyList(),
     val inventoryItems: List<FoodItem> = emptyList(),
+    val suggestedRecipes: List<RecipeMatch> = emptyList(),
     val searchQuery: String = "",
     val searchResults: SearchResult = SearchResult.Empty,
     val isLoading: Boolean = true,
@@ -54,7 +57,8 @@ class PlannerViewModel @Inject constructor(
     private val saveMealPlan: SaveMealPlanUseCase,
     private val deleteMealPlan: DeleteMealPlanUseCase,
     private val getAllRecipes: GetAllRecipesUseCase,
-    private val getAllFoodItems: GetAllFoodItemsUseCase
+    private val getAllFoodItems: GetAllFoodItemsUseCase,
+    private val scoreRecipesForInventory: ScoreRecipesForInventoryUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlannerUiState())
@@ -104,11 +108,17 @@ class PlannerViewModel @Inject constructor(
                     }
                 }
 
+                val allMatchedRecipes = scoreRecipesForInventory(recipes, inventory)
+                val suggestedRecipes = allMatchedRecipes.filter { match ->
+                    match.matchedInventoryItems.any { it.daysUntilExpiry <= 7 }
+                }
+
                 PlannerUiState(
                     selectedDate = _uiState.value.selectedDate,
                     mealPlans = plansMap,
                     allRecipes = recipes,
                     inventoryItems = inventory,
+                    suggestedRecipes = suggestedRecipes,
                     searchQuery = query,
                     searchResults = searchResult,
                     isLoading = false,
@@ -208,6 +218,20 @@ class PlannerViewModel @Inject constructor(
         val lowerQuery = query.lowercase()
         return _uiState.value.inventoryItems.filter {
             it.name.lowercase().contains(lowerQuery)
+        }
+    }
+
+    fun getSuggestedRecipes(): List<RecipeMatch> {
+        return _uiState.value.suggestedRecipes
+    }
+
+    fun getFilteredRecipesWithMatchInfo(query: String): List<RecipeMatch> {
+        val suggested = _uiState.value.suggestedRecipes
+        if (query.isBlank()) return suggested
+        val lowerQuery = query.lowercase()
+        return suggested.filter { match ->
+            match.recipe.name.lowercase().contains(lowerQuery) ||
+            match.matchedIngredients.any { it.name.lowercase().contains(lowerQuery) }
         }
     }
 }
