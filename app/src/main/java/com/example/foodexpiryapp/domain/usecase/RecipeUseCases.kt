@@ -68,8 +68,17 @@ class ScoreRecipesForInventoryUseCase @Inject constructor(
                     listOf("VEGETARIAN","VEGAN","GLUTEN_FREE","DAIRY_FREE","NUT_FREE","LOW_CARB").contains(it.name)
                 }.toList()
             )
-        }.sortedByDescending { 
-            it.matchCount * 10 + it.urgencyLevel * 5 + it.wasteRescuePercent
+        }.sortedByDescending { match ->
+            val expiryUrgencyBonus = match.matchedInventoryItems.sumOf { item ->
+                when {
+                    item.isExpired -> 10L
+                    item.daysUntilExpiry <= 1 -> 8L
+                    item.daysUntilExpiry <= 3 -> 5L
+                    item.daysUntilExpiry <= 7 -> 3L
+                    else -> 1L
+                }
+            }
+            match.matchCount * 10 + match.urgencyLevel * 5 + match.wasteRescuePercent + expiryUrgencyBonus
         }
     }
 }

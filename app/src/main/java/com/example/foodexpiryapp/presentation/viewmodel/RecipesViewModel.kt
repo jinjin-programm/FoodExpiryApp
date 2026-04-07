@@ -119,14 +119,26 @@ class RecipesViewModel @Inject constructor(
         cookedStats
     ) { recipes, inventory, query, filter, stats ->
         
-        val expiringItems = inventory.filter { it.daysUntilExpiry <= 3 && !it.isExpired }
+        val expiringItems = inventory.filter { it.daysUntilExpiry <= 7 && !it.isExpired }
             .sortedBy { it.daysUntilExpiry }
 
         val allMatches = scoreRecipesForInventory(recipes, inventory)
         val filteredMatches = applyFilter(allMatches, filter, query, inventory)
 
+        val sortedMatches = if (filter == RecipeFilter.ALL) {
+            val withExpiry = filteredMatches.filter { match ->
+                match.matchedInventoryItems.any { it.daysUntilExpiry <= 7 }
+            }
+            val withoutExpiry = filteredMatches.filter { match ->
+                match.matchedInventoryItems.none { it.daysUntilExpiry <= 7 }
+            }
+            withExpiry + withoutExpiry
+        } else {
+            filteredMatches
+        }
+
         RecipesUiState(
-            recipeMatches = filteredMatches,
+            recipeMatches = sortedMatches,
             expiringItems = expiringItems,
             isLoading = false,
             searchQuery = query,

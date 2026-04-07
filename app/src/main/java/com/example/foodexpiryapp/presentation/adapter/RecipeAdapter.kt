@@ -11,6 +11,7 @@ import com.example.foodexpiryapp.databinding.ItemRecipeBinding
 import com.example.foodexpiryapp.domain.model.Recipe
 import com.example.foodexpiryapp.domain.model.RecipeMatch
 import com.example.foodexpiryapp.domain.model.RecipeTag
+import com.example.foodexpiryapp.domain.model.FoodItem
 
 class RecipeAdapter(
     private val onRecipeClick: (Recipe) -> Unit,
@@ -46,7 +47,10 @@ class RecipeAdapter(
             binding.textRecipeDescription.text = recipe.description
             binding.textTime.text = "${recipe.totalTimeMinutes} min"
             binding.textMoneySaved.text = "Save ~$${String.format("%.2f", match.estimatedMoneySaved)}"
-            binding.textWasteScore.text = "${recipe.wasteRescueScore}% waste rescue"
+            binding.textWasteScore.text = "${match.wasteRescuePercent}% waste rescue"
+            binding.textWasteScore.setTextColor(
+                if (match.wasteRescuePercent >= 50) 0xFF2E7D32.toInt() else 0xFFE65100.toInt()
+            )
 
             val matchedNames = match.matchedIngredients.joinToString(", ") { it.name }
             binding.textMatchedIngredients.text = if (matchedNames.isNotEmpty()) {
@@ -58,8 +62,8 @@ class RecipeAdapter(
             binding.textMatchCount.text = "${match.matchCount} item${if (match.matchCount != 1) "s" else ""} matched"
 
             binding.textWasteBusterBadge.visibility = if (recipe.tags.contains(RecipeTag.WASTE_BUSTER)) View.VISIBLE else View.GONE
-            binding.textQuickBadge.visibility = if (recipe.tags.contains(RecipeTag.QUICK)) View.VISIBLE else View.GONE
-            binding.textUrgentBadge.visibility = if (recipe.tags.contains(RecipeTag.URGENT)) View.VISIBLE else View.GONE
+            binding.textQuickBadge.visibility = if (recipe.totalTimeMinutes < 30) View.VISIBLE else View.GONE
+            binding.textUrgentBadge.visibility = if (match.matchedInventoryItems.any { it.daysUntilExpiry <= 1 }) View.VISIBLE else View.GONE
 
             binding.badgeMatch.setCardBackgroundColor(
                 when {
