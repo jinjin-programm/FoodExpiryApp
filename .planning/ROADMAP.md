@@ -13,6 +13,11 @@
 ### Phase 1: Main Flow First
 **Goal:** Let a new user successfully add the first food item in under 30 seconds with proper risk visibility.
 **Requirements:** INVN-01, INVN-02, INVN-03, INVN-04, INVN-05, DATA-01
+**Plans:** 4 plans
+- [x] 01-01-PLAN.md — Unified Food Data Model
+- [ ] 01-02-PLAN.md — Inventory Empty State & Quick Actions
+- [ ] 01-03-PLAN.md — Expiring Soon Display & Tab Search
+- [ ] 01-04-PLAN.md — Photo Scan OCR Confirmation Flow
 **Success criteria:**
 1. "Get Started" area is visible on empty state on the Home/Inventory screen.
 2. User can take a photo, review pre-filled OCR data, and confirm to save the item to the unified data model.
