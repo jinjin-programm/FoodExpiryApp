@@ -18,8 +18,8 @@
 - [x] 01-02-PLAN.md — Inventory Empty State & Quick Actions
 - [x] 01-03-PLAN.md — Expiring Soon Display & Tab Search
 - [x] 01-04-PLAN.md — Photo Scan OCR Confirmation Flow
-- [ ] 01-05-PLAN.md — Fix Inventory Architecture & UI
-- [ ] 01-06-PLAN.md — Implement OCR Confirmation Bottom Sheet
+- [x] 01-05-PLAN.md — Fix Inventory Architecture & UI
+- [x] 01-06-PLAN.md — Implement OCR Confirmation Bottom Sheet
 **Success criteria:**
 1. "Get Started" area is visible on empty state on the Home/Inventory screen.
 2. User can take a photo, review pre-filled OCR data, and confirm to save the item to the unified data model.
@@ -29,6 +29,9 @@
 ### Phase 2: Connect Modules
 **Goal:** Make the app explain itself through connected data (recipes and planning).
 **Requirements:** RECP-01, RECP-02, PLAN-01
+**Plans:** 2 plans
+- [ ] 02-01-PLAN.md — Enhance Recipes with Expiry-Aware Scoring & Performance Indicators
+- [ ] 02-02-PLAN.md — Planner Expiry-Aware Recipe Picker & Slot Assignment
 **Success criteria:**
 1. Recipes module prominently suggests meals using ingredients expiring within 7 days.
 2. Recipe cards display realistic performance indicators ("ingredients rescued").
