@@ -143,6 +143,12 @@ class InventoryFragment : Fragment() {
                 findNavController().navigate(R.id.action_inventory_to_yolo_scan)
             }
         }
+        binding.btnEmptyStateScan.setOnClickListener {
+            findNavController().currentDestination?.getAction(R.id.action_inventory_to_scan)?.let {
+                val bundle = Bundle().apply { putString("scan_mode", "barcode") }
+                findNavController().navigate(R.id.action_inventory_to_scan, bundle)
+            }
+        }
     }
 
     private fun setupCategoryFilter() {
@@ -175,6 +181,14 @@ class InventoryFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
+                    val isEmpty = state.foodItems.isEmpty()
+                    
+                    binding.layoutEmptyState.visibility = if (isEmpty) View.VISIBLE else View.GONE
+                    binding.layoutExpiringSoonHeader.visibility = if (isEmpty) View.GONE else View.VISIBLE
+                    binding.recyclerExpiringSoon.visibility = if (isEmpty) View.GONE else View.VISIBLE
+                    binding.layoutFreshStockHeader.visibility = if (isEmpty) View.GONE else View.VISIBLE
+                    binding.foodItemsRecyclerView.visibility = if (isEmpty) View.GONE else View.VISIBLE
+
                     val expiringSoon = state.foodItems.filter { it.daysUntilExpiry <= 3 }.sortedBy { it.daysUntilExpiry }
                     expiringSoonAdapter.submitList(expiringSoon)
                     

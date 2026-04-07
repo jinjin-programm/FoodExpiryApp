@@ -387,6 +387,7 @@
 
             <!-- Expiring Soon Section -->
             <LinearLayout
+                android:id="@+id/layout_expiring_soon_header"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="32dp"
@@ -423,6 +424,7 @@
 
             <!-- Fresh Stock Section -->
             <LinearLayout
+                android:id="@+id/layout_fresh_stock_header"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="32dp"
@@ -452,6 +454,54 @@
                 android:layout_marginTop="16dp"
                 android:clipToPadding="false"
                 tools:listitem="@layout/item_food_list" />
+
+            <!-- Empty State Container -->
+            <LinearLayout
+                android:id="@+id/layout_empty_state"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <ImageView
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:layout_marginBottom="16dp"
+                    android:src="@android:drawable/ic_menu_camera"
+                    app:tint="@color/primary_container"
+                    android:contentDescription="Empty Inventory Icon" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Get Started"
+                    android:textColor="@color/on_surface"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Your inventory is empty. Start by scanning a food item to keep track of your groceries."
+                    android:textAlignment="center"
+                    android:textColor="@color/on_surface_variant"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_empty_state_scan"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="Scan Item"
+                    app:cornerRadius="8dp"
+                    android:backgroundTint="@color/primary"
+                    android:textColor="@color/on_primary" />
+            </LinearLayout>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
