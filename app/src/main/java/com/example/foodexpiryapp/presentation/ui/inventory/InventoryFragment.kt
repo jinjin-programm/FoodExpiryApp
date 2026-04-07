@@ -158,8 +158,9 @@ class InventoryFragment : Fragment() {
             popup.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.action_photo_scan -> {
-                        findNavController().currentDestination?.getAction(R.id.action_inventory_to_yolo_scan)?.let {
-                            findNavController().navigate(R.id.action_inventory_to_yolo_scan)
+                        findNavController().currentDestination?.getAction(R.id.action_inventory_to_scan)?.let {
+                            val bundle = Bundle().apply { putString("scan_mode", "barcode") }
+                            findNavController().navigate(R.id.action_inventory_to_scan, bundle)
                         }
                         true
                     }

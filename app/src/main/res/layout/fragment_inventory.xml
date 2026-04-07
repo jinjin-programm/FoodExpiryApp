@@ -187,9 +187,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="Your Kitchen is Empty"
+                    android:text="Get Started"
                     android:textColor="#374151"
-                    android:textSize="20sp"
+                    android:textSize="22sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -205,7 +205,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="24dp"
-                    android:text="Scan First Item"
+                    android:text="Scan Item"
                     app:icon="@android:drawable/ic_menu_camera" />
             </LinearLayout>
 
