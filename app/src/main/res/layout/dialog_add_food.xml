@@ -238,6 +238,15 @@
         <EditText android:id="@+id/edit_quantity" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
         <EditText android:id="@+id/edit_notes" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_save"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="32dp"
+            android:text="Save Item"
+            android:textSize="16sp"
+            app:cornerRadius="12dp" />
+
     </LinearLayout>
 
 </androidx.core.widget.NestedScrollView>
