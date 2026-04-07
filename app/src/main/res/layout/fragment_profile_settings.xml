@@ -219,9 +219,99 @@
                 android:layout_marginBottom="32dp"
                 app:chipSpacingHorizontal="8dp"
                 app:chipSpacingVertical="8dp">
-                
+
                 <!-- Chips will be added programmatically -->
             </com.google.android.material.chip.ChipGroup>
+
+            <!-- Privacy & Data Section -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#DDDDDD"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="24dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginEnd="8dp"
+                    android:contentDescription="Privacy"
+                    app:tint="?attr/colorPrimary"
+                    app:srcCompat="@android:drawable/ic_lock_lock" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Privacy &amp; Data"
+                    android:textAppearance="?attr/textAppearanceSubtitle1"
+                    android:textColor="?attr/colorPrimary" />
+            </LinearLayout>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/privacyCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="@color/surface_container_lowest"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="How we handle your data"
+                        android:textAppearance="?attr/textAppearanceSubtitle2"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="• All food items and photos are stored locally on your device only."
+                        android:textAppearance="?attr/textAppearanceBody2" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="• Photo scanning uses on-device AI (Google ML Kit). Your images never leave your phone."
+                        android:textAppearance="?attr/textAppearanceBody2" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="• Recipe suggestions come from your inventory data — no personal data is shared with third parties."
+                        android:textAppearance="?attr/textAppearanceBody2" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="• Google Sign-In is optional. You can use all features without an account."
+                        android:textAppearance="?attr/textAppearanceBody2" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="• You can delete all your data anytime from the Account tab."
+                        android:textAppearance="?attr/textAppearanceBody2" />
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <LinearLayout
                 android:layout_width="match_parent"
