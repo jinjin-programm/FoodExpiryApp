@@ -30,8 +30,8 @@
 **Goal:** Make the app explain itself through connected data (recipes and planning).
 **Requirements:** RECP-01, RECP-02, PLAN-01
 **Plans:** 2 plans
-- [ ] 02-01-PLAN.md — Enhance Recipes with Expiry-Aware Scoring & Performance Indicators
-- [ ] 02-02-PLAN.md — Planner Expiry-Aware Recipe Picker & Slot Assignment
+- [x] 02-01-PLAN.md — Enhance Recipes with Expiry-Aware Scoring & Performance Indicators
+- [x] 02-02-PLAN.md — Planner Expiry-Aware Recipe Picker & Slot Assignment
 **Success criteria:**
 1. Recipes module prominently suggests meals using ingredients expiring within 7 days.
 2. Recipe cards display realistic performance indicators ("ingredients rescued").
