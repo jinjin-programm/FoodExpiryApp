@@ -220,7 +220,7 @@ class InventoryFragment : Fragment() {
                     binding.layoutFreshStockHeader.visibility = if (isEmpty) View.GONE else View.VISIBLE
                     binding.foodItemsRecyclerView.visibility = if (isEmpty) View.GONE else View.VISIBLE
 
-                    val expiringSoon = state.foodItems.filter { it.daysUntilExpiry <= 3 }.sortedBy { it.daysUntilExpiry }
+                    val expiringSoon = state.foodItems.filter { it.daysUntilExpiry <= 7 }.sortedBy { it.daysUntilExpiry }
                     expiringSoonAdapter.submitList(expiringSoon)
                     
                     val otherItems = state.foodItems.sortedByDescending { it.dateAdded }
