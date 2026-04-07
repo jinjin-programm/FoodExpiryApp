@@ -77,7 +77,7 @@ class InventoryViewModel @Inject constructor(
             .collect { items ->
                 _uiState.update { state ->
                     state.copy(
-                        foodItems = items,
+                        foodItems = items.sortedWith(compareByDescending<FoodItem> { it.riskLevel }.thenBy { it.daysUntilExpiry }),
                         isLoading = false,
                         errorMessage = null
                     )
