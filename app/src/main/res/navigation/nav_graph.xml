@@ -14,9 +14,10 @@
         <action
             android:id="@+id/action_inventory_to_yolo_scan"
             app:destination="@id/navigation_yolo_scan" />
-        <action
+        <!-- LLM scan removed: llama.cpp deleted, MNN integration pending (Phase 5) -->
+        <!-- <action
             android:id="@+id/action_inventory_to_llm_scan"
-            app:destination="@id/navigation_llm_scan" />
+            app:destination="@id/navigation_llm_scan" /> -->
 <action
             android:id="@+id/action_inventory_to_chat"
             app:destination="@id/navigation_chat" />
@@ -68,10 +69,11 @@
         android:name="com.example.foodexpiryapp.presentation.ui.yolo.YoloScanFragment"
         android:label="Food Scanner" />
 
-<fragment
+<!-- LLM scan fragment removed: llama.cpp deleted, MNN integration pending (Phase 5) -->
+    <!-- <fragment
         android:id="@+id/navigation_llm_scan"
         android:name="com.example.foodexpiryapp.presentation.ui.llm.LlmScanFragment"
-        android:label="AI Food Scanner" />
+        android:label="AI Food Scanner" /> -->
 
     <fragment
         android:id="@+id/navigation_vision_scan"

@@ -61,13 +61,7 @@ android {
         mlModelBinding = true
     }
 
-    externalNativeBuild {
-        cmake {
-            path = file("src/main/jni/CMakeLists.txt")
-            version = "3.22.1"
-        }
     }
-}
 
 dependencies {
     // Core Library Desugaring (java.time on older APIs)
@@ -145,9 +139,6 @@ dependencies {
     implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
     implementation("org.tensorflow:tensorflow-lite-metadata:0.4.4")
     implementation("org.tensorflow:tensorflow-lite-gpu:2.14.0")
-
-    // llama.cpp for Local LLM Inference - pure Java GGUF parser
-    implementation("com.llama4j:gguf:0.1.1")
 
     // Networking
     implementation("com.squareup.retrofit2:retrofit:2.9.0")

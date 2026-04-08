@@ -23,7 +23,6 @@ import androidx.navigation.fragment.findNavController
 import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.databinding.FragmentVisionScanBinding
 import com.example.foodexpiryapp.domain.vision.FoodClassifier
-import com.example.foodexpiryapp.presentation.ui.llm.LlamaBridge
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
@@ -61,7 +60,6 @@ class VisionScanFragment : Fragment() {
     private var progressTickerJob: Job? = null
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-    private val llamaBridge = LlamaBridge.getInstance()
     private lateinit var foodClassifier: FoodClassifier
 
     // ML Kit processors removed for true vision
@@ -108,31 +106,11 @@ class VisionScanFragment : Fragment() {
     }
 
     private fun loadModelIfNeeded() {
-        modelLoadJob = scope.launch {
-            updateStatus("Loading model...", Status.INITIALIZING)
-            updateProgress("Optimizing for your device...")
-
-            try {
-                val report = withContext(Dispatchers.IO) {
-                    llamaBridge.ensureModelLoaded(requireContext().applicationContext, LlamaBridge.recommendedVisionConfig())
-                }
-
-                if (report.success) {
-                    updateStatus("Vision model ready - tap capture", Status.READY)
-                    updateProgress("Ready (Local AI)")
-                } else {
-                    updateStatus("Failed to load model", Status.ERROR)
-                    Toast.makeText(context, "Failed to load model", Toast.LENGTH_LONG).show()
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Model load error", e)
-                updateStatus("Error: ${e.message}", Status.ERROR)
-            } finally {
-                binding.progressBar.visibility = View.GONE
-                binding.tvProgressDetail.visibility = View.GONE
-                binding.tvInstruction.visibility = View.VISIBLE
-            }
-        }
+        // TODO: MNN model loading will be added in Phase 5
+        binding.progressBar.visibility = View.GONE
+        binding.tvProgressDetail.visibility = View.GONE
+        binding.tvInstruction.visibility = View.VISIBLE
+        updateStatus("AI model not available (MNN upgrade pending)", Status.READY)
     }
 
     private fun setupUI() {
@@ -298,80 +276,8 @@ class VisionScanFragment : Fragment() {
     private fun runAskAiInference(customBitmap: Bitmap? = null) {
         if (isProcessing) return
 
-        val loadReport = llamaBridge.ensureModelLoaded(requireContext(), LlamaBridge.recommendedVisionConfig())
-        if (!loadReport.success || !llamaBridge.hasVisionSupport()) {
-            Toast.makeText(context, "Failed to load LLM model or vision support", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val bitmap = customBitmap ?: latestBitmap
-        if (bitmap == null) {
-            Toast.makeText(context, "No image captured", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val resizedBitmap = resizeForVision(bitmap, TARGET_IMAGE_MAX_SIDE)
-        if (resizedBitmap != bitmap) {
-            Log.i(
-                TAG,
-                "Image resized from ${bitmap.width}x${bitmap.height} to ${resizedBitmap.width}x${resizedBitmap.height}"
-            )
-        }
-
-        isProcessing = true
-        binding.progressBar.visibility = View.VISIBLE
-        binding.btnCapture.isEnabled = false
-        binding.btnCancelInference.visibility = View.VISIBLE
-        binding.tvProgressDetail.visibility = View.VISIBLE
-        binding.tvInstruction.visibility = View.GONE
-        binding.btnAskAi.visibility = View.GONE
-        updateProgress("Analyzing image with AI...")
-        updateStatus("Thinking...", Status.ANALYZING)
-        startProgressTicker()
-
-        detectionJob = scope.launch {
-            try {
-                val startTime = System.currentTimeMillis()
-                
-                Log.d(TAG, "Running Llama inference on image size: ${resizedBitmap.width}x${resizedBitmap.height}")
-
-                val prompt = "<img>image0</img>\nWhat food is this? Reply with only the food name, nothing else."
-                
-                val report = withContext(Dispatchers.IO) {
-                    llamaBridge.generateWithImageDetailed(prompt, resizedBitmap, maxTokens = MAX_TOKENS)
-                }
-                
-                val elapsed = (System.currentTimeMillis() - startTime) / 1000.0
-                Log.d(
-                    TAG,
-                    "Total time: ${elapsed}s, preprocess=${report.pixelPackingMs}ms, native=${report.nativeInferenceMs}ms, approx_tps=${"%.2f".format(report.approxTokensPerSecond)}\nRaw Response: ${report.response}"
-                )
-                
-                val result = parseFoodResponse(report.response)
-                displayAiResult(result.foodName, result.expiryDate, result.rawResponse)
-                updateProgress(
-                    "Done in ${"%.1f".format(elapsed)}s (${"%.2f".format(report.approxTokensPerSecond)} tok/s est.)"
-                )
-                
-            } catch (e: CancellationException) {
-                Log.i(TAG, "Inference cancelled")
-                updateStatus("Cancelled", Status.READY)
-                updateProgress("Cancelled")
-            } catch (e: Exception) {
-                Log.e(TAG, "Analysis error: ${e.message}", e)
-                updateStatus("Error: ${e.message}", Status.ERROR)
-                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-            } finally {
-                stopProgressTicker()
-                isProcessing = false
-                binding.progressBar.visibility = View.GONE
-                binding.btnCancelInference.visibility = View.GONE
-                binding.tvProgressDetail.visibility = View.GONE
-                binding.tvInstruction.visibility = View.VISIBLE
-                binding.btnCapture.isEnabled = true
-                binding.btnAskAi.visibility = View.VISIBLE
-            }
-        }
+        // TODO: MNN AI inference will be added in Phase 5
+        Toast.makeText(context, "AI analysis is temporarily unavailable — MNN upgrade pending", Toast.LENGTH_LONG).show()
     }
 
     private fun startProgressTicker() {
@@ -507,7 +413,6 @@ class VisionScanFragment : Fragment() {
         if (::foodClassifier.isInitialized) {
             foodClassifier.close()
         }
-        llamaBridge.freeModel()
         
         _binding = null
     }

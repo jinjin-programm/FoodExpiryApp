@@ -22,7 +22,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.databinding.FragmentVisionScanBinding
-import com.example.foodexpiryapp.presentation.ui.llm.LlamaBridge
+import com.example.foodexpiryapp.domain.vision.FoodClassifier
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
@@ -34,17 +34,18 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import java.io.ByteArrayOutputStream
-import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.math.max
 
 @AndroidEntryPoint
 class VisionScanFragment : Fragment() {
 
     companion object {
         private const val TAG = "VisionScanFragment"
-        private const val MODEL_DIR = "llm"
-        private const val MODEL_FILE = "model.gguf"
+        private const val MAX_TOKENS = 24
+        private const val TARGET_IMAGE_MAX_SIDE = 224
+        private const val PROGRESS_TICK_MS = 400L
     }
 
     private var _binding: FragmentVisionScanBinding? = null
@@ -56,9 +57,10 @@ class VisionScanFragment : Fragment() {
     private var isProcessing = false
     private var detectionJob: Job? = null
     private var modelLoadJob: Job? = null
+    private var progressTickerJob: Job? = null
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-    private val llamaBridge = LlamaBridge.getInstance()
+    private lateinit var foodClassifier: FoodClassifier
 
     // ML Kit processors removed for true vision
 
@@ -85,10 +87,12 @@ class VisionScanFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         cameraExecutor = Executors.newSingleThreadExecutor()
+        foodClassifier = FoodClassifier(requireContext())
+        foodClassifier.initialize()
 
-        updateStatus("Loading Qwen3.5-0.8B...", Status.INITIALIZING)
+        updateStatus("Loading Qwen3-VL-2B...", Status.INITIALIZING)
         binding.progressBar.visibility = View.VISIBLE
-        binding.tvProgressDetail.text = "Loading text model..."
+        binding.tvProgressDetail.text = "Preparing model..."
 
         loadModelIfNeeded()
 
@@ -102,98 +106,11 @@ class VisionScanFragment : Fragment() {
     }
 
     private fun loadModelIfNeeded() {
-        if (llamaBridge.isLoaded()) {
-            updateStatus("Model ready - tap capture", Status.READY)
-            binding.progressBar.visibility = View.GONE
-            binding.tvProgressDetail.text = "Point at food item and tap capture"
-            return
-        }
-
-        modelLoadJob = scope.launch {
-            updateStatus("Loading model...", Status.INITIALIZING)
-            updateProgress("Copying model files...")
-
-            try {
-                val success = withContext(Dispatchers.IO) {
-                    loadModelInternal()
-                }
-
-                if (success) {
-                    updateStatus("Vision model ready - tap capture", Status.READY)
-                    updateProgress("Ready")
-                } else {
-                    updateStatus("Failed to load model", Status.ERROR)
-                    Toast.makeText(context, "Failed to load model", Toast.LENGTH_LONG).show()
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Model load error", e)
-                updateStatus("Error: ${e.message}", Status.ERROR)
-            } finally {
-                binding.progressBar.visibility = View.GONE
-                binding.tvProgressDetail.visibility = View.GONE
-                binding.tvInstruction.visibility = View.VISIBLE
-            }
-        }
-    }
-
-    private fun loadModelInternal(): Boolean {
-        val context = requireContext()
-        val modelPath = File(context.filesDir, MODEL_DIR)
-        val modelFile = File(modelPath, MODEL_FILE)
-        val mmprojFile = File(modelPath, "mmproj.gguf")
-
-        // Copy model from assets if needed
-        if (!modelFile.exists()) {
-            try {
-                context.assets.open("$MODEL_DIR/$MODEL_FILE").use { input ->
-                    modelPath.mkdirs()
-                    modelFile.outputStream().use { output ->
-                        input.copyTo(output)
-                    }
-                }
-                Log.i(TAG, "Model copied from assets")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to copy model: ${e.message}")
-                return false
-            }
-        }
-        
-        // Copy mmproj from assets if needed
-        if (!mmprojFile.exists()) {
-            try {
-                context.assets.open("$MODEL_DIR/mmproj.gguf").use { input ->
-                    modelPath.mkdirs()
-                    mmprojFile.outputStream().use { output ->
-                        input.copyTo(output)
-                    }
-                }
-                Log.i(TAG, "Mmproj copied from assets")
-            } catch (e: Exception) {
-                Log.w(TAG, "Failed to copy mmproj: ${e.message}")
-            }
-        }
-
-        // Load text-only model (Qwen3.5-0.8B)
-        if (!llamaBridge.isLoaded()) {
-            Log.i(TAG, "Loading model from: ${modelFile.absolutePath}")
-            
-            // Optimal settings for 0.8B model on mobile
-            val numThreads = Runtime.getRuntime().availableProcessors().coerceIn(2, 4)
-            Log.i(TAG, "Using $numThreads threads for inference")
-            
-            val loaded = llamaBridge.loadModel(modelFile.absolutePath, 2048, numThreads)
-            if (!loaded) {
-                Log.e(TAG, "Failed to load model")
-                return false
-            }
-            
-            if (mmprojFile.exists() && loaded) {
-                Log.i(TAG, "Loading vision encoder from: ${mmprojFile.absolutePath}")
-                llamaBridge.loadMmproj(mmprojFile.absolutePath)
-            }
-        }
-
-        return llamaBridge.isLoaded()
+        // TODO: MNN model loading will be added in Phase 5
+        binding.progressBar.visibility = View.GONE
+        binding.tvProgressDetail.visibility = View.GONE
+        binding.tvInstruction.visibility = View.VISIBLE
+        updateStatus("AI model not available (MNN upgrade pending)", Status.READY)
     }
 
     private fun setupUI() {
@@ -203,6 +120,14 @@ class VisionScanFragment : Fragment() {
 
         binding.btnCapture.setOnClickListener {
             captureAndAnalyze()
+        }
+
+        binding.btnCancelInference.setOnClickListener {
+            cancelOngoingInference()
+        }
+
+        binding.btnAskAi.setOnClickListener {
+            runAskAiInference()
         }
     }
 
@@ -228,7 +153,15 @@ class VisionScanFragment : Fragment() {
                 .build()
                 .also {
                     it.setAnalyzer(cameraExecutor) { imageProxy ->
-                        latestBitmap = imageProxy.toBitmap()
+                        val bm = imageProxy.toBitmap()
+                        val rotation = imageProxy.imageInfo.rotationDegrees
+                        if (bm != null && rotation != 0) {
+                            val matrix = android.graphics.Matrix()
+                            matrix.postRotate(rotation.toFloat())
+                            latestBitmap = Bitmap.createBitmap(bm, 0, 0, bm.width, bm.height, matrix, true)
+                        } else {
+                            latestBitmap = bm
+                        }
                         imageProxy.close()
                     }
                 }
@@ -252,53 +185,147 @@ class VisionScanFragment : Fragment() {
     private fun captureAndAnalyze() {
         if (isProcessing) return
 
-        if (!llamaBridge.isLoaded()) {
-            Toast.makeText(context, "Model not loaded yet", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val bitmap = latestBitmap
+        var bitmap = latestBitmap
         if (bitmap == null) {
             Toast.makeText(context, "No image captured", Toast.LENGTH_SHORT).show()
             return
         }
+        
+        // Crop the bitmap to exactly what's inside the UI bounding box
+        bitmap = cropToBoundingBox(bitmap)
 
-        isProcessing = true
-        binding.progressBar.visibility = View.VISIBLE
-        binding.btnCapture.isEnabled = false
-        binding.tvProgressDetail.visibility = View.VISIBLE
-        binding.tvInstruction.visibility = View.GONE
-        updateProgress("Analyzing image with Qwen vision...")
-        updateStatus("Thinking...", Status.ANALYZING)
-
-        detectionJob = scope.launch {
-            try {
-                val startTime = System.currentTimeMillis()
-                
-                val prompt = "Identify the food item and its expiry date. Answer ONLY in this format:\nFOOD: [name]\nEXPIRY: [date or \"not visible\"]"
-                
-                val response = withContext(Dispatchers.IO) {
-                    llamaBridge.generateWithImage(prompt, bitmap, maxTokens = 150)
-                }
-                
-                val elapsed = (System.currentTimeMillis() - startTime) / 1000.0
-                Log.d(TAG, "Total time: ${elapsed}s, Response: $response")
-                
-                val result = parseFoodResponse(response)
-                displayResult(result.foodName, result.expiryDate, result.rawResponse)
-                
-            } catch (e: Exception) {
-                Log.e(TAG, "Analysis error: ${e.message}", e)
-                updateStatus("Error: ${e.message}", Status.ERROR)
-                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-            } finally {
-                isProcessing = false
-                binding.progressBar.visibility = View.GONE
-                binding.tvProgressDetail.visibility = View.GONE
-                binding.tvInstruction.visibility = View.VISIBLE
-                binding.btnCapture.isEnabled = true
+        // Quick Scan Flow
+        if (foodClassifier.isInitialized()) {
+            val result = foodClassifier.classify(bitmap)
+            if (result != null) {
+                displayQuickScanResult(result)
+                return
             }
         }
+        
+        // Fallback to Ask AI if Quick Scan fails or not initialized
+        runAskAiInference(bitmap)
+    }
+
+    private fun cropToBoundingBox(bitmap: Bitmap): Bitmap {
+        try {
+            val previewWidth = binding.previewView.width.toFloat()
+            val previewHeight = binding.previewView.height.toFloat()
+            if (previewWidth == 0f || previewHeight == 0f) return bitmap
+
+            // UI Bounding box coordinates and dimensions
+            val boxX = binding.simulatedBox.x
+            val boxY = binding.simulatedBox.y
+            val boxWidth = binding.simulatedBox.width.toFloat()
+            val boxHeight = binding.simulatedBox.height.toFloat()
+
+            // Captured upright bitmap dimensions
+            val bitmapWidth = bitmap.width.toFloat()
+            val bitmapHeight = bitmap.height.toFloat()
+
+            // PreviewView defaults to FILL_CENTER. We calculate the scale factor.
+            val scale = maxOf(previewWidth / bitmapWidth, previewHeight / bitmapHeight)
+
+            // Scaled bitmap dimensions
+            val scaledBitmapWidth = bitmapWidth * scale
+            val scaledBitmapHeight = bitmapHeight * scale
+
+            // Calculate offset of the scaled bitmap relative to the preview (since it's centered)
+            val offsetX = (scaledBitmapWidth - previewWidth) / 2f
+            val offsetY = (scaledBitmapHeight - previewHeight) / 2f
+
+            // Map box coordinates to scaled bitmap coordinates
+            val mappedBoxX = boxX + offsetX
+            val mappedBoxY = boxY + offsetY
+
+            // Map back to original bitmap coordinates
+            val cropX = (mappedBoxX / scale).toInt().coerceAtLeast(0)
+            val cropY = (mappedBoxY / scale).toInt().coerceAtLeast(0)
+            val cropWidth = (boxWidth / scale).toInt().coerceAtMost(bitmap.width - cropX)
+            val cropHeight = (boxHeight / scale).toInt().coerceAtMost(bitmap.height - cropY)
+
+            if (cropWidth <= 0 || cropHeight <= 0) return bitmap
+
+            return Bitmap.createBitmap(bitmap, cropX, cropY, cropWidth, cropHeight)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to crop bitmap", e)
+            return bitmap
+        }
+    }
+
+    private fun displayQuickScanResult(result: com.example.foodexpiryapp.domain.vision.ClassificationResult) {
+        binding.resultCard.visibility = View.VISIBLE
+        binding.rawResponseCard.visibility = View.GONE
+        
+        binding.tvFoodName.text = result.category.nameTw
+        binding.tvExpiryDate.text = "建議保存: ${result.category.displayDays}"
+        
+        binding.tvConfidence.visibility = View.VISIBLE
+        val confPct = (result.confidence * 100).toInt()
+        binding.tvConfidence.text = "Confidence: $confPct% - ${result.category.description}"
+        
+        binding.btnAskAi.visibility = View.VISIBLE
+        
+        // Suggest AI if confidence is low
+        if (result.confidence < 0.6f) {
+            Toast.makeText(context, "信心較低，建議點擊「AI 深度分析」", Toast.LENGTH_LONG).show()
+        }
+        updateStatus("Quick Scan complete", Status.READY)
+    }
+
+    private fun runAskAiInference(customBitmap: Bitmap? = null) {
+        if (isProcessing) return
+
+        // TODO: MNN AI inference will be added in Phase 5
+        Toast.makeText(context, "AI analysis is temporarily unavailable — MNN upgrade pending", Toast.LENGTH_LONG).show()
+    }
+
+    private fun startProgressTicker() {
+        stopProgressTicker()
+        val start = System.currentTimeMillis()
+        progressTickerJob = scope.launch {
+            while (isActive && isProcessing) {
+                val elapsedSec = (System.currentTimeMillis() - start) / 1000.0
+                val etaSec = when {
+                    elapsedSec < 3 -> 8.0
+                    elapsedSec < 8 -> 5.0
+                    else -> max(2.0, 10.0 - elapsedSec)
+                }
+                updateProgress("Processing... ${"%.1f".format(elapsedSec)}s elapsed, ~${"%.0f".format(etaSec)}s remaining")
+                delay(PROGRESS_TICK_MS)
+            }
+        }
+    }
+
+    private fun stopProgressTicker() {
+        progressTickerJob?.cancel()
+        progressTickerJob = null
+    }
+
+    private fun cancelOngoingInference() {
+        if (!isProcessing) return
+        detectionJob?.cancel()
+        stopProgressTicker()
+        isProcessing = false
+        binding.progressBar.visibility = View.GONE
+        binding.btnCancelInference.visibility = View.GONE
+        binding.btnCapture.isEnabled = true
+        binding.tvInstruction.visibility = View.VISIBLE
+        binding.tvProgressDetail.visibility = View.VISIBLE
+        binding.tvProgressDetail.text = "Cancelled"
+        Toast.makeText(requireContext(), "Inference cancelled", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun resizeForVision(source: Bitmap, maxSide: Int): Bitmap {
+        val width = source.width
+        val height = source.height
+        val longest = max(width, height)
+        if (longest <= maxSide) return source
+
+        val scale = maxSide.toFloat() / longest.toFloat()
+        val targetW = (width * scale).toInt().coerceAtLeast(1)
+        val targetH = (height * scale).toInt().coerceAtLeast(1)
+        return Bitmap.createScaledBitmap(source, targetW, targetH, true)
     }
 
     private fun updateProgress(message: String) {
@@ -315,43 +342,45 @@ class VisionScanFragment : Fragment() {
 
     private fun parseFoodResponse(response: String): FoodResult {
         val foodRegex = Regex("""FOOD:\s*\[?([^\[\]\n]+)\]?"?""", RegexOption.IGNORE_CASE)
-        val expiryRegex = Regex("""EXPIRY:\s*\[?([^\[\]\n]+)\]?"?""", RegexOption.IGNORE_CASE)
-        
-        val foodMatches = foodRegex.findAll(response).toList()
-        val expiryMatches = expiryRegex.findAll(response).toList()
-        
-        var foodName = foodMatches.lastOrNull()?.groupValues?.get(1)?.trim() ?: "Unknown"
-        val expiryDate = expiryMatches.lastOrNull()?.groupValues?.get(1)?.trim()
-        
-        val cleanExpiry = expiryDate?.takeIf { 
-            !it.equals("not visible", ignoreCase = true) && 
-            !it.equals("not shown", ignoreCase = true) &&
-            it.isNotBlank() 
+        val foodMatch = foodRegex.find(response)
+        if (foodMatch != null) {
+            val foodName = foodMatch.groupValues[1].trim()
+            val expiryRegex = Regex("""EXPIRY:\s*\[?([^\[\]\n]+)\]?"?""", RegexOption.IGNORE_CASE)
+            val expiryMatch = expiryRegex.find(response)
+            val expiryDate = expiryMatch?.groupValues?.get(1)?.trim()
+            val cleanExpiry = expiryDate?.takeIf { 
+                !it.equals("not visible", ignoreCase = true) && 
+                !it.equals("not shown", ignoreCase = true) &&
+                it.isNotBlank() 
+            }
+            return FoodResult(foodName, cleanExpiry, response)
         }
         
-        if (foodName == "Unknown" || foodName.isBlank()) {
-            foodName = response.take(50).ifEmpty { "Unknown" }
-        }
+        val clean = response.trim()
+        val foodName = if (clean.length < 40 && clean.isNotBlank()) {
+            clean.removeSuffix(".").removeSuffix("!").trim()
+        } else {
+            val lines = response.lines().map { it.trim() }.filter { it.isNotEmpty() }
+            val firstLine = lines.firstOrNull()
+            if (firstLine != null && firstLine.length < 40) {
+                firstLine.removeSuffix(".").removeSuffix("!").trim()
+            } else {
+                response.take(30).trim()
+            }
+        }.ifBlank { "Unknown" }
         
-        return FoodResult(foodName, cleanExpiry, response)
+        return FoodResult(foodName, null, response)
     }
 
-    private fun displayResult(foodName: String, expiryDate: String?, rawResponse: String) {
-        binding.tvFoodName.text = foodName
+    private fun displayAiResult(foodName: String, expiryDate: String?, rawResponse: String) {
+        binding.tvFoodName.text = "AI Result: $foodName"
         binding.tvExpiryDate.text = "Expiry: ${expiryDate ?: "Not detected"}"
+        binding.tvConfidence.visibility = View.GONE
         binding.tvRawResponse.text = rawResponse
         
         binding.resultCard.visibility = View.VISIBLE
         binding.rawResponseCard.visibility = View.VISIBLE
-        updateStatus("Detection complete", Status.READY)
-
-        // Don't hide automatically so user can scroll and read long output
-        /*
-        binding.resultCard.postDelayed({
-            _binding?.resultCard?.visibility = View.GONE
-            _binding?.rawResponseCard?.visibility = View.GONE
-        }, 15000)
-        */
+        updateStatus("AI Analysis complete", Status.READY)
     }
 
     private enum class Status {
@@ -377,8 +406,13 @@ class VisionScanFragment : Fragment() {
         super.onDestroyView()
         detectionJob?.cancel()
         modelLoadJob?.cancel()
+        progressTickerJob?.cancel()
         scope.cancel()
+        cameraProvider?.unbindAll()
         cameraExecutor.shutdown()
+        if (::foodClassifier.isInitialized) {
+            foodClassifier.close()
+        }
         
         _binding = null
     }
