@@ -19,6 +19,11 @@ output-metadata.json
 # IntelliJ
 *.iml
 .idea/
+
+# Eclipse
+.project
+.settings/
+.classpath
 misc.xml
 deploymentTargetDropDown.xml
 render.experimental.xml
