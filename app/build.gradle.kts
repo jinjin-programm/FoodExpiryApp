@@ -62,6 +62,7 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags += "-std=c++17"
+                arguments += "-DCMAKE_MNN_SOURCE_ROOT=C:/Users/jinjin/AndroidStudioProjects/MNN"
             }
         }
 

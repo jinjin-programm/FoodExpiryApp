@@ -56,12 +56,12 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
   5. Model lifecycle manager prevents OOM — only one heavy model loaded at a time, auto-cleanup on backgrounding
   6. MNN engine is accessible as a Hilt singleton with a clean Kotlin API
 **Plans**: 7 plans
-- [ ] 05-01-PLAN.md — Domain contracts: FoodIdentification model + LlmInferenceRepository interface (Wave 1)
-- [ ] 05-02-PLAN.md — Download infrastructure: HTTP Range resume, SHA-256, .part files, Room persistence (Wave 1)
-- [ ] 05-03-PLAN.md — Download orchestrator: ModelDownloadManager, WiFi check, progress Flow (Wave 2)
-- [ ] 05-04-PLAN.md — MNN engine: MnnLlmEngine, ModelLifecycleManager, StructuredOutputParser (Wave 2)
-- [ ] 05-05-PLAN.md — Repository wiring: LlmInferenceRepositoryImpl, IdentifyFoodUseCase, InferenceModule (Wave 3)
-- [ ] 05-06-PLAN.md — UI integration: VisionScanFragment, ChatViewModel, FoodExpiryApp updates (Wave 4)
+- [x] 05-01-PLAN.md — Domain contracts: FoodIdentification model + LlmInferenceRepository interface (Wave 1)
+- [x] 05-02-PLAN.md — Download infrastructure: HTTP Range resume, SHA-256, .part files, Room persistence (Wave 1)
+- [x] 05-03-PLAN.md — Download orchestrator: ModelDownloadManager, WiFi check, progress Flow (Wave 2)
+- [x] 05-04-PLAN.md — MNN engine: MnnLlmEngine, ModelLifecycleManager, StructuredOutputParser (Wave 2)
+- [x] 05-05-PLAN.md — Repository wiring: LlmInferenceRepositoryImpl, IdentifyFoodUseCase, InferenceModule (Wave 3)
+- [x] 05-06-PLAN.md — UI integration: VisionScanFragment, ChatViewModel, FoodExpiryApp updates (Wave 4)
 - [ ] 05-07-PLAN.md — Verification: File existence, build, requirement coverage, human checkpoint (Wave 5)
 
 ### Phase 6: Detection
