@@ -39,7 +39,10 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
   2. MNN v3.5.0 AAR is added to project dependencies and builds successfully
   3. All llama.cpp artifacts are removed — no native `.so` files, no JNI code, no CMake references
   4. App launches and existing features (inventory, recipes, planner, shopping, barcode scan) still work after the engine swap
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 04-01-PLAN.md — Create v1.1.0-backup git tag and update .gitignore
+- [ ] 04-02-PLAN.md — Remove all llama.cpp artifacts (native libs, JNI, Kotlin wrappers)
+- [ ] 04-03-PLAN.md — Integrate MNN v3.5.0 AAR and verify build
 
 ### Phase 5: Engine
 **Goal**: MNN engine loads Qwen3.5-2B-MNN and runs LLM inference with structured JSON output, and users can download the model on demand
@@ -82,7 +85,7 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 4. Foundation | 0/0 | Not started | - |
+| 4. Foundation | 0/3 | Planned | - |
 | 5. Engine | 0/0 | Not started | - |
 | 6. Detection | 0/0 | Not started | - |
 | 7. Scan UI Overhaul | 0/0 | Not started | - |
