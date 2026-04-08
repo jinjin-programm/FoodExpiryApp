@@ -89,7 +89,11 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
   3. Pressing capture shows a shutter flash animation and freezes the frame
   4. After capture, a loading screen shows staged AI inference progress ("Detecting objects..." → "Analyzing N items..." → "Done")
   5. Barcode scan uses a manual tap-to-capture button — no auto-scan, no flash button, no close button
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 07-01-PLAN.md — Switch to NoActionBar theme, remove title bar from all main tabs (Wave 1)
+- [ ] 07-02-PLAN.md — Remove static frames, add floating back arrows, unify capture button across all scan modes (Wave 1)
+- [ ] 07-03-PLAN.md — Add white flash animation and staged progress overlay to Photo + YOLO scan (Wave 2)
+- [ ] 07-04-PLAN.md — Redesign barcode scan to manual capture with result card + human checkpoint (Wave 2)
 **UI hint**: yes
 
 ## Progress
@@ -99,7 +103,7 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 | 4. Foundation | 0/3 | Planned | - |
 | 5. Engine | 0/7 | Planned | - |
 | 6. Detection | 0/4 | Planned | - |
-| 7. Scan UI Overhaul | 0/0 | Not started | - |
+| 7. Scan UI Overhaul | 0/4 | Planned | - |
 
 ---
 *Roadmap created: 2026-04-08 for v2.0 AI Vision Engine Overhaul*
