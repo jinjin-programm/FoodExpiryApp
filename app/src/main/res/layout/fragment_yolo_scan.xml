@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="@color/surface">
 
-    <!-- Camera Viewport -->
+    <!-- Camera Viewport (full-bleed) -->
     <androidx.camera.view.PreviewView
         android:id="@+id/viewFinder"
         android:layout_width="match_parent"
@@ -15,7 +15,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Detection overlay — draws bounding boxes -->
+    <!-- Detection overlay — draws bounding boxes during detection (KEEP per D-07) -->
     <com.example.foodexpiryapp.presentation.ui.yolo.DetectionOverlayView
         android:id="@+id/detectionOverlay"
         android:layout_width="match_parent"
@@ -23,92 +23,27 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Scanning Guides Overlay -->
-    <View
-        android:id="@+id/overlay"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:background="#261B1C1A"
-        app:layout_constraintBottom_toBottomOf="parent"
+    <!-- Floating Back Arrow -->
+    <ImageButton
+        android:id="@+id/btn_back"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="24dp"
+        android:background="@drawable/shape_fab_back"
+        android:contentDescription="Back"
+        android:src="@android:drawable/ic_menu_revert"
+        app:tint="@color/white"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Top Controls (Close & Mode) -->
-    <LinearLayout
-        android:id="@+id/top_controls"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:paddingHorizontal="24dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/shape_leaf_chip"
-                android:fontFamily="sans-serif-medium"
-                android:paddingHorizontal="20dp"
-                android:paddingVertical="8dp"
-                android:text="Single Item"
-                android:textColor="@color/on_primary_fixed"
-                android:textSize="14sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:background="@drawable/shape_pill_glass"
-                android:fontFamily="sans-serif-medium"
-                android:paddingHorizontal="20dp"
-                android:paddingVertical="8dp"
-                android:text="Multi-Scan"
-                android:textColor="@color/white"
-                android:textSize="14sp" />
-        </LinearLayout>
-
-        <ImageButton
-            android:id="@+id/btn_close"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="@drawable/shape_circle"
-            android:backgroundTint="#33FFFFFF"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
-            app:tint="@color/white" />
-    </LinearLayout>
-
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/frame_card"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginBottom="16dp"
-        app:cardBackgroundColor="@android:color/transparent"
-        app:cardCornerRadius="24dp"
-        app:cardElevation="0dp"
-        app:layout_constraintBottom_toTopOf="@id/bottom_controls"
-        app:layout_constraintDimensionRatio="3:4"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/top_controls"
-        app:layout_constraintVertical_bias="0.2"
-        app:layout_constraintWidth_percent="0.8"
-        app:strokeColor="#FFFFFF"
-        app:strokeWidth="2dp">
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="2dp"
-            android:layout_gravity="center"
-            android:background="@drawable/shape_scanning_line" />
-    </com.google.android.material.card.MaterialCardView>
+    <!-- Hidden stub for Kotlin compatibility (btnClose replaced by btn_back) -->
+    <ImageButton
+        android:id="@+id/btn_close"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <!-- Bottom Controls -->
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -206,25 +141,7 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Contextual Tip -->
-    <TextView
-        android:id="@+id/tv_instruction"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:gravity="center"
-        android:paddingHorizontal="48dp"
-        android:shadowColor="#80000000"
-        android:shadowDx="0"
-        android:shadowDy="2"
-        android:shadowRadius="4"
-        android:text="Align items within the frame and tap capture"
-        android:textColor="#FF5252"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/frame_card" />
-
-    <!-- Progress Overlay (D-07: staged progress screen) -->
+    <!-- Progress Overlay (staged progress screen) -->
     <LinearLayout
         android:id="@+id/progressOverlay"
         android:layout_width="match_parent"
