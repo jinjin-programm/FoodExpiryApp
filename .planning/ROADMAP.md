@@ -40,9 +40,9 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
   3. All llama.cpp artifacts are removed — no native `.so` files, no JNI code, no CMake references
   4. App launches and existing features (inventory, recipes, planner, shopping, barcode scan) still work after the engine swap
 **Plans**: 3 plans
-- [ ] 04-01-PLAN.md — Create v1.1.0-backup git tag and update .gitignore
-- [ ] 04-02-PLAN.md — Remove all llama.cpp artifacts (native libs, JNI, Kotlin wrappers)
-- [ ] 04-03-PLAN.md — Integrate MNN v3.5.0 AAR and verify build
+- [x] 04-01-PLAN.md — Create v1.1.0-backup git tag and update .gitignore
+- [x] 04-02-PLAN.md — Remove all llama.cpp artifacts (native libs, JNI, Kotlin wrappers)
+- [x] 04-03-PLAN.md — Integrate MNN v3.5.0 AAR and verify build
 
 ### Phase 5: Engine
 **Goal**: MNN engine loads Qwen3.5-2B-MNN and runs LLM inference with structured JSON output, and users can download the model on demand
