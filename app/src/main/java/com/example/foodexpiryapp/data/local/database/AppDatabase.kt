@@ -13,10 +13,11 @@ import com.example.foodexpiryapp.data.local.dao.CookedRecipeDao
 import com.example.foodexpiryapp.data.local.dao.LocalRecipeDao
 import com.example.foodexpiryapp.data.local.dao.ShoppingTemplateDao
 import com.example.foodexpiryapp.data.local.dao.DownloadStateDao
+import com.example.foodexpiryapp.data.local.dao.DetectionResultDao
 
 @Database(
-    entities = [FoodItemEntity::class, AnalyticsEventEntity::class, MealPlanEntity::class, ShoppingItemEntity::class, CookedRecipeEntity::class, LocalRecipeEntity::class, ShoppingTemplateEntity::class, DownloadStateEntity::class],
-    version = 10,
+    entities = [FoodItemEntity::class, AnalyticsEventEntity::class, MealPlanEntity::class, ShoppingItemEntity::class, CookedRecipeEntity::class, LocalRecipeEntity::class, ShoppingTemplateEntity::class, DownloadStateEntity::class, DetectionResultEntity::class],
+    version = 11,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -28,6 +29,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun localRecipeDao(): LocalRecipeDao
     abstract fun shoppingTemplateDao(): ShoppingTemplateDao
     abstract fun downloadStateDao(): DownloadStateDao
+    abstract fun detectionResultDao(): DetectionResultDao
 
     companion object {
         val MIGRATION_4_5 = object : Migration(4, 5) {
@@ -151,6 +153,29 @@ abstract class AppDatabase : RoomDatabase() {
                         expectedSha256 TEXT,
                         actualSha256 TEXT,
                         updatedAt INTEGER NOT NULL
+                    )
+                """.trimIndent())
+            }
+        }
+
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("""
+                    CREATE TABLE IF NOT EXISTS detection_results (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        sessionId TEXT NOT NULL,
+                        indexInSession INTEGER NOT NULL,
+                        foodName TEXT NOT NULL,
+                        foodNameZh TEXT NOT NULL DEFAULT '',
+                        category TEXT NOT NULL DEFAULT 'OTHER',
+                        confidence REAL NOT NULL DEFAULT 0.0,
+                        llmConfidence REAL NOT NULL DEFAULT 0.0,
+                        status TEXT NOT NULL DEFAULT 'PENDING',
+                        boundingBoxLeft REAL NOT NULL DEFAULT 0.0,
+                        boundingBoxTop REAL NOT NULL DEFAULT 0.0,
+                        boundingBoxRight REAL NOT NULL DEFAULT 0.0,
+                        boundingBoxBottom REAL NOT NULL DEFAULT 0.0,
+                        createdAt INTEGER NOT NULL
                     )
                 """.trimIndent())
             }
