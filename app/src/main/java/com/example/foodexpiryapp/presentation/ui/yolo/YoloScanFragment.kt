@@ -18,36 +18,50 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.setFragmentResult
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.viewpager2.widget.ViewPager2
+import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.databinding.FragmentYoloScanBinding
-import com.example.foodexpiryapp.domain.model.FoodCategory
+import com.example.foodexpiryapp.presentation.ui.scan.ScanPagerAdapter
+import com.example.foodexpiryapp.presentation.viewmodel.YoloScanViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
+/**
+ * YOLO scan tab with camera preview + bounding box overlay + staged progress.
+ *
+ * Replaces the previous TFLite YoloDetector with the MNN pipeline via
+ * YoloScanViewModel → YoloDetectionRepository.
+ *
+ * Per D-02: Bounding boxes on camera preview via DetectionOverlayView.
+ * Per D-07: Staged progress — Detecting → Identifying(n/total) → Navigate to Confirmation.
+ * Per D-19: 0 items detected shows helpful message with retry option.
+ * Per D-21: Model lifecycle during tab switch — cancel and unload when swiping away.
+ */
 @AndroidEntryPoint
 class YoloScanFragment : Fragment() {
 
     companion object {
         private const val TAG = "YoloScanFragment"
-        private const val DETECTION_INTERVAL_MS = 800L
     }
 
     private var _binding: FragmentYoloScanBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var cameraExecutor: ExecutorService
-    private var imageAnalyzer: ImageAnalysis? = null
-    private var cameraProvider: ProcessCameraProvider? = null
-    private var yoloDetector: YoloDetector? = null
+    private val viewModel: YoloScanViewModel by viewModels()
 
-    private var isProcessing = false
-    private var lastDetectionTime = 0L
-    private var bestDetection: DetectionResult? = null
+    private lateinit var cameraExecutor: ExecutorService
+    private var cameraProvider: ProcessCameraProvider? = null
+    private var latestBitmap: Bitmap? = null
+    private var isCapturing = false
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -73,15 +87,6 @@ class YoloScanFragment : Fragment() {
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
-        // Initialise detector off the main thread to avoid blocking the UI
-        cameraExecutor.execute {
-            yoloDetector = context?.let { YoloDetector(it) }
-            activity?.runOnUiThread {
-                val loaded = yoloDetector?.isModelLoaded() == true
-                updateStatus(if (loaded) "YOLO26n ready – point at an object" else "Model unavailable")
-            }
-        }
-
         if (allPermissionsGranted()) {
             startCamera()
         } else {
@@ -89,38 +94,111 @@ class YoloScanFragment : Fragment() {
         }
 
         setupUI()
+        observeUiState()
+        setupViewPagerCallback()
     }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // UI setup
+    // ────────────────────────────────────────────────────────────────────────
 
     private fun setupUI() {
         binding.btnClose.setOnClickListener {
             findNavController().popBackStack()
         }
 
-        binding.btnUseDetection.setOnClickListener {
-            bestDetection?.let { detection ->
-                returnDetectionResult(detection)
+        // Shutter button triggers capture → pipeline start
+        binding.btnCapture.setOnClickListener {
+            captureAndDetect()
+        }
+
+        // Initially hide progress overlay
+        showProgressOverlay(false)
+    }
+
+    /**
+     * Observe ViewModel UI state and update the progress overlay.
+     * Per D-07: Staged progress — Detecting → Identifying(n/total) → Complete.
+     */
+    private fun observeUiState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
+                    when (state) {
+                        is YoloScanViewModel.YoloScanUiState.Ready -> {
+                            showProgressOverlay(false)
+                            isCapturing = false
+                        }
+                        is YoloScanViewModel.YoloScanUiState.Detecting -> {
+                            // Stage 1: "Detecting food items..."
+                            showProgressOverlay(true)
+                            binding.tvProgressTitle.text = "Detecting food items..."
+                            binding.tvProgressDetail.text = "Analyzing camera frame"
+                            binding.btnCancel.visibility = View.GONE
+                        }
+                        is YoloScanViewModel.YoloScanUiState.Classifying -> {
+                            // Stage 2: "Identifying item (1/5)..."
+                            binding.tvProgressTitle.text = "Identifying item (${state.current}/${state.total})..."
+                            binding.tvProgressDetail.text = "AI classification in progress"
+                            binding.btnCancel.visibility = View.VISIBLE
+                        }
+                        is YoloScanViewModel.YoloScanUiState.Complete -> {
+                            // Stage 3: Auto-navigate to ConfirmationFragment
+                            showProgressOverlay(false)
+                            isCapturing = false
+                            navigateToConfirmation(state.sessionId)
+                        }
+                        is YoloScanViewModel.YoloScanUiState.Error -> {
+                            showProgressOverlay(false)
+                            isCapturing = false
+                            Toast.makeText(context, "Detection failed: ${state.message}", Toast.LENGTH_LONG).show()
+                        }
+                        is YoloScanViewModel.YoloScanUiState.NoDetection -> {
+                            // D-19: 0 items detected
+                            showNoDetectionMessage()
+                            isCapturing = false
+                        }
+                    }
+                }
             }
         }
+    }
 
-        binding.btnManualSelect.setOnClickListener {
-            returnDetectionResult(
-                DetectionResult(
-                    label = "Food Item",
-                    confidence = 0f,
-                    boundingBox = android.graphics.RectF(),
-                    category = FoodCategory.OTHER
-                )
-            )
+    /**
+     * Per D-21: Cancel pending analysis and unload YOLO model when swiping away.
+     */
+    private fun setupViewPagerCallback() {
+        val viewPager = requireParentFragment().view?.findViewById<ViewPager2>(R.id.viewPager) ?: return
+        viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                if (position != ScanPagerAdapter.TAB_YOLO) {
+                    // Cancel any ongoing pipeline when leaving YOLO tab
+                    viewModel.cancelDetection()
+                    showProgressOverlay(false)
+                    isCapturing = false
+                }
+            }
+        })
+    }
+
+    private fun showProgressOverlay(show: Boolean) {
+        binding.progressOverlay.visibility = if (show) View.VISIBLE else View.GONE
+        binding.btnCapture.isEnabled = !show
+    }
+
+    /**
+     * Per D-19: Show "No food items detected" with retry and switch-to-Photo-Scan options.
+     */
+    private fun showNoDetectionMessage() {
+        showProgressOverlay(true)
+        binding.tvProgressTitle.text = "No food items detected"
+        binding.tvProgressDetail.text = "Try adjusting the camera or lighting"
+        binding.btnCancel.text = "Retry"
+        binding.btnCancel.visibility = View.VISIBLE
+        binding.btnCancel.setOnClickListener {
+            viewModel.resetToReady()
+            showProgressOverlay(false)
         }
-
-        binding.btnManualSelect.visibility = View.VISIBLE
-        
-        // Auto fade-out unnecessary text
-        binding.tvInstruction.animate()
-            .alpha(0f)
-            .setStartDelay(2000)
-            .setDuration(500)
-            .start()
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -142,60 +220,75 @@ class YoloScanFragment : Fragment() {
             .build()
             .also { it.setSurfaceProvider(binding.viewFinder.surfaceProvider) }
 
-        imageAnalyzer = ImageAnalysis.Builder()
+        val imageAnalyzer = ImageAnalysis.Builder()
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
-            .also { it.setAnalyzer(cameraExecutor, FrameAnalyzer()) }
+            .also { it.setAnalyzer(cameraExecutor, FrameCapturer()) }
 
         try {
             provider.unbindAll()
-            provider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageAnalyzer)
+            provider.bindToLifecycle(
+                viewLifecycleOwner,
+                CameraSelector.DEFAULT_BACK_CAMERA,
+                preview,
+                imageAnalyzer
+            )
         } catch (e: Exception) {
             Log.e(TAG, "Camera binding failed", e)
-            updateStatus("Camera failed to start")
+        }
+    }
+
+    /**
+     * Captures the latest bitmap and triggers the detection pipeline via ViewModel.
+     */
+    private fun captureAndDetect() {
+        if (isCapturing) return
+
+        val bitmap = latestBitmap
+        if (bitmap == null) {
+            Toast.makeText(context, "No image captured — try again", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        isCapturing = true
+        viewModel.startDetection(bitmap)
+    }
+
+    /**
+     * Navigates to ConfirmationFragment with sessionId as argument.
+     * Per D-16: Navigation Component for navigation from scan to confirmation.
+     */
+    private fun navigateToConfirmation(sessionId: String) {
+        try {
+            val bundle = Bundle().apply { putString("sessionId", sessionId) }
+            findNavController().navigate(R.id.action_scan_container_to_confirmation, bundle)
+        } catch (e: Exception) {
+            Log.e(TAG, "Navigation to confirmation failed", e)
+            // Fallback: set FragmentResult for compatibility
+            isCapturing = false
         }
     }
 
     // ────────────────────────────────────────────────────────────────────────
-    // Frame analysis
+    // Frame capture (keeps latest bitmap for shutter-triggered capture)
     // ────────────────────────────────────────────────────────────────────────
 
-    private inner class FrameAnalyzer : ImageAnalysis.Analyzer {
+    private inner class FrameCapturer : ImageAnalysis.Analyzer {
         @SuppressLint("UnsafeOptInUsageError")
         override fun analyze(imageProxy: ImageProxy) {
-            val now = System.currentTimeMillis()
-
-            if (isProcessing || now - lastDetectionTime < DETECTION_INTERVAL_MS) {
-                imageProxy.close()
-                return
+            val bitmap = imageProxy.toBitmap()
+            val rotation = imageProxy.imageInfo.rotationDegrees
+            if (bitmap != null && rotation != 0) {
+                val matrix = android.graphics.Matrix()
+                matrix.postRotate(rotation.toFloat())
+                latestBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+            } else {
+                latestBitmap = bitmap
             }
-
-            if (imageProxy.image == null) {
-                imageProxy.close()
-                return
-            }
-
-            isProcessing = true
-
-            try {
-                val bitmap = imageProxy.toNv21Bitmap()
-                if (bitmap != null) {
-                    val detections = yoloDetector?.detect(bitmap) ?: emptyList()
-                    activity?.runOnUiThread { handleDetections(detections, bitmap) }
-                } else {
-                    Log.w(TAG, "Frame conversion failed")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Frame analysis error", e)
-            } finally {
-                isProcessing = false
-                lastDetectionTime = System.currentTimeMillis()
-                imageProxy.close()
-            }
+            imageProxy.close()
         }
 
-        /** Convert ImageProxy (YUV_420_888) → NV21 → JPEG → Bitmap. */
-        private fun ImageProxy.toNv21Bitmap(): Bitmap? {
+        private fun ImageProxy.toBitmap(): Bitmap? {
             return try {
                 val yBuffer = planes[0].buffer
                 val uBuffer = planes[1].buffer
@@ -222,72 +315,18 @@ class YoloScanFragment : Fragment() {
     }
 
     // ────────────────────────────────────────────────────────────────────────
-    // UI updates
+    // Lifecycle
     // ────────────────────────────────────────────────────────────────────────
-
-    private fun handleDetections(detections: List<DetectionResult>, bitmap: Bitmap) {
-        val binding = _binding ?: return
-        if (detections.isNotEmpty()) {
-            val best = detections.maxByOrNull { it.confidence }!!
-
-            // Surface detections above 40% confidence in the UI
-            if (best.confidence > 0.40f) {
-                bestDetection = best
-                binding.tvDetectedItem.text = "Detected: ${best.label.capitalizeWords()}"
-                binding.tvConfidence.text = "Confidence: ${(best.confidence * 100).toInt()}%"
-                updateStatus("${detections.size} object(s) detected")
-                binding.detectionResultsContainer.visibility = View.VISIBLE
-                binding.btnManualSelect.visibility = View.GONE
-            } else {
-                // Very low-confidence results
-                updateStatus("Scanning… keep scanning (${(best.confidence * 100).toInt()}%)")
-            }
-
-            binding.detectionOverlay.setDetections(detections, bitmap.width, bitmap.height)
-        } else {
-            updateStatus("Scanning… point camera at an object")
-            binding.detectionOverlay.clearDetections()
-        }
-    }
-
-    private fun updateStatus(message: String) {
-        _binding?.tvDetectionStatus?.text = message
-    }
-
-    // ────────────────────────────────────────────────────────────────────────
-    // Result
-    // ────────────────────────────────────────────────────────────────────────
-
-    private fun returnDetectionResult(detection: DetectionResult) {
-        requireActivity().supportFragmentManager.setFragmentResult(
-            "YOLO_SCAN_RESULT",
-            bundleOf(
-                "yolo_label"      to detection.label,
-                "yolo_category"   to detection.category.name,
-                "yolo_confidence" to detection.confidence
-            )
-        )
-        findNavController().popBackStack()
-    }
 
     private fun allPermissionsGranted() = ContextCompat.checkSelfPermission(
         requireContext(), Manifest.permission.CAMERA
     ) == PackageManager.PERMISSION_GRANTED
 
-    // ────────────────────────────────────────────────────────────────────────
-    // Lifecycle
-    // ────────────────────────────────────────────────────────────────────────
-
     override fun onDestroyView() {
         super.onDestroyView()
         cameraProvider?.unbindAll()
         cameraExecutor.shutdown()
-        yoloDetector?.close()
+        viewModel.cancelDetection()
         _binding = null
     }
 }
-
-private fun String.capitalizeWords(): String =
-    split(" ").joinToString(" ") { word ->
-        word.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-    }

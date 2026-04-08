@@ -13,7 +13,7 @@
             app:destination="@id/navigation_scan" />
         <action
             android:id="@+id/action_inventory_to_yolo_scan"
-            app:destination="@id/navigation_yolo_scan" />
+            app:destination="@id/navigation_scan_container" />
         <!-- LLM scan removed: llama.cpp deleted, MNN integration pending (Phase 5) -->
         <!-- <action
             android:id="@+id/action_inventory_to_llm_scan"
@@ -63,6 +63,26 @@
         android:id="@+id/navigation_scan"
         android:name="com.example.foodexpiryapp.presentation.ui.scan.ScanFragment"
         android:label="Scan Item" />
+
+    <!-- Scan Container: ViewPager2 with Photo/Barcode/YOLO tabs (D-04) -->
+    <fragment
+        android:id="@+id/navigation_scan_container"
+        android:name="com.example.foodexpiryapp.presentation.ui.scan.ScanContainerFragment"
+        android:label="Scan">
+        <action
+            android:id="@+id/action_scan_container_to_confirmation"
+            app:destination="@id/navigation_confirmation" />
+    </fragment>
+
+    <!-- Confirmation: batch detection result review (D-09, D-16) -->
+    <fragment
+        android:id="@+id/navigation_confirmation"
+        android:name="com.example.foodexpiryapp.presentation.ui.detection.ConfirmationFragment"
+        android:label="Confirm Items">
+        <argument
+            android:name="sessionId"
+            app:argType="string" />
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_yolo_scan"

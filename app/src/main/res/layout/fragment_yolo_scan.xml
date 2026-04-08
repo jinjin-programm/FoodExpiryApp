@@ -15,7 +15,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Detection overlay -->
+    <!-- Detection overlay — draws bounding boxes -->
     <com.example.foodexpiryapp.presentation.ui.yolo.DetectionOverlayView
         android:id="@+id/detectionOverlay"
         android:layout_width="match_parent"
@@ -218,19 +218,61 @@
         android:shadowDx="0"
         android:shadowDy="2"
         android:shadowRadius="4"
-        android:text="Align the item within the frame for auto-detection"
+        android:text="Align items within the frame and tap capture"
         android:textColor="#FF5252"
         android:textSize="14sp"
         android:textStyle="bold"
         app:layout_constraintTop_toBottomOf="@id/frame_card" />
 
-    <!-- Legacy / Hidden elements -->
-    <TextView android:id="@+id/tv_detection_status" android:layout_width="wrap_content" android:layout_height="wrap_content" android:visibility="gone" app:layout_constraintTop_toTopOf="parent" />
-    <LinearLayout android:id="@+id/detectionResultsContainer" android:layout_width="match_parent" android:layout_height="wrap_content" android:visibility="gone" app:layout_constraintTop_toTopOf="parent">
-        <TextView android:id="@+id/tv_detected_item" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-        <TextView android:id="@+id/tv_confidence" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-        <com.google.android.material.button.MaterialButton android:id="@+id/btn_use_detection" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-        <com.google.android.material.button.MaterialButton android:id="@+id/btn_manual_select" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+    <!-- Progress Overlay (D-07: staged progress screen) -->
+    <LinearLayout
+        android:id="@+id/progressOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#CC000000"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ProgressBar
+            android:id="@+id/progressIndicator"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_marginBottom="24dp"
+            android:indeterminate="true"
+            android:indeterminateTint="@color/white" />
+
+        <TextView
+            android:id="@+id/tvProgressTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Detecting food items..."
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvProgressDetail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Analyzing camera frame"
+            android:textColor="#B3FFFFFF"
+            android:textSize="14sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Cancel"
+            android:textColor="@color/white"
+            android:visibility="gone"
+            app:backgroundTint="#33FFFFFF"
+            app:cornerRadius="24dp" />
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
