@@ -9,6 +9,7 @@ import com.example.foodexpiryapp.data.local.dao.ShoppingItemDao
 import com.example.foodexpiryapp.data.local.dao.ShoppingTemplateDao
 import com.example.foodexpiryapp.data.local.dao.CookedRecipeDao
 import com.example.foodexpiryapp.data.local.dao.LocalRecipeDao
+import com.example.foodexpiryapp.data.local.dao.DownloadStateDao
 import com.example.foodexpiryapp.data.local.database.AppDatabase
 import dagger.Module
 import dagger.Provides
@@ -43,7 +44,8 @@ object DatabaseModule {
             AppDatabase.MIGRATION_5_6,
             AppDatabase.MIGRATION_6_7,
             AppDatabase.MIGRATION_7_8,
-            AppDatabase.MIGRATION_8_9
+            AppDatabase.MIGRATION_8_9,
+            AppDatabase.MIGRATION_9_10
         ).build()
     }
 
@@ -81,5 +83,11 @@ object DatabaseModule {
     @Singleton
     fun provideLocalRecipeDao(database: AppDatabase): LocalRecipeDao {
         return database.localRecipeDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideDownloadStateDao(database: AppDatabase): DownloadStateDao {
+        return database.downloadStateDao()
     }
 }

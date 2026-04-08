@@ -12,10 +12,11 @@ import com.example.foodexpiryapp.data.local.dao.ShoppingItemDao
 import com.example.foodexpiryapp.data.local.dao.CookedRecipeDao
 import com.example.foodexpiryapp.data.local.dao.LocalRecipeDao
 import com.example.foodexpiryapp.data.local.dao.ShoppingTemplateDao
+import com.example.foodexpiryapp.data.local.dao.DownloadStateDao
 
 @Database(
-    entities = [FoodItemEntity::class, AnalyticsEventEntity::class, MealPlanEntity::class, ShoppingItemEntity::class, CookedRecipeEntity::class, LocalRecipeEntity::class, ShoppingTemplateEntity::class],
-    version = 9,
+    entities = [FoodItemEntity::class, AnalyticsEventEntity::class, MealPlanEntity::class, ShoppingItemEntity::class, CookedRecipeEntity::class, LocalRecipeEntity::class, ShoppingTemplateEntity::class, DownloadStateEntity::class],
+    version = 10,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -26,6 +27,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun cookedRecipeDao(): CookedRecipeDao
     abstract fun localRecipeDao(): LocalRecipeDao
     abstract fun shoppingTemplateDao(): ShoppingTemplateDao
+    abstract fun downloadStateDao(): DownloadStateDao
 
     companion object {
         val MIGRATION_4_5 = object : Migration(4, 5) {
@@ -130,6 +132,25 @@ abstract class AppDatabase : RoomDatabase() {
                         name TEXT NOT NULL,
                         description TEXT NOT NULL,
                         itemNames TEXT NOT NULL DEFAULT '[]'
+                    )
+                """.trimIndent())
+            }
+        }
+
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("""
+                    CREATE TABLE IF NOT EXISTS download_state (
+                        filePath TEXT NOT NULL PRIMARY KEY,
+                        totalBytes INTEGER NOT NULL DEFAULT 0,
+                        downloadedBytes INTEGER NOT NULL DEFAULT 0,
+                        eTag TEXT,
+                        lastModified TEXT,
+                        status TEXT NOT NULL DEFAULT 'PENDING',
+                        errorMessage TEXT,
+                        expectedSha256 TEXT,
+                        actualSha256 TEXT,
+                        updatedAt INTEGER NOT NULL
                     )
                 """.trimIndent())
             }
