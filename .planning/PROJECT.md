@@ -44,12 +44,20 @@ Let a new user add their first food item within 30 seconds and reduce the mental
 - ✓ PROF-02: Privacy & Data usage explanations — v1.0
 - ✓ PROF-03: Google Sign-In optional — v1.0
 
+### Validated (v2.0)
+- ✓ SAFE-01: Full project backup before v2.0 — v2.0 Phase 4
+- ✓ SAFE-02: Git tag v1.1.0-backup — v2.0 Phase 4
+- ✓ MNN-01: MNN v3.5.0 AAR integrated — v2.0 Phase 4
+- ✓ MNN-02: llama.cpp completely removed — v2.0 Phase 4
+
 ### Active
-- UI cleanup for scan screens (remove title bar, horizontal frame, capture animation)
-- Barcode scan redesign (manual capture, remove auto-scan/flash/close)
-- MNN inference engine integration (replace GGUF)
-- Dynamic model download from HuggingFace
-- YOLO+LLM multi-object food detection (new scan tab)
+- MNN-03: Qwen3.5-2B-MNN model inference via MNN engine
+- MNN-04: Structured JSON output from LLM
+- MNN-05: Model lifecycle manager (mutual exclusion)
+- MNN-06: Hilt singleton wrapper for MNN engine
+- DL-01 through DL-07: Dynamic model download from HuggingFace
+- YOLO-01 through YOLO-08: YOLO+LLM batch detection pipeline
+- UI-01 through UI-08: Scan UI overhaul
 
 ### Out of Scope
 - **Full App Redesign:** Visual identity preserved, UX optimization only.
@@ -84,4 +92,4 @@ Let a new user add their first food item within 30 seconds and reduce the mental
 This document evolves at phase transitions and milestone boundaries.
 
 ---
-*Last updated: 2026-04-08 after v2.0 milestone started*
+*Last updated: 2026-04-08 after Phase 4 Foundation completion*
