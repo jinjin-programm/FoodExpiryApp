@@ -22,6 +22,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.databinding.FragmentVisionScanBinding
+import com.example.foodexpiryapp.domain.usecase.IdentifyFoodUseCase
+import com.example.foodexpiryapp.data.remote.ModelDownloadManager
+import com.example.foodexpiryapp.domain.model.DownloadUiState
 import com.example.foodexpiryapp.domain.vision.FoodClassifier
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScanning
@@ -61,6 +64,9 @@ class VisionScanFragment : Fragment() {
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private lateinit var foodClassifier: FoodClassifier
+
+    @Inject lateinit var identifyFoodUseCase: IdentifyFoodUseCase
+    @Inject lateinit var modelDownloadManager: ModelDownloadManager
 
     // ML Kit processors removed for true vision
 
@@ -106,11 +112,58 @@ class VisionScanFragment : Fragment() {
     }
 
     private fun loadModelIfNeeded() {
-        // TODO: MNN model loading will be added in Phase 5
-        binding.progressBar.visibility = View.GONE
-        binding.tvProgressDetail.visibility = View.GONE
-        binding.tvInstruction.visibility = View.VISIBLE
-        updateStatus("AI model not available (MNN upgrade pending)", Status.READY)
+        viewLifecycleOwner.lifecycleScope.launch {
+            // Check if model is ready
+            var isReady = false
+            try {
+                isReady = modelDownloadManager.isModelReady()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error checking model status", e)
+            }
+
+            if (isReady) {
+                updateStatus("AI model ready", Status.READY)
+                binding.progressBar.visibility = View.GONE
+                binding.tvProgressDetail.visibility = View.GONE
+                binding.tvInstruction.visibility = View.VISIBLE
+            } else {
+                // Check download state
+                modelDownloadManager.observeDownloadState().collect { state ->
+                    when (state) {
+                        is DownloadUiState.Ready,
+                        is DownloadUiState.Complete -> {
+                            updateStatus("AI model ready", Status.READY)
+                            binding.progressBar.visibility = View.GONE
+                            binding.tvProgressDetail.visibility = View.GONE
+                            binding.tvInstruction.visibility = View.VISIBLE
+                        }
+                        is DownloadUiState.NotDownloaded -> {
+                            updateStatus("AI model not downloaded — tap 'AI 深度分析' to download", Status.READY)
+                            binding.progressBar.visibility = View.GONE
+                            binding.tvProgressDetail.visibility = View.GONE
+                            binding.tvInstruction.visibility = View.VISIBLE
+                        }
+                        is DownloadUiState.Downloading -> {
+                            updateStatus("Downloading model... ${state.overallProgress}%", Status.INITIALIZING)
+                            binding.progressBar.visibility = View.VISIBLE
+                            binding.progressBar.max = 100
+                            binding.progressBar.progress = state.overallProgress
+                            binding.tvProgressDetail.text = "${state.currentFile} — ${String.format("%.1f", state.downloadedMB)}MB / ${String.format("%.1f", state.totalMB)}MB"
+                            binding.tvInstruction.visibility = View.GONE
+                        }
+                        is DownloadUiState.Error -> {
+                            updateStatus("Download error: ${state.message}", Status.ERROR)
+                            binding.progressBar.visibility = View.GONE
+                            binding.tvProgressDetail.visibility = View.GONE
+                            binding.tvInstruction.visibility = View.VISIBLE
+                        }
+                        else -> {
+                            updateStatus("AI model ${state::class.simpleName}", Status.INITIALIZING)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun setupUI() {
@@ -276,8 +329,139 @@ class VisionScanFragment : Fragment() {
     private fun runAskAiInference(customBitmap: Bitmap? = null) {
         if (isProcessing) return
 
-        // TODO: MNN AI inference will be added in Phase 5
-        Toast.makeText(context, "AI analysis is temporarily unavailable — MNN upgrade pending", Toast.LENGTH_LONG).show()
+        var bitmap = customBitmap ?: latestBitmap
+        if (bitmap == null) {
+            Toast.makeText(context, "No image captured", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Check if model needs download first
+        viewLifecycleOwner.lifecycleScope.launch {
+            val isReady = modelDownloadManager.isModelReady()
+            if (!isReady) {
+                // Start download with WiFi check
+                modelDownloadManager.downloadModel().collect { state ->
+                    when (state) {
+                        is DownloadUiState.WifiCheckRequired -> {
+                            // Show WiFi warning dialog
+                            showWifiWarningDialog(state.estimatedSizeMB)
+                        }
+                        is DownloadUiState.Downloading -> {
+                            isProcessing = true
+                            binding.progressBar.visibility = View.VISIBLE
+                            binding.progressBar.max = 100
+                            binding.progressBar.progress = state.overallProgress
+                            binding.tvProgressDetail.text = "Downloading model... ${state.overallProgress}%"
+                            binding.btnCancelInference.visibility = View.VISIBLE
+                            updateStatus("Downloading AI model...", Status.INITIALIZING)
+                        }
+                        is DownloadUiState.Complete -> {
+                            isProcessing = false
+                            binding.progressBar.visibility = View.GONE
+                            binding.btnCancelInference.visibility = View.GONE
+                            Toast.makeText(context, "Model downloaded! Starting analysis...", Toast.LENGTH_SHORT).show()
+                            // Retry inference after download
+                            runAskAiInference(bitmap)
+                        }
+                        is DownloadUiState.Error -> {
+                            isProcessing = false
+                            binding.progressBar.visibility = View.GONE
+                            binding.btnCancelInference.visibility = View.GONE
+                            Toast.makeText(context, "Download failed: ${state.message}", Toast.LENGTH_LONG).show()
+                            updateStatus("Download failed", Status.ERROR)
+                        }
+                        else -> { /* ignore other states during download */ }
+                    }
+                }
+                return@launch
+            }
+
+            // Model ready — run inference
+            isProcessing = true
+            binding.progressBar.visibility = View.VISIBLE
+            binding.btnCancelInference.visibility = View.VISIBLE
+            updateStatus("Analyzing food...", Status.ANALYZING)
+            startProgressTicker()
+
+            try {
+                identifyFoodUseCase.invoke(bitmap).collect { result ->
+                    isProcessing = false
+                    stopProgressTicker()
+                    binding.progressBar.visibility = View.GONE
+                    binding.btnCancelInference.visibility = View.GONE
+
+                    if (result.name == "Error") {
+                        displayAiResult(result.name, null, result.rawResponse ?: "Error")
+                        updateStatus("Analysis failed", Status.ERROR)
+                    } else {
+                        // Send result to InventoryFragment via FragmentResultListener
+                        val bundle = android.os.Bundle().apply {
+                            putString("food_name", result.name)
+                            putString("food_name_zh", result.nameZh)
+                            putString("expiry_date", result.expiryHint)
+                            putFloat("confidence", result.confidence)
+                        }
+                        requireActivity().supportFragmentManager.setFragmentResult("llm_scan_result", bundle)
+
+                        displayAiResult(result.name, result.nameZh, result.rawResponse ?: "")
+                        updateStatus("Analysis complete", Status.READY)
+                    }
+                }
+            } catch (e: Exception) {
+                isProcessing = false
+                stopProgressTicker()
+                binding.progressBar.visibility = View.GONE
+                binding.btnCancelInference.visibility = View.GONE
+                Log.e(TAG, "Inference error", e)
+                Toast.makeText(context, "AI analysis failed: ${e.message}", Toast.LENGTH_LONG).show()
+                updateStatus("Analysis failed", Status.ERROR)
+            }
+        }
+    }
+
+    private fun showWifiWarningDialog(estimatedSizeMB: Double) {
+        val message = "The AI model is approximately ${String.format("%.0f", estimatedSizeMB)}MB. " +
+                     "Download over cellular may use significant data.\n\nDownload anyway?"
+
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Download Over Cellular")
+            .setMessage(message)
+            .setPositiveButton("Download") { _, _ ->
+                viewLifecycleOwner.lifecycleScope.launch {
+                    modelDownloadManager.downloadModel(skipWifiCheck = true).collect { state ->
+                        when (state) {
+                            is DownloadUiState.Downloading -> {
+                                isProcessing = true
+                                binding.progressBar.visibility = View.VISIBLE
+                                binding.progressBar.max = 100
+                                binding.progressBar.progress = state.overallProgress
+                                binding.tvProgressDetail.text = "Downloading model... ${state.overallProgress}%"
+                                binding.btnCancelInference.visibility = View.VISIBLE
+                                updateStatus("Downloading AI model...", Status.INITIALIZING)
+                            }
+                            is DownloadUiState.Complete -> {
+                                isProcessing = false
+                                binding.progressBar.visibility = View.GONE
+                                binding.btnCancelInference.visibility = View.GONE
+                                Toast.makeText(context, "Model downloaded! Starting analysis...", Toast.LENGTH_SHORT).show()
+                                runAskAiInference()
+                            }
+                            is DownloadUiState.Error -> {
+                                isProcessing = false
+                                binding.progressBar.visibility = View.GONE
+                                binding.btnCancelInference.visibility = View.GONE
+                                Toast.makeText(context, "Download failed: ${state.message}", Toast.LENGTH_LONG).show()
+                                updateStatus("Download failed", Status.ERROR)
+                            }
+                            else -> { /* ignore other states during download */ }
+                        }
+                    }
+                }
+            }
+            .setNegativeButton("Wait for WiFi") { _, _ ->
+                Toast.makeText(context, "Download will start when WiFi is available", Toast.LENGTH_SHORT).show()
+            }
+            .show()
     }
 
     private fun startProgressTicker() {
