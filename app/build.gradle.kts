@@ -59,6 +59,12 @@ android {
             abiFilters += listOf("arm64-v8a")
         }
 
+        externalNativeBuild {
+            cmake {
+                cppFlags += "-std=c++17"
+            }
+        }
+
         // API Keys - placeholders for now
         buildConfigField("String", "RAPIDAPI_KEY", "\"test_key\"")
         buildConfigField("String", "GOOGLE_VISION_API_KEY", "\"test_key\"")
@@ -98,6 +104,13 @@ android {
         viewBinding = true
         buildConfig = true
         mlModelBinding = true
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
     }
 
     }
