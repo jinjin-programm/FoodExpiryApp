@@ -24,6 +24,10 @@ struct LlmInstance {
 
 static std::mutex g_llm_mutex;
 
+// Forward declarations for helper functions
+static std::string extractJson(const std::string& text);
+static std::string escapeJson(const std::string& text);
+
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeCreateLlm(
         JNIEnv *env, jobject thiz, jstring modelDir, jint threadNum, jstring memoryMode) {

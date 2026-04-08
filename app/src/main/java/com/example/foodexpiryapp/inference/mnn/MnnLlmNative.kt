@@ -12,9 +12,18 @@ object MnnLlmNative {
 
     init {
         try {
+            // Load MNN dependencies first (order matters!)
+            System.loadLibrary("MNN")
+            System.loadLibrary("MNN_Express")
+            System.loadLibrary("llm")
+            // Optional: GPU backends
+            try { System.loadLibrary("MNN_CL") } catch (e: UnsatisfiedLinkError) { Log.d(TAG, "MNN_CL not available (OpenCL)") }
+            try { System.loadLibrary("MNN_Vulkan") } catch (e: UnsatisfiedLinkError) { Log.d(TAG, "MNN_Vulkan not available") }
+            // Load our JNI bridge last
             System.loadLibrary("mnn_llm_bridge")
+            Log.i(TAG, "All MNN libraries loaded successfully")
         } catch (e: UnsatisfiedLinkError) {
-            Log.w(TAG, "libmnn_llm_bridge.so not found — LLM native features unavailable", e)
+            Log.w(TAG, "MNN libraries not found — LLM native features unavailable", e)
         }
     }
 
