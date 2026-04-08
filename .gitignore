@@ -44,12 +44,38 @@ nul
 # YOLO training run outputs (large generated files)
 runs/
 
+# Local cleanup/archive areas
+archive/
+tools/ml/
+app/model_backup/
+
+# Large model artifacts
+*.pt
+*.onnx
+*_saved_model/
+
 # Local model assets (large files)
 app/src/main/assets/llm/*.gguf
 analytics-branch-backup/
+.bg-shell/
+.gsd/
 # MNN models
 app/src/main/assets/mnn/**/*.mnn
 app/src/main/assets/mnn/**/*.weight
 app/src/main/assets/mnn/**/*.json
 app/src/main/assets/mnn/**/*.txt
 app/src/main/assets/mnn/**/*.mtok
+
+# v2.0 — MNN inference engine
+*.mnn
+*.mnn.weight
+*.mtok
+app/libs/MNN-*.aar
+
+# v2.0 — Model download artifacts
+*.part
+*.meta
+llm/
+
+# v2.0 — Native build intermediates (supplement)
+app/.cxx/
