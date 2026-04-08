@@ -73,7 +73,11 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
   2. After capture, the app crops detected regions, classifies each with the local LLM, and displays a list of identified foods
   3. User can review and confirm detected items before saving to inventory
   4. Processing caps at 5-8 items per scan and recycles bitmaps immediately — no memory issues on 6GB devices
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 06-01-PLAN.md — YOLO engine + batch detection pipeline (domain contracts, MnnYoloEngine, DetectionPipeline)
+- [ ] 06-02-PLAN.md — Data persistence layer (Room entity, DAO, migration v10→v11, DetectionResultRepository)
+- [ ] 06-03-PLAN.md — Scan UI (ViewPager2 container, YOLO scan tab, ConfirmationFragment)
+- [ ] 06-04-PLAN.md — Save flow (DefaultAttributeEngine, Quick Mode, batch save, Snackbar)
 
 ### Phase 7: Scan UI Overhaul
 **Goal**: Scan screens have a cleaner, more modern look with no top title bar, horizontal capture frame, and satisfying capture-to-result flow
@@ -94,7 +98,7 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 |-------|----------------|--------|-----------|
 | 4. Foundation | 0/3 | Planned | - |
 | 5. Engine | 0/7 | Planned | - |
-| 6. Detection | 0/0 | Not started | - |
+| 6. Detection | 0/4 | Planned | - |
 | 7. Scan UI Overhaul | 0/0 | Not started | - |
 
 ---
