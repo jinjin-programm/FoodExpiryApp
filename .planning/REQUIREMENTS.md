@@ -82,37 +82,37 @@ Deferred to future release. Not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SAFE-01 | Phase 1 | Pending |
-| SAFE-02 | Phase 1 | Pending |
-| MNN-01 | Phase 1 | Pending |
-| MNN-02 | Phase 1 | Pending |
-| MNN-03 | Phase 2 | Pending |
-| MNN-04 | Phase 2 | Pending |
-| MNN-05 | Phase 2 | Pending |
-| MNN-06 | Phase 2 | Pending |
-| DL-01 | Phase 2 | Pending |
-| DL-02 | Phase 2 | Pending |
-| DL-03 | Phase 2 | Pending |
-| DL-04 | Phase 2 | Pending |
-| DL-05 | Phase 2 | Pending |
-| DL-06 | Phase 2 | Pending |
-| DL-07 | Phase 2 | Pending |
-| YOLO-01 | Phase 3 | Pending |
-| YOLO-02 | Phase 3 | Pending |
-| YOLO-03 | Phase 3 | Pending |
-| YOLO-04 | Phase 3 | Pending |
-| YOLO-05 | Phase 3 | Pending |
-| YOLO-06 | Phase 3 | Pending |
-| YOLO-07 | Phase 3 | Pending |
-| YOLO-08 | Phase 3 | Pending |
-| UI-01 | Phase 4 | Pending |
-| UI-02 | Phase 4 | Pending |
-| UI-03 | Phase 4 | Pending |
-| UI-04 | Phase 4 | Pending |
-| UI-05 | Phase 4 | Pending |
-| UI-06 | Phase 4 | Pending |
-| UI-07 | Phase 4 | Pending |
-| UI-08 | Phase 4 | Pending |
+| SAFE-01 | Phase 4 | Pending |
+| SAFE-02 | Phase 4 | Pending |
+| MNN-01 | Phase 4 | Pending |
+| MNN-02 | Phase 4 | Pending |
+| MNN-03 | Phase 5 | Pending |
+| MNN-04 | Phase 5 | Pending |
+| MNN-05 | Phase 5 | Pending |
+| MNN-06 | Phase 5 | Pending |
+| DL-01 | Phase 5 | Pending |
+| DL-02 | Phase 5 | Pending |
+| DL-03 | Phase 5 | Pending |
+| DL-04 | Phase 5 | Pending |
+| DL-05 | Phase 5 | Pending |
+| DL-06 | Phase 5 | Pending |
+| DL-07 | Phase 5 | Pending |
+| YOLO-01 | Phase 6 | Pending |
+| YOLO-02 | Phase 6 | Pending |
+| YOLO-03 | Phase 6 | Pending |
+| YOLO-04 | Phase 6 | Pending |
+| YOLO-05 | Phase 6 | Pending |
+| YOLO-06 | Phase 6 | Pending |
+| YOLO-07 | Phase 6 | Pending |
+| YOLO-08 | Phase 6 | Pending |
+| UI-01 | Phase 7 | Pending |
+| UI-02 | Phase 7 | Pending |
+| UI-03 | Phase 7 | Pending |
+| UI-04 | Phase 7 | Pending |
+| UI-05 | Phase 7 | Pending |
+| UI-06 | Phase 7 | Pending |
+| UI-07 | Phase 7 | Pending |
+| UI-08 | Phase 7 | Pending |
 
 **Coverage:**
 - v2.0 requirements: 27 total
@@ -121,4 +121,4 @@ Deferred to future release. Not in current roadmap.
 
 ---
 *Requirements defined: 2026-04-08*
-*Last updated: 2026-04-08 after initial definition*
+*Last updated: 2026-04-08 after roadmap creation (phase mappings updated to Phases 4-7)*
