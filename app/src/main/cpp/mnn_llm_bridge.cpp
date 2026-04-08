@@ -231,14 +231,14 @@ static std::string escapeJson(const std::string& text) {
     for (char c : text) {
         switch (c) {
             case '"': result += "\\\""; break;
-            case '\\': result += "\\\\\"; break;
+            case '\\': result += "\\\\"; break;
             case '\n': result += "\\n"; break;
             case '\r': result += "\\r"; break;
             case '\t': result += "\\t"; break;
             default:
-                if (c >= 0 && c < 32) {
+                if (static_cast<unsigned char>(c) < 32) {
                     char buf[8];
-                    snprintf(buf, sizeof(buf), "\\u%04x", (unsigned char)c);
+                    snprintf(buf, sizeof(buf), "\\u%04x", static_cast<unsigned char>(c));
                     result += buf;
                 } else {
                     result += c;
