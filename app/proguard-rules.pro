@@ -19,3 +19,12 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# MNN Inference Engine
+-keep class com.taobao.android.mnn.** { *; }
+-keep class com.taobao.android.utils.Common { *; }
+
+# MNN native methods
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
