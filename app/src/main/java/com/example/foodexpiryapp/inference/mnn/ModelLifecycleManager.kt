@@ -3,6 +3,7 @@ package com.example.foodexpiryapp.inference.mnn
 import android.app.ActivityManager
 import android.content.Context
 import android.util.Log
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
@@ -15,7 +16,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class ModelLifecycleManager @Inject constructor(
-    private val context: Context
+    @ApplicationContext private val context: Context
 ) {
     companion object {
         private const val TAG = "ModelLifecycleManager"
