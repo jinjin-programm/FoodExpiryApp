@@ -26,6 +26,9 @@ class FoodExpiryApp : Application(), Configuration.Provider {
     @Inject
     lateinit var notificationSettingsRepository: NotificationSettingsRepository
 
+    @Inject
+    lateinit var modelStorageManager: com.example.foodexpiryapp.data.local.ModelStorageManager
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
@@ -40,7 +43,13 @@ class FoodExpiryApp : Application(), Configuration.Provider {
             NotificationScheduler.scheduleDailyNotification(this@FoodExpiryApp, settings)
         }
 
-        // TODO: MNN model warmup will be added in Phase 5
+        // Phase 5: Cleanup incomplete model downloads from previous sessions
+        try {
+            modelStorageManager.cleanupIncompleteDownloads()
+            android.util.Log.d("FoodExpiryApp", "Incomplete model downloads cleaned up")
+        } catch (e: Exception) {
+            android.util.Log.w("FoodExpiryApp", "Failed to cleanup downloads", e)
+        }
 
         android.util.Log.d("FoodExpiryApp", "Application onCreate finished")
     }
