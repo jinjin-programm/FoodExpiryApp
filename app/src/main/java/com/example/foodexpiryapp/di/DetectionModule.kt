@@ -1,6 +1,7 @@
 package com.example.foodexpiryapp.di
 
 import com.example.foodexpiryapp.data.repository.YoloDetectionRepositoryImpl
+import com.example.foodexpiryapp.domain.engine.DefaultAttributeEngine
 import com.example.foodexpiryapp.domain.repository.YoloDetectionRepository
 import com.example.foodexpiryapp.inference.yolo.MnnYoloConfig
 import dagger.Binds
@@ -18,6 +19,7 @@ import javax.inject.Singleton
  * Provides:
  * - [YoloDetectionRepository] binding to [YoloDetectionRepositoryImpl]
  * - [MnnYoloConfig] with default configuration
+ * - [DefaultAttributeEngine] singleton for food attribute inference
  *
  * [DetectionPipeline], [MnnYoloEngine], and [MnnLlmEngine] are
  * @Singleton @Inject classes, so they're automatically provided by Hilt.
@@ -36,5 +38,9 @@ abstract class DetectionModule {
         @Provides
         @Singleton
         fun provideMnnYoloConfig(): MnnYoloConfig = MnnYoloConfig()
+
+        @Provides
+        @Singleton
+        fun provideDefaultAttributeEngine(): DefaultAttributeEngine = DefaultAttributeEngine()
     }
 }

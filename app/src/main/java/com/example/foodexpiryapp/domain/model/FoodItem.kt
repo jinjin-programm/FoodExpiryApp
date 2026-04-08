@@ -67,7 +67,8 @@ enum class ScanSource {
     MANUAL,
     BARCODE,
     RECEIPT,
-    INGREDIENT_LIST
+    INGREDIENT_LIST,
+    YOLO_SCAN
 }
 
 /**
