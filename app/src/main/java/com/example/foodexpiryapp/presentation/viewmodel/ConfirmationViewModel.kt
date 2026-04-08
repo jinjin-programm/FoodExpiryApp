@@ -5,7 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.foodexpiryapp.data.local.database.DetectionResultEntity
 import com.example.foodexpiryapp.data.repository.DetectionResultRepository
+import com.example.foodexpiryapp.domain.usecase.SaveDetectedFoodsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,10 +21,13 @@ import javax.inject.Inject
  * Per D-16: Reads sessionId from SavedStateHandle (nav args).
  * Per D-20: Observes results from Room DB — survives process death.
  * Per D-09: Full-screen confirmation page for batch results.
+ * Per D-12: Quick Mode auto-confirm countdown for single items.
+ * Per D-14: Save flow via SaveDetectedFoodsUseCase.
  */
 @HiltViewModel
 class ConfirmationViewModel @Inject constructor(
     private val detectionResultRepository: DetectionResultRepository,
+    private val saveDetectedFoodsUseCase: SaveDetectedFoodsUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -32,6 +38,17 @@ class ConfirmationViewModel @Inject constructor(
 
     private val _isSaving = MutableStateFlow(false)
     val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
+
+    private val _saveResult = MutableStateFlow<SaveDetectedFoodsUseCase.SaveResult?>(null)
+    val saveResult: StateFlow<SaveDetectedFoodsUseCase.SaveResult?> = _saveResult.asStateFlow()
+
+    // Quick Mode support (D-12)
+    private val _quickModeCountdown = MutableStateFlow(0)
+    val quickModeCountdown: StateFlow<Int> = _quickModeCountdown.asStateFlow()
+
+    var quickModeEnabled: Boolean = false
+
+    private var quickModeJob: Job? = null
 
     init {
         if (sessionId.isNotEmpty()) {
@@ -74,6 +91,55 @@ class ConfirmationViewModel @Inject constructor(
         _results.value.filter { it.status != "REMOVED" }
 
     /**
+     * Per D-14: Save all detected items via SaveDetectedFoodsUseCase.
+     * Applies DefaultAttributeEngine, batch inserts to Room, cleans up temp data.
+     */
+    fun saveAll() {
+        if (_isSaving.value) return
+        viewModelScope.launch {
+            _isSaving.value = true
+            try {
+                val result = saveDetectedFoodsUseCase(sessionId)
+                _saveResult.value = result
+            } catch (e: Exception) {
+                // Save failed — keep session data so user can retry
+            } finally {
+                _isSaving.value = false
+            }
+        }
+    }
+
+    /**
+     * Per D-12: Quick Mode auto-confirm countdown.
+     * Only triggers when Quick Mode is ON and exactly 1 active item exists.
+     * Countdown from 3 → 1, then auto-saves.
+     */
+    fun startQuickModeCountdownIfNeeded() {
+        if (!quickModeEnabled) return
+        val activeResults = getActiveResults()
+        if (activeResults.size != 1) return
+
+        quickModeJob?.cancel()
+        quickModeJob = viewModelScope.launch {
+            for (i in 3 downTo 1) {
+                _quickModeCountdown.value = i
+                delay(1000)
+            }
+            saveAll()
+        }
+    }
+
+    /**
+     * Per D-12: Cancel Quick Mode countdown.
+     * Called on any user interaction (touch, scroll, click).
+     */
+    fun cancelQuickModeCountdown() {
+        quickModeJob?.cancel()
+        quickModeJob = null
+        _quickModeCountdown.value = 0
+    }
+
+    /**
      * Clears all results for this session from Room.
      */
     fun clearSession() {
@@ -83,4 +149,9 @@ class ConfirmationViewModel @Inject constructor(
     }
 
     fun getSessionId(): String = sessionId
+
+    override fun onCleared() {
+        super.onCleared()
+        quickModeJob?.cancel()
+    }
 }

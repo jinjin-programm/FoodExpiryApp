@@ -18,6 +18,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -29,6 +30,7 @@ import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.databinding.FragmentYoloScanBinding
 import com.example.foodexpiryapp.presentation.ui.scan.ScanPagerAdapter
 import com.example.foodexpiryapp.presentation.viewmodel.YoloScanViewModel
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
@@ -96,6 +98,7 @@ class YoloScanFragment : Fragment() {
         setupUI()
         observeUiState()
         setupViewPagerCallback()
+        setupSaveResultListener()
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -179,6 +182,30 @@ class YoloScanFragment : Fragment() {
                 }
             }
         })
+    }
+
+    /**
+     * Per D-15: Listens for save completion from ConfirmationFragment.
+     * Shows Snackbar with "View" action that navigates to inventory with highlight flag.
+     * Per D-18: Camera preview is already running since we popped back to this fragment.
+     */
+    private fun setupSaveResultListener() {
+        requireActivity().supportFragmentManager.setFragmentResultListener(
+            "yolo_save_complete", viewLifecycleOwner
+        ) { _, bundle ->
+            val savedCount = bundle.getInt("saved_count", 0)
+            // Per D-15: Snackbar with "View" action
+            Snackbar.make(binding.root, "$savedCount item(s) added to fridge", Snackbar.LENGTH_LONG)
+                .setAction("View") {
+                    // Navigate to inventory with highlight flag
+                    val invBundle = bundleOf("highlightNew" to true)
+                    requireActivity().supportFragmentManager.setFragmentResult("highlight_new_items", invBundle)
+                    findNavController().popBackStack()
+                }
+                .show()
+
+            // Per D-18: Camera preview resumes automatically since we're back on this fragment
+        }
     }
 
     private fun showProgressOverlay(show: Boolean) {
