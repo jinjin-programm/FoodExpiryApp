@@ -21,4 +21,12 @@
         android:icon="@android:drawable/ic_menu_sort_by_size"
         android:title="View Analysis"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/action_load_test_data"
+        android:title="Load Test Data"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_clear_all_data"
+        android:title="Clear All Data"
+        app:showAsAction="never" />
 </menu>

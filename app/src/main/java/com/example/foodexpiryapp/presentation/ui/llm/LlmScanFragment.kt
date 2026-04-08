@@ -183,7 +183,7 @@ class LlmScanFragment : Fragment() {
                     displayResult(it.foodName, it.expiryDate, it.confidence, it.rawResponse)
                     
                     // Pass result back to inventory fragment
-                    setFragmentResult(
+                    requireActivity().supportFragmentManager.setFragmentResult(
                         "llm_scan_result",
                         bundleOf(
                             "food_name" to it.foodName,

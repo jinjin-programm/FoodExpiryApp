@@ -1,6 +1,8 @@
 package com.example.foodexpiryapp.presentation.ui.recipes
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -78,6 +80,9 @@ class RecipesFragment : Fragment() {
             },
             onRecipeCooked = { match ->
                 viewModel.onRecipeCooked(match.recipe, match.matchedInventoryItems)
+                Handler(Looper.getMainLooper()).postDelayed({
+                    binding.recipesRecyclerView.scrollToPosition(0)
+                }, 300)
             }
         )
 

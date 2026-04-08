@@ -259,7 +259,7 @@ class YoloScanFragment : Fragment() {
     // ────────────────────────────────────────────────────────────────────────
 
     private fun returnDetectionResult(detection: DetectionResult) {
-        setFragmentResult(
+        requireActivity().supportFragmentManager.setFragmentResult(
             "YOLO_SCAN_RESULT",
             bundleOf(
                 "yolo_label"      to detection.label,

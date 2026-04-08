@@ -67,6 +67,10 @@ class FoodRepositoryImpl @Inject constructor(
         dao.deleteFoodItemById(id)
     }
 
+    override suspend fun deleteAllFoodItems() {
+        dao.deleteAllFoodItems()
+    }
+
     override fun getFoodItemCount(): Flow<Int> {
         return dao.getFoodItemCount()
     }

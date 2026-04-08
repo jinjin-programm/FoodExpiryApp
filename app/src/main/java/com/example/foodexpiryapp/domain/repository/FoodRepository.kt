@@ -32,6 +32,8 @@ interface FoodRepository {
 
     suspend fun deleteFoodItemById(id: Long)
 
+    suspend fun deleteAllFoodItems()
+
     fun getFoodItemCount(): Flow<Int>
 
     /** Non-Flow version used by background workers (notifications). */

@@ -9,10 +9,13 @@ import com.example.foodexpiryapp.domain.usecase.*
 import com.example.foodexpiryapp.domain.model.AnalyticsEvent
 import com.example.foodexpiryapp.domain.model.EventType
 import com.example.foodexpiryapp.domain.repository.AnalyticsRepository
+import com.example.foodexpiryapp.domain.repository.CookedRecipeRepository
+import com.example.foodexpiryapp.domain.repository.FoodRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import javax.inject.Inject
 
 /**
@@ -42,6 +45,8 @@ class InventoryViewModel @Inject constructor(
     private val updateFoodItem: UpdateFoodItemUseCase,
     private val deleteFoodItem: DeleteFoodItemUseCase,
     private val searchFoodItems: SearchFoodItemsUseCase,
+    private val foodRepository: FoodRepository,
+    private val cookedRecipeRepository: CookedRecipeRepository,
     private val analyticsRepository: AnalyticsRepository
 ) : ViewModel() {
 
@@ -197,6 +202,47 @@ class InventoryViewModel @Inject constructor(
                 addFoodItem(foodItem)
             } catch (e: Exception) {
                 _events.emit(InventoryEvent.ShowMessage("Error undoing: ${e.message}"))
+            }
+        }
+    }
+
+    fun onInsertTestData() {
+        viewModelScope.launch {
+            try {
+                val today = LocalDate.now()
+                val items = listOf(
+                    FoodItem(name = "Milk", category = FoodCategory.DAIRY, expiryDate = today.plusDays(1), quantity = 1, location = StorageLocation.FRIDGE, dateAdded = today.minusDays(3)),
+                    FoodItem(name = "Chicken Breast", category = FoodCategory.MEAT, expiryDate = today.plusDays(2), quantity = 2, location = StorageLocation.FRIDGE, dateAdded = today.minusDays(2)),
+                    FoodItem(name = "Broccoli", category = FoodCategory.VEGETABLES, expiryDate = today.plusDays(3), quantity = 1, location = StorageLocation.FRIDGE, dateAdded = today.minusDays(1)),
+                    FoodItem(name = "Apple", category = FoodCategory.FRUITS, expiryDate = today.plusDays(5), quantity = 3, location = StorageLocation.COUNTER, dateAdded = today.minusDays(2)),
+                    FoodItem(name = "Rice", category = FoodCategory.GRAINS, expiryDate = today.plusDays(7), quantity = 1, location = StorageLocation.FRIDGE, dateAdded = today.minusDays(1)),
+                    FoodItem(name = "Yogurt", category = FoodCategory.DAIRY, expiryDate = today.minusDays(1), quantity = 1, location = StorageLocation.FRIDGE, dateAdded = today.minusDays(5)),
+                    FoodItem(name = "Salmon", category = FoodCategory.MEAT, expiryDate = today.plusDays(1), quantity = 1, location = StorageLocation.FRIDGE, dateAdded = today.minusDays(1)),
+                    FoodItem(name = "Tomato", category = FoodCategory.VEGETABLES, expiryDate = today.plusDays(4), quantity = 4, location = StorageLocation.COUNTER, dateAdded = today),
+                    FoodItem(name = "Cheese", category = FoodCategory.DAIRY, expiryDate = today.plusDays(10), quantity = 1, location = StorageLocation.FRIDGE, dateAdded = today),
+                    FoodItem(name = "Egg", category = FoodCategory.OTHER, expiryDate = today.plusDays(14), quantity = 6, location = StorageLocation.FRIDGE, dateAdded = today.minusDays(1)),
+                    FoodItem(name = "Tofu", category = FoodCategory.OTHER, expiryDate = today.plusDays(2), quantity = 1, location = StorageLocation.FRIDGE, dateAdded = today),
+                    FoodItem(name = "Lettuce", category = FoodCategory.VEGETABLES, expiryDate = today.minusDays(1), quantity = 1, location = StorageLocation.FRIDGE, dateAdded = today.minusDays(4)),
+                    FoodItem(name = "Banana", category = FoodCategory.FRUITS, expiryDate = today.plusDays(3), quantity = 2, location = StorageLocation.COUNTER, dateAdded = today.minusDays(2)),
+                    FoodItem(name = "Beef", category = FoodCategory.MEAT, expiryDate = today.plusDays(6), quantity = 1, location = StorageLocation.FREEZER, dateAdded = today),
+                    FoodItem(name = "Orange Juice", category = FoodCategory.BEVERAGES, expiryDate = today.plusDays(20), quantity = 1, location = StorageLocation.FRIDGE, dateAdded = today)
+                )
+                items.forEach { addFoodItem(it) }
+                _events.emit(InventoryEvent.ShowMessage("Added ${items.size} test food items"))
+            } catch (e: Exception) {
+                _events.emit(InventoryEvent.ShowMessage("Error: ${e.message}"))
+            }
+        }
+    }
+
+    fun onDeleteAllFoodItems() {
+        viewModelScope.launch {
+            try {
+                foodRepository.deleteAllFoodItems()
+                cookedRecipeRepository.deleteAll()
+                _events.emit(InventoryEvent.ShowMessage("All data cleared"))
+            } catch (e: Exception) {
+                _events.emit(InventoryEvent.ShowMessage("Error: ${e.message}"))
             }
         }
     }

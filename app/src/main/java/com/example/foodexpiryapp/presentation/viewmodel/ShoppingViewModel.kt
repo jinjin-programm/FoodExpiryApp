@@ -66,26 +66,30 @@ class ShoppingViewModel @Inject constructor(
 
     private fun seedTemplatesIfNeeded() {
         viewModelScope.launch {
-            val count = shoppingTemplateDao.getTemplateCount()
-            if (count == 0) {
-                val builtInTemplates = listOf(
-                    ShoppingTemplateEntity(
-                        name = "Weekly Restock",
-                        description = "Your weekly pantry essentials",
-                        itemNames = """["Milk","Eggs","Bread","Butter","Chicken breast","Rice","Olive oil","Onions","Garlic","Tomatoes"]"""
-                    ),
-                    ShoppingTemplateEntity(
-                        name = "Breakfast Essentials",
-                        description = "Start every morning right",
-                        itemNames = """["Eggs","Bread","Butter","Milk","Cereal","Bananas","Yogurt","Orange juice"]"""
-                    ),
-                    ShoppingTemplateEntity(
-                        name = "Fresh Produce",
-                        description = "Fresh fruits & vegetables",
-                        itemNames = """["Spinach","Tomatoes","Avocados","Bell peppers","Carrots","Cucumbers","Berries","Lemons"]"""
-                    )
+            val existingTemplates = shoppingTemplateDao.getAllTemplatesSync()
+            val existingNames = existingTemplates.map { it.name }.toSet()
+
+            val builtInTemplates = listOf(
+                ShoppingTemplateEntity(
+                    name = "Weekly Restock",
+                    description = "Your weekly pantry essentials",
+                    itemNames = """["Milk","Eggs","Bread","Butter","Chicken breast","Rice","Olive oil","Onions","Garlic","Tomatoes"]"""
+                ),
+                ShoppingTemplateEntity(
+                    name = "Breakfast Essentials",
+                    description = "Start every morning right",
+                    itemNames = """["Eggs","Bread","Butter","Milk","Cereal","Bananas","Yogurt","Orange juice"]"""
+                ),
+                ShoppingTemplateEntity(
+                    name = "Fresh Produce",
+                    description = "Fresh fruits & vegetables",
+                    itemNames = """["Spinach","Tomatoes","Avocados","Bell peppers","Carrots","Cucumbers","Berries","Lemons"]"""
                 )
-                shoppingTemplateDao.insertTemplates(builtInTemplates)
+            )
+
+            val missingTemplates = builtInTemplates.filter { it.name !in existingNames }
+            if (missingTemplates.isNotEmpty()) {
+                shoppingTemplateDao.insertTemplates(missingTemplates)
             }
         }
     }

@@ -18,6 +18,9 @@ interface ShoppingTemplateDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTemplates(templates: List<ShoppingTemplateEntity>)
 
+    @Query("SELECT * FROM shopping_templates")
+    suspend fun getAllTemplatesSync(): List<ShoppingTemplateEntity>
+
     @Query("SELECT COUNT(*) FROM shopping_templates")
     suspend fun getTemplateCount(): Int
 }

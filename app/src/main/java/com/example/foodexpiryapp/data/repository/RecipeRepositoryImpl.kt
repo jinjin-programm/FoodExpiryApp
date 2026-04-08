@@ -100,21 +100,30 @@ class RecipeRepositoryImpl @Inject constructor(
                     response = theMealDbApi.searchMeals(ingredient)
                 }
 
-                response.meals?.forEach { mealDto ->
-                    val recipe = Recipe(
-                        id = mealDto.idMeal.toLongOrNull() ?: 0L,
-                        name = mealDto.strMeal,
-                        description = "Uses your $ingredient",
-                        imageUrl = mealDto.strMealThumb,
-                        ingredients = emptyList(),
-                        steps = emptyList(),
-                        cuisine = mealDto.strArea ?: "",
-                        tags = emptySet(),
-                        prepTimeMinutes = 15,
-                        cookTimeMinutes = 30
-                    )
-                    if (seenIds.add(recipe.id)) {
-                        allMatchingRecipes.add(recipe)
+                for (mealDto in response.meals ?: emptyList()) {
+                    if (seenIds.size >= 20) break
+                    val recipeId = mealDto.idMeal.toLongOrNull() ?: 0L
+                    if (!seenIds.add(recipeId)) continue
+                    try {
+                        val detailResponse = theMealDbApi.getMealDetails(mealDto.idMeal)
+                        val detailedRecipe = detailResponse.meals?.firstOrNull()?.toDomain()
+                        if (detailedRecipe != null) {
+                            allMatchingRecipes.add(detailedRecipe)
+                        }
+                    } catch (_: Exception) {
+                        val fallbackRecipe = Recipe(
+                            id = recipeId,
+                            name = mealDto.strMeal,
+                            description = "Uses your $ingredient",
+                            imageUrl = mealDto.strMealThumb,
+                            ingredients = emptyList(),
+                            steps = emptyList(),
+                            cuisine = mealDto.strArea ?: "",
+                            tags = emptySet(),
+                            prepTimeMinutes = 15,
+                            cookTimeMinutes = 30
+                        )
+                        allMatchingRecipes.add(fallbackRecipe)
                     }
                 }
             } catch (e: Exception) {}

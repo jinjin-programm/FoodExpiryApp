@@ -176,6 +176,14 @@ class InventoryFragment : Fragment() {
                         Toast.makeText(requireContext(), "View Analysis Not Implemented", Toast.LENGTH_SHORT).show()
                         true
                     }
+                    R.id.action_load_test_data -> {
+                        viewModel.onInsertTestData()
+                        true
+                    }
+                    R.id.action_clear_all_data -> {
+                        viewModel.onDeleteAllFoodItems()
+                        true
+                    }
                     else -> false
                 }
             }
@@ -251,19 +259,18 @@ class InventoryFragment : Fragment() {
     }
 
     private fun setupFragmentResultListeners() {
-        setFragmentResultListener("SCAN_RESULT") { _, bundle ->
+        requireActivity().supportFragmentManager.setFragmentResultListener("SCAN_RESULT", viewLifecycleOwner) { _, bundle ->
             val barcode = bundle.getString("barcode")
             val dateString = bundle.getString("date")
             if (barcode != null) {
                 handleBarcodeResult(barcode)
             } else if (dateString != null) {
-                val expiryDate = parseDate(dateString) ?: LocalDate.now().plusDays(7)
-                showAddEditDialog(draftFoodItem?.copy(expiryDate = expiryDate))
-                draftFoodItem = null
+                val bottomSheet = AddFoodBottomSheet.newInstance(expiryDate = dateString)
+                bottomSheet.show(requireActivity().supportFragmentManager, AddFoodBottomSheet.TAG)
             }
         }
 
-        setFragmentResultListener("YOLO_SCAN_RESULT") { _, bundle ->
+        requireActivity().supportFragmentManager.setFragmentResultListener("YOLO_SCAN_RESULT", viewLifecycleOwner) { _, bundle ->
             val label = bundle.getString("yolo_label") ?: "Unknown Item"
             val category = FoodCategory.values().find { it.name == bundle.getString("yolo_category") } ?: FoodCategory.OTHER
             val shelfLife = ShelfLifeEstimator.estimateShelfLife(listOf(label))
@@ -277,7 +284,7 @@ class InventoryFragment : Fragment() {
             ))
         }
 
-        setFragmentResultListener("llm_scan_result") { _, bundle ->
+        requireActivity().supportFragmentManager.setFragmentResultListener("llm_scan_result", viewLifecycleOwner) { _, bundle ->
             val foodName = bundle.getString("food_name") ?: "Unknown"
             val expiryDateStr = bundle.getString("expiry_date")
             val expiryDate = parseDate(expiryDateStr) ?: ShelfLifeEstimator.calculateExpiryDate(ShelfLifeEstimator.estimateShelfLife(listOf(foodName.lowercase())).days)
@@ -297,27 +304,20 @@ class InventoryFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             barcodeRepository.scanBarcode(barcode).fold(
                 onSuccess = { result ->
-                    showAddEditDialog(FoodItem(
-                        name = result.name,
+                    val bottomSheet = AddFoodBottomSheet.newInstance(
                         barcode = barcode,
-                        expiryDate = result.estimatedExpiryDate,
-                        category = result.category,
-                        location = StorageLocation.FRIDGE,
-                        quantity = 1,
-                        dateAdded = LocalDate.now(),
+                        foodName = result.name,
+                        category = result.category.name,
+                        expiryDate = result.estimatedExpiryDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
                         notes = result.brand?.let { "Brand: $it" } ?: ""
-                    ))
+                    )
+                    bottomSheet.show(requireActivity().supportFragmentManager, AddFoodBottomSheet.TAG)
                 },
                 onFailure = {
-                    showAddEditDialog(FoodItem(
-                        name = "Scanned Item",
-                        barcode = barcode,
-                        expiryDate = LocalDate.now().plusDays(7),
-                        category = FoodCategory.OTHER,
-                        location = StorageLocation.FRIDGE,
-                        quantity = 1,
-                        dateAdded = LocalDate.now()
-                    ))
+                    val bottomSheet = AddFoodBottomSheet.newInstance(
+                        barcode = barcode
+                    )
+                    bottomSheet.show(requireActivity().supportFragmentManager, AddFoodBottomSheet.TAG)
                 }
             )
         }

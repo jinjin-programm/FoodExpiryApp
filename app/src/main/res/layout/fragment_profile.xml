@@ -181,6 +181,15 @@
                         app:iconTint="@android:color/transparent"
                         app:iconTintMode="add" />
 
+                    <TextView
+                        android:id="@+id/textGoogleSignInHint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Optional — sync across devices"
+                        android:textAppearance="?attr/textAppearanceCaption"
+                        android:textColor="@color/tertiary" />
+
                     <!-- Name Input -->
                     <RelativeLayout
                         android:layout_width="match_parent"
@@ -612,6 +621,22 @@
                                     app:backgroundTint="@color/secondary_container"
                                     app:cornerRadius="20dp" />
                             </RelativeLayout>
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnTestNotification"
+                                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="16dp"
+                                android:text="Send Test Notification"
+                                android:textAllCaps="false"
+                                android:textColor="@color/on_secondary_container"
+                                android:textStyle="bold"
+                                app:cornerRadius="12dp"
+                                app:icon="@android:drawable/ic_popup_reminder"
+                                app:iconGravity="textStart"
+                                app:iconTint="@color/on_secondary_container"
+                                app:strokeColor="@color/secondary_container" />
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>
@@ -671,6 +696,86 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Privacy & Data Section -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                app:cardBackgroundColor="@color/surface_container_lowest"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-bold"
+                            android:text="Privacy &amp; Data"
+                            android:textColor="@color/on_surface"
+                            android:textSize="20sp" />
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_alignParentEnd="true"
+                            android:alpha="0.5"
+                            android:src="@android:drawable/ic_lock_lock"
+                            app:tint="@color/tertiary" />
+                    </RelativeLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="How we handle your data"
+                        android:textColor="@color/tertiary"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="• All food items and photos are stored locally on your device only."
+                        android:textAppearance="?attr/textAppearanceBody2" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="• Photo scanning uses on-device AI (Google ML Kit). Your images never leave your phone."
+                        android:textAppearance="?attr/textAppearanceBody2" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="• Recipe suggestions come from your inventory data — no personal data is shared with third parties."
+                        android:textAppearance="?attr/textAppearanceBody2" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="• Google Sign-In is optional. You can use all features without an account."
+                        android:textAppearance="?attr/textAppearanceBody2" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="• You can delete all your data anytime from your device settings."
+                        android:textAppearance="?attr/textAppearanceBody2" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- Save Button & Sign Out -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSave"
@@ -703,7 +808,6 @@
             <View android:id="@+id/imgGooglePhoto" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
             <View android:id="@+id/textGoogleUserName" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
             <View android:id="@+id/textGoogleUserEmail" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
-            <View android:id="@+id/btnTestNotification" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
             <ProgressBar android:id="@+id/progressIndicator" android:layout_width="wrap_content" android:layout_height="wrap_content" android:visibility="gone" />
 
         </LinearLayout>

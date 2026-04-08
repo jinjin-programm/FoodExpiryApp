@@ -52,9 +52,7 @@ class ScoreRecipesForInventoryUseCase @Inject constructor(
             
             val avgItemCost = 3.0
             val estimatedSaved = matchedInvItems.sumOf { avgItemCost * 0.7 }
-            val wasteRescue = if (matchedInvItems.isNotEmpty()) {
-                ((matchedInvItems.size.toDouble() / recipe.ingredients.size) * 100).toInt().coerceAtMost(100)
-            } else 0
+            val wasteRescue = (matchedInvItems.size * 25).coerceAtMost(100)
             
             RecipeMatch(
                 recipe = recipe,

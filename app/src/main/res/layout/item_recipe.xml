@@ -225,7 +225,7 @@
                     android:textSize="13sp"
                     android:textColor="#E65100"
                     android:textStyle="bold"
-                    tools:text="90% waste rescue" />
+                    tools:text="2 items rescued" />
             </LinearLayout>
         </LinearLayout>
 

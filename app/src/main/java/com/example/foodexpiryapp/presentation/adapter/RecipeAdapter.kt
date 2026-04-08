@@ -47,9 +47,9 @@ class RecipeAdapter(
             binding.textRecipeDescription.text = recipe.description
             binding.textTime.text = "${recipe.totalTimeMinutes} min"
             binding.textMoneySaved.text = "Save ~$${String.format("%.2f", match.estimatedMoneySaved)}"
-            binding.textWasteScore.text = "${match.wasteRescuePercent}% waste rescue"
+            binding.textWasteScore.text = "${match.matchCount} item${if (match.matchCount != 1) "s" else ""} rescued"
             binding.textWasteScore.setTextColor(
-                if (match.wasteRescuePercent >= 50) 0xFF2E7D32.toInt() else 0xFFE65100.toInt()
+                if (match.matchCount >= 2) 0xFF2E7D32.toInt() else 0xFFE65100.toInt()
             )
 
             val matchedNames = match.matchedIngredients.joinToString(", ") { it.name }

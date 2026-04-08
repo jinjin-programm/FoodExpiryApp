@@ -1,0 +1,47 @@
+{
+  "executor_model": "sonnet",
+  "verifier_model": "sonnet",
+  "commit_docs": true,
+  "sub_repos": [],
+  "parallelization": true,
+  "context_window": 200000,
+  "branching_strategy": "none",
+  "phase_branch_template": "gsd/phase-{phase}-{slug}",
+  "milestone_branch_template": "gsd/{milestone}-{slug}",
+  "verifier_enabled": true,
+  "phase_found": true,
+  "phase_dir": ".planning/phases/01-main-flow-first",
+  "phase_number": "01",
+  "phase_name": "main-flow-first",
+  "phase_slug": "main-flow-first",
+  "phase_req_ids": null,
+  "plans": [
+    "01-01-PLAN.md",
+    "01-02-PLAN.md",
+    "01-03-PLAN.md",
+    "01-04-PLAN.md"
+  ],
+  "summaries": [
+    "01-01-SUMMARY.md"
+  ],
+  "incomplete_plans": [
+    "01-02-PLAN.md",
+    "01-03-PLAN.md",
+    "01-04-PLAN.md"
+  ],
+  "plan_count": 4,
+  "incomplete_count": 3,
+  "branch_name": null,
+  "milestone_version": "v1.0",
+  "milestone_name": "milestone",
+  "milestone_slug": "milestone",
+  "state_exists": true,
+  "roadmap_exists": true,
+  "config_exists": true,
+  "state_path": ".planning/STATE.md",
+  "roadmap_path": ".planning/ROADMAP.md",
+  "config_path": ".planning/config.json",
+  "project_root": "C:\\Users\\jinjin\\AndroidStudioProjects\\FoodExpiryApp",
+  "agents_installed": true,
+  "missing_agents": []
+}

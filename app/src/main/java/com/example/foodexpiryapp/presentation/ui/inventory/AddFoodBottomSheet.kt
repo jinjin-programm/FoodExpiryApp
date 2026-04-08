@@ -62,20 +62,34 @@ class AddFoodBottomSheet : BottomSheetDialogFragment() {
         arguments?.let { args ->
             val barcode = args.getString(ARG_BARCODE)
             val expiryDate = args.getString(ARG_EXPIRY_DATE)
+            val foodName = args.getString(ARG_FOOD_NAME)
+            val categoryName = args.getString(ARG_CATEGORY)
+            val notes = args.getString(ARG_NOTES)
 
             if (!barcode.isNullOrEmpty()) {
                 binding.editBarcode.setText(barcode)
-                // In a real app we might look up the barcode to get the product name
+            }
+
+            if (!foodName.isNullOrEmpty()) {
+                binding.editFoodName.setText(foodName)
+            } else if (!barcode.isNullOrEmpty()) {
                 binding.editFoodName.setText("Scanned Product")
             }
 
+            if (!categoryName.isNullOrEmpty()) {
+                val cat = FoodCategory.values().find { it.name == categoryName }
+                if (cat != null) binding.dropdownCategory.setText(cat.displayName, false)
+            }
+
             if (!expiryDate.isNullOrEmpty()) {
-                // Assuming expiryDate is passed in as a string
                 binding.editExpiryDate.setText(expiryDate)
             } else {
-                // Default to 7 days from now if no date is provided
                 val defaultDate = LocalDate.now().plusDays(7).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
                 binding.editExpiryDate.setText(defaultDate)
+            }
+
+            if (!notes.isNullOrEmpty()) {
+                binding.editNotes.setText(notes)
             }
         }
     }
@@ -158,16 +172,24 @@ class AddFoodBottomSheet : BottomSheetDialogFragment() {
         const val TAG = "AddFoodBottomSheet"
         private const val ARG_BARCODE = "arg_barcode"
         private const val ARG_EXPIRY_DATE = "arg_expiry_date"
+        private const val ARG_FOOD_NAME = "arg_food_name"
+        private const val ARG_CATEGORY = "arg_category"
+        private const val ARG_NOTES = "arg_notes"
 
-        fun newInstance(barcode: String? = null, expiryDate: String? = null): AddFoodBottomSheet {
+        fun newInstance(
+            barcode: String? = null,
+            expiryDate: String? = null,
+            foodName: String? = null,
+            category: String? = null,
+            notes: String? = null
+        ): AddFoodBottomSheet {
             val fragment = AddFoodBottomSheet()
             val args = Bundle()
-            if (barcode != null) {
-                args.putString(ARG_BARCODE, barcode)
-            }
-            if (expiryDate != null) {
-                args.putString(ARG_EXPIRY_DATE, expiryDate)
-            }
+            if (barcode != null) args.putString(ARG_BARCODE, barcode)
+            if (expiryDate != null) args.putString(ARG_EXPIRY_DATE, expiryDate)
+            if (foodName != null) args.putString(ARG_FOOD_NAME, foodName)
+            if (category != null) args.putString(ARG_CATEGORY, category)
+            if (notes != null) args.putString(ARG_NOTES, notes)
             fragment.arguments = args
             return fragment
         }

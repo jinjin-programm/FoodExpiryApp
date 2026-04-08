@@ -210,19 +210,15 @@ class ScanFragment : Fragment() {
     private fun handleBarcodeResult(barcode: String) {
         activity?.runOnUiThread {
             Toast.makeText(context, "Barcode found: $barcode", Toast.LENGTH_SHORT).show()
-            val bottomSheet = com.example.foodexpiryapp.presentation.ui.inventory.AddFoodBottomSheet.newInstance(barcode = barcode)
-            bottomSheet.show(requireActivity().supportFragmentManager, com.example.foodexpiryapp.presentation.ui.inventory.AddFoodBottomSheet.TAG)
+            requireActivity().supportFragmentManager.setFragmentResult("SCAN_RESULT", bundleOf("barcode" to barcode))
             findNavController().popBackStack()
         }
     }
 
     private fun handleDateResult(dateString: String) {
         activity?.runOnUiThread {
-            // Try to parse the date to ensure it's valid, or just return the string
-            // Here we just return the raw string and let the caller handle parsing or confirmation
             Toast.makeText(context, "Date found: $dateString", Toast.LENGTH_SHORT).show()
-            val bottomSheet = com.example.foodexpiryapp.presentation.ui.inventory.AddFoodBottomSheet.newInstance(expiryDate = dateString)
-            bottomSheet.show(requireActivity().supportFragmentManager, com.example.foodexpiryapp.presentation.ui.inventory.AddFoodBottomSheet.TAG)
+            requireActivity().supportFragmentManager.setFragmentResult("SCAN_RESULT", bundleOf("date" to dateString))
             findNavController().popBackStack()
         }
     }

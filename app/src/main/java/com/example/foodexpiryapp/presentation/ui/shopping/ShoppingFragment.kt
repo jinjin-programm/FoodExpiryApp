@@ -2,7 +2,9 @@ package com.example.foodexpiryapp.presentation.ui.shopping
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -10,6 +12,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.foodexpiryapp.databinding.FragmentShoppingBinding
 import com.example.foodexpiryapp.domain.model.AnalyticsEvent
 import com.example.foodexpiryapp.domain.model.EventType
@@ -81,6 +84,41 @@ class ShoppingFragment : Fragment() {
         binding.recyclerTemplates.apply {
             adapter = templateAdapter
             layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+            addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
+                private var initialX = 0f
+                private var initialY = 0f
+                private val touchSlop = ViewConfiguration.get(requireContext()).scaledTouchSlop
+
+                override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
+                    when (e.action) {
+                        MotionEvent.ACTION_DOWN -> {
+                            initialX = e.rawX
+                            initialY = e.rawY
+                            parent?.requestDisallowInterceptTouchEvent(false)
+                        }
+                        MotionEvent.ACTION_MOVE -> {
+                            val dx = e.rawX - initialX
+                            val dy = e.rawY - initialY
+                            if (Math.abs(dx) > touchSlop && Math.abs(dx) > Math.abs(dy)) {
+                                val canScrollHorizontally = if (dx < 0) {
+                                    rv.canScrollHorizontally(1)
+                                } else {
+                                    rv.canScrollHorizontally(-1)
+                                }
+                                if (canScrollHorizontally) {
+                                    parent?.requestDisallowInterceptTouchEvent(true)
+                                }
+                            }
+                        }
+                        MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                            parent?.requestDisallowInterceptTouchEvent(false)
+                        }
+                    }
+                    return false
+                }
+                override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {}
+                override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
+            })
         }
     }
 

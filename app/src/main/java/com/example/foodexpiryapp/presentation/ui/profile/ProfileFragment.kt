@@ -1,10 +1,15 @@
 package com.example.foodexpiryapp.presentation.ui.profile
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -44,6 +49,16 @@ class ProfileFragment : Fragment() {
     private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) {
             viewModel.updateProfilePhoto(uri.toString())
+        }
+    }
+
+    private val requestNotificationPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            triggerTestNotification()
+        } else {
+            Toast.makeText(requireContext(), "Notification permission is required", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -171,6 +186,20 @@ class ProfileFragment : Fragment() {
                 }
                 .show()
         }
+
+        binding.btnTestNotification.setOnClickListener {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS)
+                    == PackageManager.PERMISSION_GRANTED
+                ) {
+                    triggerTestNotification()
+                } else {
+                    requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            } else {
+                triggerTestNotification()
+            }
+        }
     }
     
     private fun showTimePicker() {
@@ -189,6 +218,12 @@ class ProfileFragment : Fragment() {
         picker.show(parentFragmentManager, "time_picker")
     }
 
+    private fun triggerTestNotification() {
+        val request = OneTimeWorkRequestBuilder<ExpiryNotificationWorker>().build()
+        WorkManager.getInstance(requireContext()).enqueue(request)
+        Toast.makeText(requireContext(), "Test notification sent!", Toast.LENGTH_SHORT).show()
+    }
+
     private fun observeState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -196,12 +231,14 @@ class ProfileFragment : Fragment() {
                     // Update Google Sign-In UI
                     if (state.isGoogleSignIn) {
                         binding.btnGoogleSignIn.visibility = View.GONE
+                        binding.textGoogleSignInHint.visibility = View.GONE
                         binding.btnGoogleSignOut.visibility = View.VISIBLE
                         
                         // Disable manual email editing when signed in with Google
                         binding.editEmail.isEnabled = false
                     } else {
                         binding.btnGoogleSignIn.visibility = View.VISIBLE
+                        binding.textGoogleSignInHint.visibility = View.VISIBLE
                         binding.btnGoogleSignOut.visibility = View.GONE
                         binding.editEmail.isEnabled = true
                     }

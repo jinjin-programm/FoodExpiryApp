@@ -46,6 +46,9 @@ interface FoodItemDao {
     @Query("DELETE FROM food_items WHERE id = :id")
     suspend fun deleteFoodItemById(id: Long)
 
+    @Query("DELETE FROM food_items")
+    suspend fun deleteAllFoodItems()
+
     @Query("SELECT COUNT(*) FROM food_items")
     fun getFoodItemCount(): Flow<Int>
 
