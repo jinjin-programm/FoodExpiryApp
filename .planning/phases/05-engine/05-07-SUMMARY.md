@@ -129,10 +129,31 @@ The following has been verified:
 - All 11 requirements (MNN-03 through DL-07) have implementation patterns
 - D-01/D-02/D-03 decisions honored in implementation
 
+### JNI Bridge Status: IMPLEMENTED
+
+The JNI bridge is now fully implemented with real MNN LLM C++ API integration:
+
+**CMakeLists.txt:**
+- Links 5 MNN native libraries: libMNN.so, libMNN_Express.so, libllm.so, libMNN_CL.so, libMNN_Vulkan.so
+- Configured for MNN source headers at `C:/Users/jinjin/AndroidStudioProjects/MNN`
+
+**mnn_llm_bridge.cpp:**
+- `nativeCreateLlm`: `Llm::createLLM(config_path)` → `set_config(json)` → `load()`
+- `nativeRunInference`: ChatMessages history → `response(history, &stream, end_with, 0)` prefill → `generate(1)` stepping decode loop → JSON extraction
+- `nativeDestroyLlm`: `reset()` + cleanup
+- Thread-safe with mutex
+
+**MnnLlmNative.kt:**
+- Loads MNN dependencies first (MNN, MNN_Express, llm, optional CL/Vulkan)
+- Then loads `mnn_llm_bridge`
+
+**jniLibs/arm64-v8a:**
+- 5 prebuilt MNN .so files (~155MB total)
+
 ### Known Limitations
 
-1. **JNI Bridge Not Implemented**: MnnLlmEngine has native method stubs that will throw `UnsatisfiedLinkError` when called. The JNI bridge to MNN LLM C++ API is deferred.
-2. **SHA-256 Values Empty**: ModelManifest has empty expectedSha256 values, to be populated after first verified download.
+1. **Model Download Required**: User must download Qwen3.5-2B-MNN model from HuggingFace before inference works
+2. **SHA-256 Values Empty**: ModelManifest has empty expectedSha256 values, to be populated after first verified download
 
 ## Self-Check: PASSED
 
@@ -140,14 +161,17 @@ The following has been verified:
 - [x] Build verified: assembleDebug successful
 - [x] Requirements verified: 11/11 patterns found
 - [x] Commits verified: 41106ad exists
+- [x] JNI bridge implemented with real MNN LLM API
 
 ## Commits
 
 | Commit | Message | Type |
 |--------|---------|------|
 | 41106ad | fix(05-07): fix compilation errors — missing imports and Hilt DI bindings | fix |
+| e5a15b4 | feat(05): implement real MNN LLM JNI bridge | feat |
+| af3138d | fix(05): correct library name mismatch and load order | fix |
 
 ---
 
-*Completed: 2026-04-09T01:14:00Z*
-*Duration: 225 seconds*
+*Completed: 2026-04-09T02:05:00Z*
+*Duration: 225 seconds (verification) + JNI implementation*
