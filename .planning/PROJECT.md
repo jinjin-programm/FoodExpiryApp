@@ -12,6 +12,20 @@ Let a new user add their first food item within 30 seconds and reduce the mental
 - **Tech Stack:** Kotlin, Android (Material Design 3), Room, Hilt, WorkManager, Google ML Kit, CameraX
 - **Architecture:** MVVM with Clean Architecture layers (domain/data/presentation)
 
+## Current Milestone: v2.0 AI Vision Engine Overhaul
+
+**Goal:** Transform scanning with YOLO+LLM multi-object detection and switch to MNN inference with dynamic model download.
+
+**Target features:**
+- Remove top title bar on all pages, keep only back button
+- Horizontal (landscape) photo frame for scanning
+- Capture animation → loading screen with AI inference progress
+- Barcode scan: manual capture button, remove auto-scan/flash/close
+- MNN inference engine replacing GGUF (official MNN Chat component)
+- Dynamic model download from HuggingFace (Qwen3.5-2B-MNN)
+- YOLO+LLM food detection: new scan tab for multi-object detection
+- Batch processing with structured JSON output
+
 ## Requirements
 
 ### Validated (v1.0)
@@ -31,12 +45,17 @@ Let a new user add their first food item within 30 seconds and reduce the mental
 - ✓ PROF-03: Google Sign-In optional — v1.0
 
 ### Active
-*(None — define next milestone for new requirements)*
+- UI cleanup for scan screens (remove title bar, horizontal frame, capture animation)
+- Barcode scan redesign (manual capture, remove auto-scan/flash/close)
+- MNN inference engine integration (replace GGUF)
+- Dynamic model download from HuggingFace
+- YOLO+LLM multi-object food detection (new scan tab)
 
 ### Out of Scope
 - **Full App Redesign:** Visual identity preserved, UX optimization only.
 - **Complex 2-way Planner/Recipe Sync:** Deferred to avoid complexity.
-- **Flash Mode in Scanning:** Removed if not adding value.
+- **CLIP classifier:** YOLO detection + LLM classification is sufficient (no CLIP training).
+- **GGUF model support:** Replaced entirely by MNN inference.
 
 ## Key Decisions
 | Decision | Rationale | Outcome |
@@ -47,15 +66,22 @@ Let a new user add their first food item within 30 seconds and reduce the mental
 | OCR confirmation before save | App should not silently save uncertain data | ✓ Shipped |
 | WorkManager for notifications | Reliable daily scheduling with boot recovery | ✓ Shipped |
 | Horizontal template carousel | Compact template display in Shopping | ✓ Shipped (with ViewPager2 scroll fix) |
+| MNN Chat official component | Avoid custom inference layer, use battle-tested engine | — Pending |
+| Qwen3.5-2B-MNN model | 4-bit quantized, lightweight enough for mobile | — Pending |
+| YOLO + LLM (skip CLIP) | CLIP classifier overlaps with LLM capability | — Pending |
+| Dynamic model download from HF | Reduce APK size, model not bundled | — Pending |
 
 ## Context
-- **Shipped:** v1.0 MVP on 2026-04-08
-- **3 phases, 11 plans, 14/14 requirements validated**
+- **Shipped:** v1.0 MVP on 2026-04-08, v1.1.0 UX improvements on 2026-04-08
+- **v1.0:** 3 phases, 11 plans, 14/14 requirements validated
+- **v1.1.0:** UX optimizations, recipe improvements, planning updates
 - **UAT:** 14/14 tests passed across all phases
-- **Timeline:** ~58 days (Feb 10 → Apr 8, 2026)
+- **MNN Reference:** https://github.com/alibaba/MNN (v3.5.0, supports Qwen3.5)
+- **Model:** taobao-mnn/Qwen3.5-2B-MNN (4-bit quantized)
+- **YOLO Reference:** https://github.com/tishuo-wang/YOLO_CLIP_targetDetection (YOLO detection pattern)
 
 ## Evolution
 This document evolves at phase transitions and milestone boundaries.
 
 ---
-*Last updated: 2026-04-08 after v1.0 milestone*
+*Last updated: 2026-04-08 after v2.0 milestone started*
