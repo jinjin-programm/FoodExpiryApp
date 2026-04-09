@@ -41,7 +41,8 @@ class HuggingFaceDownloadService @Inject constructor(
             "llm_config.json",
             "config.json",
             "tokenizer.txt",
-            "visual.mnn"
+            "visual.mnn",
+            "visual.mnn.weight"
         )
     }
 

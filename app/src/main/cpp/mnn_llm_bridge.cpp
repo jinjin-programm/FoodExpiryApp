@@ -66,6 +66,8 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeCreateLlm(
             config_json += ",\"precision\":\"high\"";
         }
 
+        config_json += ",\"enable_thinking\":false";
+
         config_json += "}";
 
         LOGI("nativeCreateLlm: config=%s", config_json.c_str());
@@ -110,7 +112,7 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeRunInference(
         // Build system prompt
         std::string system_prompt =
             "You are a food identification assistant. Identify the food in the image and respond ONLY with a JSON object in this exact format:\n"
-            "{\"name\": \"english name\", \"name_zh\": \"中文名\", \"category\": \"category\", \"confidence\": 0.95}\n\n"
+            "{\"name\": \"english name\", \"name_zh\": \"中文名\", \"confidence\": 0.95}\n\n"
             "Rules:\n"
             "- \"name\" must be in English, lowercase\n"
             "- \"name_zh\" must be in Traditional Chinese (繁體中文)\n"

@@ -295,7 +295,7 @@ class InventoryFragment : Fragment() {
                 location = StorageLocation.FRIDGE,
                 quantity = 1,
                 dateAdded = LocalDate.now(),
-                notes = "AI Scan (Confidence: ${bundle.getString("confidence") ?: "medium"})"
+                notes = "AI Scan (Confidence: ${String.format("%.0f%%", bundle.getFloat("confidence", 0f) * 100)})"
             ))
         }
     }
