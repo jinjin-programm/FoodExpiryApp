@@ -97,9 +97,9 @@ Deferred to future release. Not in current roadmap.
 | DL-05 | Phase 5 | Pending |
 | DL-06 | Phase 5 | Pending |
 | DL-07 | Phase 5 | Pending |
-| YOLO-01 | Phase 6 | Pending |
-| YOLO-02 | Phase 6 | Pending |
-| YOLO-03 | Phase 6 | Pending |
+| YOLO-01 | Phase 8 (gap closure) | Partial |
+| YOLO-02 | Phase 6 | Satisfied |
+| YOLO-03 | Phase 8 (gap closure) | Partial |
 | YOLO-04 | Phase 6 | Pending |
 | YOLO-05 | Phase 6 | Pending |
 | YOLO-06 | Phase 6 | Pending |

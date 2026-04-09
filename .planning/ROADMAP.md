@@ -3,7 +3,7 @@
 ## Milestones
 
 - ✅ **v1.0 MVP** — 3 phases, 11 plans (shipped 2026-04-08)
-- 🔄 **v2.0 AI Vision Engine Overhaul** — 4 phases (in progress)
+- 🔄 **v2.0 AI Vision Engine Overhaul** — 6 phases (in progress)
 
 ## Phases
 
@@ -19,12 +19,14 @@
 Full details: [.planning/milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 
 <details>
-<summary>🔄 v2.0 AI Vision Engine Overhaul (Phases 4-7) — IN PROGRESS</summary>
+<summary>🔄 v2.0 AI Vision Engine Overhaul (Phases 4-9) — IN PROGRESS</summary>
 
-- [ ] **Phase 4: Foundation** — Backup, MNN AAR integration, llama.cpp removal
-- [ ] **Phase 5: Engine** — LLM inference wrapper, dynamic model download from HuggingFace
-- [ ] **Phase 6: Detection** — YOLO+LLM batch pipeline, new scan tab, multi-item detection
-- [ ] **Phase 7: Scan UI Overhaul** — Title bar removal, horizontal frame, capture animation, barcode redesign
+- [x] **Phase 4: Foundation** — Backup, MNN AAR integration, llama.cpp removal
+- [x] **Phase 5: Engine** — LLM inference wrapper, dynamic model download from HuggingFace
+- [x] **Phase 6: Detection** — YOLO+LLM batch pipeline, new scan tab, multi-item detection
+- [x] **Phase 7: Scan UI Overhaul** — Title bar removal, horizontal frame, capture animation, barcode redesign
+- [ ] **Phase 8: YOLO Detection Hardening** — Model asset, overlay wiring, code review fixes
+- [ ] **Phase 9: Verification & Artifact Cleanup** — Missing verification docs, planning state sync
 
 </details>
 
@@ -96,14 +98,43 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 - [x] 07-04-PLAN.md — Redesign barcode scan to manual capture with result card + human checkpoint (Wave 2)
 **UI hint**: yes
 
+### Phase 8: YOLO Detection Hardening
+**Goal**: YOLO scan works end-to-end with real detections, bounding boxes rendered, and all code review warnings addressed
+**Depends on**: Phase 6, Phase 7
+**Requirements**: YOLO-01, YOLO-03
+**Gap Closure**: Closes audit gaps YOLO-01, YOLO-03, INT-01, INT-02, INT-03, FLOW-01, WR-01–WR-06, IN-01, IN-04
+**Success Criteria** (what must be TRUE):
+  1. `yolo_food.mnn` model asset exists in `app/src/main/assets/` and loads successfully
+  2. `DetectionOverlayView.setDetections()` is called from `YoloScanFragment` to render bounding boxes
+  3. `cancelDetection()` propagates cancellation to running pipeline coroutine
+  4. No bitmap double-recycle or memory leak risks in `DetectionPipeline`
+  5. Defensive bitmap copy in `YoloScanFragment.captureAndDetect()`
+  6. `ConfirmationViewModel.saveAll()` reports errors instead of silent swallowing
+  7. Hardcoded colors in `DetectionResultAdapter` extracted to `colors.xml`
+**Plans**: 3 plans
+
+### Phase 9: Verification & Artifact Cleanup
+**Goal**: All phases have formal verification artifacts, planning state reflects reality, untracked files committed
+**Depends on**: Phase 8
+**Gap Closure**: Closes audit gaps MNN-03, untracked files, ROADMAP/STATE sync
+**Success Criteria** (what must be TRUE):
+  1. `05-VERIFICATION.md` exists in `.planning/phases/05-engine/` with 11/11 requirements verified
+  2. `06-REVIEW.md` and `06-VERIFICATION.md` are tracked in git
+  3. ROADMAP.md progress table shows actual completion percentages
+  4. STATE.md milestone progress matches reality (4/4 phases, 18/18 plans)
+  5. REQUIREMENTS.md checkboxes reflect audit findings (24/27 satisfied)
+**Plans**: 2 plans
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 4. Foundation | 0/3 | Planned | - |
-| 5. Engine | 0/7 | Planned | - |
-| 6. Detection | 0/4 | Planned | - |
-| 7. Scan UI Overhaul | 0/4 | Planned | - |
+| 4. Foundation | 3/3 | Complete | 2026-04-09 |
+| 5. Engine | 7/7 | Complete | 2026-04-09 |
+| 6. Detection | 4/4 | Complete | 2026-04-09 |
+| 7. Scan UI Overhaul | 4/4 | Complete | 2026-04-09 |
+| 8. YOLO Detection Hardening | 0/3 | Not started | - |
+| 9. Verification & Artifact Cleanup | 0/2 | Not started | - |
 
 ---
-*Roadmap created: 2026-04-08 for v2.0 AI Vision Engine Overhaul*
+*Roadmap updated: 2026-04-09 — gap closure phases 8-9 added from v2.0-MILESTONE-AUDIT*
