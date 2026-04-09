@@ -90,10 +90,10 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
   4. After capture, a loading screen shows staged AI inference progress ("Detecting objects..." → "Analyzing N items..." → "Done")
   5. Barcode scan uses a manual tap-to-capture button — no auto-scan, no flash button, no close button
 **Plans**: 4 plans
-- [ ] 07-01-PLAN.md — Switch to NoActionBar theme, remove title bar from all main tabs (Wave 1)
-- [ ] 07-02-PLAN.md — Remove static frames, add floating back arrows, unify capture button across all scan modes (Wave 1)
-- [ ] 07-03-PLAN.md — Add white flash animation and staged progress overlay to Photo + YOLO scan (Wave 2)
-- [ ] 07-04-PLAN.md — Redesign barcode scan to manual capture with result card + human checkpoint (Wave 2)
+- [x] 07-01-PLAN.md — Switch to NoActionBar theme, remove title bar from all main tabs (Wave 1)
+- [x] 07-02-PLAN.md — Remove static frames, add floating back arrows, unify capture button across all scan modes (Wave 1)
+- [x] 07-03-PLAN.md — Add white flash animation and staged progress overlay to Photo + YOLO scan (Wave 2)
+- [x] 07-04-PLAN.md — Redesign barcode scan to manual capture with result card + human checkpoint (Wave 2)
 **UI hint**: yes
 
 ## Progress
