@@ -11,11 +11,13 @@ import com.example.foodexpiryapp.domain.model.DownloadUiState
 import com.example.foodexpiryapp.domain.model.ModelFile
 import com.example.foodexpiryapp.domain.model.ModelManifest
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.atomic.AtomicBoolean
@@ -39,6 +41,7 @@ class ModelDownloadManager @Inject constructor(
     private val downloadService: HuggingFaceDownloadService,
     private val storageManager: ModelStorageManager,
     private val downloadStateDao: DownloadStateDao,
+    private val hfTokenProvider: HfTokenProvider,
     @ApplicationContext private val context: Context
 ) {
     private val downloadMutex = Mutex()
@@ -51,11 +54,11 @@ class ModelDownloadManager @Inject constructor(
         /** Default manifest — SHA-256 values populated from HuggingFace API at resolve time. */
         private val DEFAULT_MANIFEST = ModelManifest(
             version = "1.0.0",
-            modelId = "jinjin06/Qwen3.5-2B-MNN",
+            modelId = "taobao-mnn/Qwen3.5-2B-MNN",
             files = listOf(
                 ModelFile("config.json", estimatedSizeBytes = 512),
                 ModelFile("llm_config.json", estimatedSizeBytes = 2_048),
-                ModelFile("tokenizer.model", estimatedSizeBytes = 500_000),
+                ModelFile("tokenizer.txt", estimatedSizeBytes = 500_000),
                 ModelFile("llm.mnn", estimatedSizeBytes = 50_000_000),
                 ModelFile("llm.mnn.weight", estimatedSizeBytes = 1_200_000_000)
             )
@@ -74,18 +77,24 @@ class ModelDownloadManager @Inject constructor(
      * Response includes siblings[].lfs.sha256 for LFS-tracked files.
      * Non-LFS files (config.json, etc.) are small — verification optional.
      */
-    private fun fetchSha256Hashes(): Map<String, String> {
-        return try {
+    private suspend fun fetchSha256Hashes(): Map<String, String> = withContext(Dispatchers.IO) {
+        try {
             val request = URL("https://huggingface.co/api/models/${DEFAULT_MANIFEST.modelId}")
             val connection = request.openConnection() as HttpURLConnection
             connection.connectTimeout = 15_000
             connection.readTimeout = 15_000
             connection.setRequestProperty("User-Agent", HuggingFaceDownloadService.USER_AGENT)
 
+            // Add Authorization header for private repo access
+            val token = hfTokenProvider.getToken()
+            if (token.isNotBlank()) {
+                connection.setRequestProperty("Authorization", "Bearer $token")
+            }
+
             val responseCode = connection.responseCode
             if (responseCode != HttpURLConnection.HTTP_OK) {
                 Log.w(TAG, "Failed to fetch SHA-256 hashes: HTTP $responseCode")
-                return emptyMap()
+                return@withContext emptyMap()
             }
 
             val body = connection.inputStream.bufferedReader().readText()
@@ -120,7 +129,7 @@ class ModelDownloadManager @Inject constructor(
      * Resolves manifest with actual SHA-256 hashes from HuggingFace.
      * Call this before starting download to enable DL-03 verification.
      */
-    fun resolveManifest() {
+    suspend fun resolveManifest() {
         val hashes = fetchSha256Hashes()
         if (hashes.isNotEmpty()) {
             resolvedManifest = DEFAULT_MANIFEST.copy(

@@ -23,10 +23,12 @@ import javax.inject.Singleton
  * Per PITFALL-4: Use .part file pattern to avoid corrupting final model files.
  */
 @Singleton
-class HuggingFaceDownloadService @Inject constructor() {
+class HuggingFaceDownloadService @Inject constructor(
+    private val hfTokenProvider: HfTokenProvider
+) {
 
     companion object {
-        const val HF_REPO = "jinjin06/Qwen3.5-2B-MNN"
+        const val HF_REPO = "taobao-mnn/Qwen3.5-2B-MNN"
         const val HF_BASE_URL = "https://huggingface.co"
         const val USER_AGENT = "FoodExpiryApp/2.0"
         const val BUFFER_SIZE = 8192
@@ -38,8 +40,18 @@ class HuggingFaceDownloadService @Inject constructor() {
             "llm.mnn.weight",
             "llm_config.json",
             "config.json",
-            "tokenizer.model"
+            "tokenizer.txt"
         )
+    }
+
+    /**
+     * Applies Authorization header for private repo access if a token is available.
+     */
+    private fun applyAuth(connection: HttpURLConnection) {
+        val token = hfTokenProvider.getToken()
+        if (token.isNotBlank()) {
+            connection.setRequestProperty("Authorization", "Bearer $token")
+        }
     }
 
     /**
@@ -66,6 +78,7 @@ class HuggingFaceDownloadService @Inject constructor() {
         connection.readTimeout = 60_000
         connection.instanceFollowRedirects = true
         connection.setRequestProperty("User-Agent", USER_AGENT)
+        applyAuth(connection)
 
         // Set Range header for resume
         if (startByte > 0) {
