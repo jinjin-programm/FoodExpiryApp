@@ -106,7 +106,7 @@ class YoloScanFragment : Fragment() {
     // ────────────────────────────────────────────────────────────────────────
 
     private fun setupUI() {
-        binding.btnClose.setOnClickListener {
+        binding.btnBack.setOnClickListener {
             findNavController().popBackStack()
         }
 
@@ -209,8 +209,22 @@ class YoloScanFragment : Fragment() {
     }
 
     private fun showProgressOverlay(show: Boolean) {
-        binding.progressOverlay.visibility = if (show) View.VISIBLE else View.GONE
+        if (show) {
+            showProgressOverlayWithFadeIn()
+        } else {
+            binding.progressOverlay.visibility = View.GONE
+        }
         binding.btnCapture.isEnabled = !show
+    }
+
+    // D-09: Semi-transparent overlay fades in on frozen frame
+    private fun showProgressOverlayWithFadeIn() {
+        binding.progressOverlay.visibility = View.VISIBLE
+        binding.progressOverlay.alpha = 0f
+        binding.progressOverlay.animate()
+            .alpha(1f)
+            .setDuration(200L)
+            .start()
     }
 
     /**
@@ -267,6 +281,7 @@ class YoloScanFragment : Fragment() {
 
     /**
      * Captures the latest bitmap and triggers the detection pipeline via ViewModel.
+     * Per D-08: White flash animation before detection.
      */
     private fun captureAndDetect() {
         if (isCapturing) return
@@ -278,7 +293,28 @@ class YoloScanFragment : Fragment() {
         }
 
         isCapturing = true
-        viewModel.startDetection(bitmap)
+
+        // D-08: White flash animation
+        showFlashAnimation {
+            // D-09: Show progress overlay over frozen frame
+            showProgressOverlayWithFadeIn()
+            viewModel.startDetection(bitmap)
+        }
+    }
+
+    // D-08: White flash animation helper
+    private fun showFlashAnimation(onComplete: () -> Unit) {
+        binding.flashOverlay.visibility = View.VISIBLE
+        binding.flashOverlay.alpha = 1f
+
+        binding.flashOverlay.animate()
+            .alpha(0f)
+            .setDuration(150L)
+            .withEndAction {
+                binding.flashOverlay.visibility = View.GONE
+                onComplete()
+            }
+            .start()
     }
 
     /**

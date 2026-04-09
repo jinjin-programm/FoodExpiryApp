@@ -98,8 +98,6 @@ class VisionScanFragment : Fragment() {
         foodClassifier.initialize()
 
         updateStatus("Loading Qwen3-VL-2B...", Status.INITIALIZING)
-        binding.progressBar.visibility = View.VISIBLE
-        binding.tvProgressDetail.text = "Preparing model..."
 
         loadModelIfNeeded()
 
@@ -124,9 +122,6 @@ class VisionScanFragment : Fragment() {
 
             if (isReady) {
                 updateStatus("AI model ready", Status.READY)
-                binding.progressBar.visibility = View.GONE
-                binding.tvProgressDetail.visibility = View.GONE
-                binding.tvInstruction.visibility = View.VISIBLE
             } else {
                 // Check download state
                 modelDownloadManager.observeDownloadState().collect { state ->
@@ -134,29 +129,15 @@ class VisionScanFragment : Fragment() {
                         is DownloadUiState.Ready,
                         is DownloadUiState.Complete -> {
                             updateStatus("AI model ready", Status.READY)
-                            binding.progressBar.visibility = View.GONE
-                            binding.tvProgressDetail.visibility = View.GONE
-                            binding.tvInstruction.visibility = View.VISIBLE
                         }
                         is DownloadUiState.NotDownloaded -> {
                             updateStatus("AI model not downloaded — tap 'AI 深度分析' to download", Status.READY)
-                            binding.progressBar.visibility = View.GONE
-                            binding.tvProgressDetail.visibility = View.GONE
-                            binding.tvInstruction.visibility = View.VISIBLE
                         }
                         is DownloadUiState.Downloading -> {
                             updateStatus("Downloading model... ${state.overallProgress}%", Status.INITIALIZING)
-                            binding.progressBar.visibility = View.VISIBLE
-                            binding.progressBar.max = 100
-                            binding.progressBar.progress = state.overallProgress
-                            binding.tvProgressDetail.text = "${state.currentFile} — ${String.format("%.1f", state.downloadedMB)}MB / ${String.format("%.1f", state.totalMB)}MB"
-                            binding.tvInstruction.visibility = View.GONE
                         }
                         is DownloadUiState.Error -> {
                             updateStatus("Download error: ${state.message}", Status.ERROR)
-                            binding.progressBar.visibility = View.GONE
-                            binding.tvProgressDetail.visibility = View.GONE
-                            binding.tvInstruction.visibility = View.VISIBLE
                         }
                         else -> {
                             updateStatus("AI model ${state::class.simpleName}", Status.INITIALIZING)
@@ -168,7 +149,7 @@ class VisionScanFragment : Fragment() {
     }
 
     private fun setupUI() {
-        binding.btnClose.setOnClickListener {
+        binding.btnBack.setOnClickListener {
             findNavController().popBackStack()
         }
 
@@ -176,7 +157,7 @@ class VisionScanFragment : Fragment() {
             captureAndAnalyze()
         }
 
-        binding.btnCancelInference.setOnClickListener {
+        binding.btnCancelProgress.setOnClickListener {
             cancelOngoingInference()
         }
 
@@ -244,70 +225,62 @@ class VisionScanFragment : Fragment() {
             Toast.makeText(context, "No image captured", Toast.LENGTH_SHORT).show()
             return
         }
-        
-        // Crop the bitmap to exactly what's inside the UI bounding box
-        bitmap = cropToBoundingBox(bitmap)
 
-        // Quick Scan Flow
-        if (foodClassifier.isInitialized()) {
-            val result = foodClassifier.classify(bitmap)
-            if (result != null) {
-                displayQuickScanResult(result)
-                return
+        // D-08: White flash animation (100-150ms)
+        showFlashAnimation {
+            // D-09: Freeze frame handled by stopping camera feed — but since we already
+            // captured latestBitmap, the "frozen frame" is the bitmap we have.
+            // Show progress overlay on top of the frozen camera preview.
+
+            // No more cropToBoundingBox — simulated_box is removed (D-05)
+            // Quick Scan Flow
+            if (foodClassifier.isInitialized()) {
+                val result = foodClassifier.classify(bitmap)
+                if (result != null) {
+                    displayQuickScanResult(result)
+                    return@showFlashAnimation
+                }
             }
+
+            // Fallback to Ask AI
+            runAskAiInference(bitmap)
         }
-        
-        // Fallback to Ask AI if Quick Scan fails or not initialized
-        runAskAiInference(bitmap)
     }
 
-    private fun cropToBoundingBox(bitmap: Bitmap): Bitmap {
-        try {
-            val previewWidth = binding.previewView.width.toFloat()
-            val previewHeight = binding.previewView.height.toFloat()
-            if (previewWidth == 0f || previewHeight == 0f) return bitmap
+    // D-08: White flash animation helper
+    private fun showFlashAnimation(onComplete: () -> Unit) {
+        binding.flashOverlay.visibility = View.VISIBLE
+        binding.flashOverlay.alpha = 1f
 
-            // UI Bounding box coordinates and dimensions
-            val boxX = binding.simulatedBox.x
-            val boxY = binding.simulatedBox.y
-            val boxWidth = binding.simulatedBox.width.toFloat()
-            val boxHeight = binding.simulatedBox.height.toFloat()
+        // D-08: 100-150ms white flash
+        binding.flashOverlay.animate()
+            .alpha(0f)
+            .setDuration(150L)
+            .withEndAction {
+                binding.flashOverlay.visibility = View.GONE
+                // D-09: Show progress overlay after flash
+                showProgressOverlay()
+                onComplete()
+            }
+            .start()
+    }
 
-            // Captured upright bitmap dimensions
-            val bitmapWidth = bitmap.width.toFloat()
-            val bitmapHeight = bitmap.height.toFloat()
+    // D-09: Semi-transparent overlay fades in on frozen frame
+    private fun showProgressOverlay() {
+        binding.progressOverlay.visibility = View.VISIBLE
+        binding.progressOverlay.alpha = 0f
+        binding.progressOverlay.animate()
+            .alpha(1f)
+            .setDuration(200L)
+            .start()
+    }
 
-            // PreviewView defaults to FILL_CENTER. We calculate the scale factor.
-            val scale = maxOf(previewWidth / bitmapWidth, previewHeight / bitmapHeight)
-
-            // Scaled bitmap dimensions
-            val scaledBitmapWidth = bitmapWidth * scale
-            val scaledBitmapHeight = bitmapHeight * scale
-
-            // Calculate offset of the scaled bitmap relative to the preview (since it's centered)
-            val offsetX = (scaledBitmapWidth - previewWidth) / 2f
-            val offsetY = (scaledBitmapHeight - previewHeight) / 2f
-
-            // Map box coordinates to scaled bitmap coordinates
-            val mappedBoxX = boxX + offsetX
-            val mappedBoxY = boxY + offsetY
-
-            // Map back to original bitmap coordinates
-            val cropX = (mappedBoxX / scale).toInt().coerceAtLeast(0)
-            val cropY = (mappedBoxY / scale).toInt().coerceAtLeast(0)
-            val cropWidth = (boxWidth / scale).toInt().coerceAtMost(bitmap.width - cropX)
-            val cropHeight = (boxHeight / scale).toInt().coerceAtMost(bitmap.height - cropY)
-
-            if (cropWidth <= 0 || cropHeight <= 0) return bitmap
-
-            return Bitmap.createBitmap(bitmap, cropX, cropY, cropWidth, cropHeight)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to crop bitmap", e)
-            return bitmap
-        }
+    private fun hideProgressOverlay() {
+        binding.progressOverlay.visibility = View.GONE
     }
 
     private fun displayQuickScanResult(result: com.example.foodexpiryapp.domain.vision.ClassificationResult) {
+        hideProgressOverlay()
         binding.resultCard.visibility = View.VISIBLE
         binding.rawResponseCard.visibility = View.GONE
         
@@ -349,25 +322,21 @@ class VisionScanFragment : Fragment() {
                         }
                         is DownloadUiState.Downloading -> {
                             isProcessing = true
-                            binding.progressBar.visibility = View.VISIBLE
-                            binding.progressBar.max = 100
-                            binding.progressBar.progress = state.overallProgress
-                            binding.tvProgressDetail.text = "Downloading model... ${state.overallProgress}%"
-                            binding.btnCancelInference.visibility = View.VISIBLE
+                            showProgressOverlay()
+                            binding.tvProgressTitle.text = "Downloading AI model..."
+                            binding.tvProgressDetailOverlay.text = "Downloading model... ${state.overallProgress}%"
                             updateStatus("Downloading AI model...", Status.INITIALIZING)
                         }
                         is DownloadUiState.Complete -> {
                             isProcessing = false
-                            binding.progressBar.visibility = View.GONE
-                            binding.btnCancelInference.visibility = View.GONE
+                            hideProgressOverlay()
                             Toast.makeText(context, "Model downloaded! Starting analysis...", Toast.LENGTH_SHORT).show()
                             // Retry inference after download
                             runAskAiInference(bitmap)
                         }
                         is DownloadUiState.Error -> {
                             isProcessing = false
-                            binding.progressBar.visibility = View.GONE
-                            binding.btnCancelInference.visibility = View.GONE
+                            hideProgressOverlay()
                             Toast.makeText(context, "Download failed: ${state.message}", Toast.LENGTH_LONG).show()
                             updateStatus("Download failed", Status.ERROR)
                         }
@@ -379,8 +348,9 @@ class VisionScanFragment : Fragment() {
 
             // Model ready — run inference
             isProcessing = true
-            binding.progressBar.visibility = View.VISIBLE
-            binding.btnCancelInference.visibility = View.VISIBLE
+            showProgressOverlay()
+            binding.tvProgressTitle.text = "Analyzing food..."
+            binding.tvProgressDetailOverlay.text = "Preparing analysis"
             updateStatus("Analyzing food...", Status.ANALYZING)
             startProgressTicker()
 
@@ -388,8 +358,7 @@ class VisionScanFragment : Fragment() {
                 identifyFoodUseCase.invoke(bitmap).collect { result ->
                     isProcessing = false
                     stopProgressTicker()
-                    binding.progressBar.visibility = View.GONE
-                    binding.btnCancelInference.visibility = View.GONE
+                    hideProgressOverlay()
 
                     if (result.name == "Error") {
                         displayAiResult(result.name, null, result.rawResponse ?: "Error")
@@ -411,8 +380,7 @@ class VisionScanFragment : Fragment() {
             } catch (e: Exception) {
                 isProcessing = false
                 stopProgressTicker()
-                binding.progressBar.visibility = View.GONE
-                binding.btnCancelInference.visibility = View.GONE
+                hideProgressOverlay()
                 Log.e(TAG, "Inference error", e)
                 Toast.makeText(context, "AI analysis failed: ${e.message}", Toast.LENGTH_LONG).show()
                 updateStatus("Analysis failed", Status.ERROR)
@@ -433,24 +401,20 @@ class VisionScanFragment : Fragment() {
                         when (state) {
                             is DownloadUiState.Downloading -> {
                                 isProcessing = true
-                                binding.progressBar.visibility = View.VISIBLE
-                                binding.progressBar.max = 100
-                                binding.progressBar.progress = state.overallProgress
-                                binding.tvProgressDetail.text = "Downloading model... ${state.overallProgress}%"
-                                binding.btnCancelInference.visibility = View.VISIBLE
+                                showProgressOverlay()
+                                binding.tvProgressTitle.text = "Downloading AI model..."
+                                binding.tvProgressDetailOverlay.text = "Downloading model... ${state.overallProgress}%"
                                 updateStatus("Downloading AI model...", Status.INITIALIZING)
                             }
                             is DownloadUiState.Complete -> {
                                 isProcessing = false
-                                binding.progressBar.visibility = View.GONE
-                                binding.btnCancelInference.visibility = View.GONE
+                                hideProgressOverlay()
                                 Toast.makeText(context, "Model downloaded! Starting analysis...", Toast.LENGTH_SHORT).show()
                                 runAskAiInference()
                             }
                             is DownloadUiState.Error -> {
                                 isProcessing = false
-                                binding.progressBar.visibility = View.GONE
-                                binding.btnCancelInference.visibility = View.GONE
+                                hideProgressOverlay()
                                 Toast.makeText(context, "Download failed: ${state.message}", Toast.LENGTH_LONG).show()
                                 updateStatus("Download failed", Status.ERROR)
                             }
@@ -476,7 +440,12 @@ class VisionScanFragment : Fragment() {
                     elapsedSec < 8 -> 5.0
                     else -> max(2.0, 10.0 - elapsedSec)
                 }
-                updateProgress("Processing... ${"%.1f".format(elapsedSec)}s elapsed, ~${"%.0f".format(etaSec)}s remaining")
+                // D-10: Staged progress text
+                val stage = when {
+                    elapsedSec < 3 -> "Identifying food item..."
+                    else -> "Almost done..."
+                }
+                _binding?.tvProgressDetailOverlay?.text = "$stage ${"%.1f".format(elapsedSec)}s elapsed"
                 delay(PROGRESS_TICK_MS)
             }
         }
@@ -492,12 +461,8 @@ class VisionScanFragment : Fragment() {
         detectionJob?.cancel()
         stopProgressTicker()
         isProcessing = false
-        binding.progressBar.visibility = View.GONE
-        binding.btnCancelInference.visibility = View.GONE
+        hideProgressOverlay()
         binding.btnCapture.isEnabled = true
-        binding.tvInstruction.visibility = View.VISIBLE
-        binding.tvProgressDetail.visibility = View.VISIBLE
-        binding.tvProgressDetail.text = "Cancelled"
         Toast.makeText(requireContext(), "Inference cancelled", Toast.LENGTH_SHORT).show()
     }
 
@@ -511,12 +476,6 @@ class VisionScanFragment : Fragment() {
         val targetW = (width * scale).toInt().coerceAtLeast(1)
         val targetH = (height * scale).toInt().coerceAtLeast(1)
         return Bitmap.createScaledBitmap(source, targetW, targetH, true)
-    }
-
-    private fun updateProgress(message: String) {
-        _binding?.let { binding ->
-            binding.tvProgressDetail.text = message
-        }
     }
 
     private data class FoodResult(
