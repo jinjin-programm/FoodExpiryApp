@@ -33,9 +33,9 @@ class MnnLlmEngine @Inject constructor(
 
         init {
             try {
-                System.loadLibrary("mnn_llm_bridge")
-            } catch (e: UnsatisfiedLinkError) {
-                Log.w(TAG, "libmnn_llm_bridge.so not found — LLM features unavailable", e)
+                MnnLlmNative
+            } catch (_: UnsatisfiedLinkError) {
+                Log.w(TAG, "MNN native libraries not available — LLM features unavailable")
             }
         }
 

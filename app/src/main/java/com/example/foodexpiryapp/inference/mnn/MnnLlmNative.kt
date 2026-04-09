@@ -12,7 +12,7 @@ object MnnLlmNative {
 
     init {
         try {
-            // Load MNN dependencies first (order matters!)
+            System.loadLibrary("c++_shared")
             System.loadLibrary("MNN")
             System.loadLibrary("MNN_Express")
             System.loadLibrary("llm")
