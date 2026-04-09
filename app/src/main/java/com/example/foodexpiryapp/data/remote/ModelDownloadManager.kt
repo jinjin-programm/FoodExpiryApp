@@ -59,6 +59,7 @@ class ModelDownloadManager @Inject constructor(
                 ModelFile("config.json", estimatedSizeBytes = 512),
                 ModelFile("llm_config.json", estimatedSizeBytes = 2_048),
                 ModelFile("tokenizer.txt", estimatedSizeBytes = 500_000),
+                ModelFile("visual.mnn", estimatedSizeBytes = 50_000_000),
                 ModelFile("llm.mnn", estimatedSizeBytes = 50_000_000),
                 ModelFile("llm.mnn.weight", estimatedSizeBytes = 1_200_000_000)
             )

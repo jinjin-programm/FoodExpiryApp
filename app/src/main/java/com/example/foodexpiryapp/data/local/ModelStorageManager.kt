@@ -28,7 +28,8 @@ class ModelStorageManager @Inject constructor(
             "llm.mnn.weight",
             "llm_config.json",
             "config.json",
-            "tokenizer.txt"
+            "tokenizer.txt",
+            "visual.mnn"
         )
     }
 
