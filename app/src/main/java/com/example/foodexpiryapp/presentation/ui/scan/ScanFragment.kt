@@ -3,6 +3,11 @@ package com.example.foodexpiryapp.presentation.ui.scan
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageFormat
+import android.graphics.Rect
+import android.graphics.YuvImage
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -19,11 +24,11 @@ import androidx.fragment.app.setFragmentResult
 import androidx.navigation.fragment.findNavController
 import com.example.foodexpiryapp.databinding.FragmentScanBinding
 import com.google.mlkit.vision.barcode.BarcodeScanning
-import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import dagger.hilt.android.AndroidEntryPoint
+import java.io.ByteArrayOutputStream
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ExecutorService
@@ -40,8 +45,12 @@ class ScanFragment : Fragment() {
     private var imageAnalyzer: ImageAnalysis? = null
     private var cameraProvider: ProcessCameraProvider? = null
 
-    private var isScanningBarcode = true // Default mode
-    private var isProcessing = false // Prevent multiple rapid scans
+    // Manual capture state (D-12: frame capturer keeps latest bitmap)
+    private var latestBitmap: Bitmap? = null
+    private var isProcessing = false
+
+    // Scan mode: "barcode" (default) or "date"
+    private var scanMode = "barcode"
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -68,7 +77,7 @@ class ScanFragment : Fragment() {
         // Check for initial scan mode from arguments
         val mode = arguments?.getString("scan_mode")
         if (mode == "date") {
-            isScanningBarcode = false
+            scanMode = "date"
         }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
@@ -83,20 +92,29 @@ class ScanFragment : Fragment() {
     }
 
     private fun setupUI() {
-        binding.btnClose.setOnClickListener {
+        // D-04: Floating back arrow
+        binding.btnBack.setOnClickListener {
             findNavController().popBackStack()
         }
-        
-        updateModeUI()
-    }
 
-    private fun updateModeUI() {
-        if (isScanningBarcode) {
-            binding.tvInstruction.text = "Point camera at barcode"
-        } else {
-            binding.tvInstruction.text = "Point camera at expiry date (e.g., EXP 12/2025)"
+        // D-12: Manual capture button
+        binding.btnCapture.setOnClickListener {
+            captureAndAnalyze()
+        }
+
+        // D-14: Confirm button in result card (barcode mode)
+        binding.btnConfirmBarcode.setOnClickListener {
+            val barcode = binding.tvBarcodeValue.text.toString()
+            requireActivity().supportFragmentManager.setFragmentResult(
+                "SCAN_RESULT", bundleOf("barcode" to barcode)
+            )
+            findNavController().popBackStack()
         }
     }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Camera setup
+    // ────────────────────────────────────────────────────────────────────────
 
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
@@ -107,121 +125,195 @@ class ScanFragment : Fragment() {
         }, ContextCompat.getMainExecutor(requireContext()))
     }
 
-    private fun restartCamera() {
-        cameraProvider?.unbindAll()
-        bindCameraUseCases()
-    }
-
     private fun bindCameraUseCases() {
         val cameraProvider = cameraProvider ?: return
 
         val preview = Preview.Builder()
             .build()
-            .also {
-                it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
-            }
+            .also { it.setSurfaceProvider(binding.viewFinder.surfaceProvider) }
 
         imageAnalyzer = ImageAnalysis.Builder()
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
-            .also {
-                it.setAnalyzer(cameraExecutor, if (isScanningBarcode) BarcodeAnalyzer() else TextAnalyzer())
-            }
+            .also { it.setAnalyzer(cameraExecutor, FrameCapturer()) }
 
         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
         try {
             cameraProvider.unbindAll()
-            cameraProvider.bindToLifecycle(
-                this, cameraSelector, preview, imageAnalyzer
-            )
+            cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalyzer)
         } catch (exc: Exception) {
             Log.e(TAG, "Use case binding failed", exc)
         }
     }
 
-    private inner class BarcodeAnalyzer : ImageAnalysis.Analyzer {
-        private val scanner = BarcodeScanning.getClient()
+    // ────────────────────────────────────────────────────────────────────────
+    // Frame capture (keeps latest bitmap for shutter-triggered capture)
+    // D-12: Manual capture — user taps capture, detection runs on captured frame
+    // ────────────────────────────────────────────────────────────────────────
 
+    private inner class FrameCapturer : ImageAnalysis.Analyzer {
         @SuppressLint("UnsafeOptInUsageError")
         override fun analyze(imageProxy: ImageProxy) {
-            val mediaImage = imageProxy.image
-            if (mediaImage != null && !isProcessing) {
-                val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-                
-                scanner.process(image)
-                    .addOnSuccessListener { barcodes ->
-                        for (barcode in barcodes) {
-                            if (!barcode.rawValue.isNullOrEmpty()) {
-                                isProcessing = true
-                                handleBarcodeResult(barcode.rawValue!!)
-                                break 
-                            }
-                        }
-                    }
-                    .addOnFailureListener {
-                        // Task failed with an exception
-                    }
-                    .addOnCompleteListener {
-                        imageProxy.close()
-                    }
+            val bitmap = imageProxy.toBitmap()
+            val rotation = imageProxy.imageInfo.rotationDegrees
+            if (bitmap != null && rotation != 0) {
+                val matrix = android.graphics.Matrix()
+                matrix.postRotate(rotation.toFloat())
+                latestBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
             } else {
-                imageProxy.close()
+                latestBitmap = bitmap
+            }
+            imageProxy.close()
+        }
+
+        private fun ImageProxy.toBitmap(): Bitmap? {
+            return try {
+                val yBuffer = planes[0].buffer
+                val uBuffer = planes[1].buffer
+                val vBuffer = planes[2].buffer
+
+                val ySize = yBuffer.remaining()
+                val uSize = uBuffer.remaining()
+                val vSize = vBuffer.remaining()
+
+                val nv21 = ByteArray(ySize + uSize + vSize)
+                yBuffer.get(nv21, 0, ySize)
+                vBuffer.get(nv21, ySize, vSize)
+                uBuffer.get(nv21, ySize + vSize, uSize)
+
+                val yuvImage = YuvImage(nv21, ImageFormat.NV21, width, height, null)
+                val out = ByteArrayOutputStream()
+                yuvImage.compressToJpeg(Rect(0, 0, width, height), 90, out)
+                BitmapFactory.decodeByteArray(out.toByteArray(), 0, out.size())
+            } catch (e: Exception) {
+                Log.e(TAG, "YUV→Bitmap conversion failed", e)
+                null
             }
         }
     }
 
-    private inner class TextAnalyzer : ImageAnalysis.Analyzer {
-        private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-        // Simple regex for dates like DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD
-        // This is a basic implementation and can be improved
-        private val datePattern = Pattern.compile(
+    // ────────────────────────────────────────────────────────────────────────
+    // Capture + flash + barcode/date detection flow
+    // ────────────────────────────────────────────────────────────────────────
+
+    private fun captureAndAnalyze() {
+        if (isProcessing) return
+
+        val bitmap = latestBitmap
+        if (bitmap == null) {
+            Toast.makeText(context, "No image captured — try again", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        isProcessing = true
+
+        // D-08/D-11: Flash animation on capture
+        showFlashAnimation {
+            if (scanMode == "barcode") {
+                detectBarcodeInBitmap(bitmap)
+            } else {
+                detectDateInBitmap(bitmap)
+            }
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Barcode detection on captured bitmap
+    // ────────────────────────────────────────────────────────────────────────
+
+    private fun detectBarcodeInBitmap(bitmap: Bitmap) {
+        val image = InputImage.fromBitmap(bitmap, 0)
+        val scanner = BarcodeScanning.getClient()
+
+        scanner.process(image)
+            .addOnSuccessListener { barcodes ->
+                if (barcodes.isNotEmpty() && !barcodes[0].rawValue.isNullOrEmpty()) {
+                    val barcodeValue = barcodes[0].rawValue!!
+                    showBarcodeResult(barcodeValue)
+                } else {
+                    isProcessing = false
+                    Toast.makeText(context, "No barcode detected — try again", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .addOnFailureListener { e ->
+                isProcessing = false
+                Toast.makeText(context, "Barcode scan failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Date detection on captured bitmap (manual capture mode)
+    // ────────────────────────────────────────────────────────────────────────
+
+    private fun detectDateInBitmap(bitmap: Bitmap) {
+        val image = InputImage.fromBitmap(bitmap, 0)
+        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+        val datePattern = Pattern.compile(
             "\\b(\\d{1,2}[-/. ]\\d{1,2}[-/. ]\\d{2,4})|(\\d{4}[-/. ]\\d{1,2}[-/. ]\\d{1,2})\\b"
         )
 
-        @SuppressLint("UnsafeOptInUsageError")
-        override fun analyze(imageProxy: ImageProxy) {
-            val mediaImage = imageProxy.image
-            if (mediaImage != null && !isProcessing) {
-                val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-
-                recognizer.process(image)
-                    .addOnSuccessListener { visionText ->
-                        val text = visionText.text
-                        val matcher = datePattern.matcher(text)
-                        if (matcher.find()) {
-                            val potentialDate = matcher.group()
-                            isProcessing = true
-                            handleDateResult(potentialDate)
-                        }
+        recognizer.process(image)
+            .addOnSuccessListener { visionText ->
+                val text = visionText.text
+                val matcher = datePattern.matcher(text)
+                if (matcher.find()) {
+                    val potentialDate = matcher.group()
+                    if (potentialDate != null) {
+                        showBarcodeResult(potentialDate) // Reuse result card for date
+                    } else {
+                        isProcessing = false
+                        Toast.makeText(context, "No date detected — try again", Toast.LENGTH_SHORT).show()
                     }
-                    .addOnFailureListener {
-                        // Task failed with an exception
-                    }
-                    .addOnCompleteListener {
-                        imageProxy.close()
-                    }
-            } else {
-                imageProxy.close()
+                } else {
+                    isProcessing = false
+                    Toast.makeText(context, "No date detected — try again", Toast.LENGTH_SHORT).show()
+                }
             }
+            .addOnFailureListener { e ->
+                isProcessing = false
+                Toast.makeText(context, "Date scan failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Result display
+    // ────────────────────────────────────────────────────────────────────────
+
+    /**
+     * D-14: Show result in card with Confirm button.
+     * For barcode mode, shows barcode value.
+     * For date mode, shows detected date string.
+     */
+    private fun showBarcodeResult(value: String) {
+        activity?.runOnUiThread {
+            binding.tvBarcodeValue.text = value
+            binding.cardBarcodeResult.visibility = View.VISIBLE
+            isProcessing = false
         }
     }
 
-    private fun handleBarcodeResult(barcode: String) {
-        activity?.runOnUiThread {
-            Toast.makeText(context, "Barcode found: $barcode", Toast.LENGTH_SHORT).show()
-            requireActivity().supportFragmentManager.setFragmentResult("SCAN_RESULT", bundleOf("barcode" to barcode))
-            findNavController().popBackStack()
-        }
+    // ────────────────────────────────────────────────────────────────────────
+    // Flash animation (D-08: white flash on capture)
+    // ────────────────────────────────────────────────────────────────────────
+
+    private fun showFlashAnimation(onComplete: () -> Unit) {
+        binding.flashOverlay.visibility = View.VISIBLE
+        binding.flashOverlay.alpha = 1f
+
+        binding.flashOverlay.animate()
+            .alpha(0f)
+            .setDuration(150L)
+            .withEndAction {
+                binding.flashOverlay.visibility = View.GONE
+                onComplete()
+            }
+            .start()
     }
 
-    private fun handleDateResult(dateString: String) {
-        activity?.runOnUiThread {
-            Toast.makeText(context, "Date found: $dateString", Toast.LENGTH_SHORT).show()
-            requireActivity().supportFragmentManager.setFragmentResult("SCAN_RESULT", bundleOf("date" to dateString))
-            findNavController().popBackStack()
-        }
-    }
+    // ────────────────────────────────────────────────────────────────────────
+    // Lifecycle
+    // ────────────────────────────────────────────────────────────────────────
 
     private fun allPermissionsGranted() = ContextCompat.checkSelfPermission(
         requireContext(), Manifest.permission.CAMERA
