@@ -9,6 +9,7 @@ import com.example.foodexpiryapp.data.local.dao.ShoppingItemDao
 import com.example.foodexpiryapp.data.local.dao.ShoppingTemplateDao
 import com.example.foodexpiryapp.data.local.dao.CookedRecipeDao
 import com.example.foodexpiryapp.data.local.dao.LocalRecipeDao
+import com.example.foodexpiryapp.data.local.dao.DetectionResultDao
 import com.example.foodexpiryapp.data.local.dao.DownloadStateDao
 import com.example.foodexpiryapp.data.local.database.AppDatabase
 import dagger.Module
@@ -89,5 +90,11 @@ object DatabaseModule {
     @Singleton
     fun provideDownloadStateDao(database: AppDatabase): DownloadStateDao {
         return database.downloadStateDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideDetectionResultDao(database: AppDatabase): DetectionResultDao {
+        return database.detectionResultDao()
     }
 }
