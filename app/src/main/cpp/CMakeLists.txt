@@ -49,5 +49,18 @@ target_link_libraries(mnn_llm_bridge
     jnigraphics
 )
 
-# 5. 支援 Android 15+ 的 16KB 頁面大小
+# 5. YOLO bridge library (same MNN deps, NO llm dependency)
+add_library(mnn_yolo_bridge SHARED mnn_yolo_bridge.cpp)
+
+target_link_libraries(mnn_yolo_bridge
+    MNN
+    MNN_Express
+    MNNOpenCV
+    log
+    android
+    jnigraphics
+)
+
+# 6. 支援 Android 15+ 的 16KB 頁面大小
 target_link_options(mnn_llm_bridge PRIVATE "-Wl,-z,max-page-size=16384")
+target_link_options(mnn_yolo_bridge PRIVATE "-Wl,-z,max-page-size=16384")
