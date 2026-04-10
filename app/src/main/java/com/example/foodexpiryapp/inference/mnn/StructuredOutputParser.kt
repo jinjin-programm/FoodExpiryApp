@@ -11,7 +11,7 @@ object StructuredOutputParser {
     fun parse(rawResponse: String?): FoodIdentification? {
         if (rawResponse.isNullOrBlank()) return null
 
-        val match = FOOD_TAG_REGEX.find(rawResponse)
+        val match = FOOD_TAG_REGEX.findAll(rawResponse).lastOrNull {
         if (match != null) {
             val foodName = match.groupValues[1].trim()
             if (foodName.isNotBlank() && foodName.lowercase() != "unknown") {
