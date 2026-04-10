@@ -134,7 +134,9 @@ class DetectionPipeline @Inject constructor(
                 // Recycle crop bitmap IMMEDIATELY per YOLO-08/PITFALL-6
                 detection.cropBitmap?.recycle()
 
-                results.add(result)
+                // Per D-10: Null out cropBitmap on result to prevent stale reference
+                // The bitmap is recycled above; result should not hold a reference to it
+                results.add(result.copy(cropBitmap = null))
             }
 
             // Stage 3: Complete
