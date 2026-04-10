@@ -8,6 +8,7 @@ import com.example.foodexpiryapp.inference.mnn.ModelLifecycleManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -39,6 +40,7 @@ class MnnYoloEngine @Inject constructor(
     }
 
     private var isLoaded = false
+    private var nativeHandle: Long = 0L
 
     /**
      * Loads the YOLO model from APK assets.
@@ -62,7 +64,7 @@ class MnnYoloEngine @Inject constructor(
             val modelPath = config.modelAssetPath
             Log.d(TAG, "Loading YOLO model from assets: $modelPath")
 
-            // Verify asset exists
+            // Verify asset exists per T-08-01-03 (threat mitigation: check asset before native call)
             try {
                 context.assets.open(modelPath).close()
                 Log.d(TAG, "YOLO model asset found: $modelPath")
@@ -72,10 +74,17 @@ class MnnYoloEngine @Inject constructor(
                 return@withContext false
             }
 
-            // TODO: Initialize MNN YOLO session via JNI when native bridge is ready
-            // For now, mark as loaded since the asset exists
+            // Initialize MNN YOLO session via JNI
+            // Per D-04: Custom JNI bridge pattern (same as MnnLlmNative)
+            nativeHandle = MnnYoloNative.nativeCreateYolo(modelPath, 4) // 4 threads default
+            if (nativeHandle == 0L) {
+                Log.e(TAG, "Failed to create YOLO native instance")
+                lifecycleManager.release(ModelLifecycleManager.ModelType.YOLO)
+                return@withContext false
+            }
+
             isLoaded = true
-            Log.d(TAG, "YOLO model loaded successfully (stub mode)")
+            Log.d(TAG, "YOLO model loaded successfully (handle=$nativeHandle)")
             true
         } catch (e: Exception) {
             Log.e(TAG, "Error loading YOLO model", e)
@@ -92,11 +101,11 @@ class MnnYoloEngine @Inject constructor(
      * Per YOLO-07: Results capped at maxDetections (default 8).
      * Per PITFALL-5: All on Dispatchers.IO (caller's responsibility for suspend).
      *
-     * Processing pipeline:
-     * 1. Preprocess bitmap (letterbox resize to 640x640, normalize)
-     * 2. Run MNN inference (stub returning empty array until native bridge ready)
-     * 3. Postprocess with MnnYoloPostprocessor (NMS, coordinate normalization)
-     * 4. Return capped list
+ * Processing pipeline:
+ * 1. Encode bitmap to JPEG byte array
+ * 2. Run MNN YOLO inference via native bridge (mnn_yolo_bridge.cpp)
+ * 3. Postprocess with MnnYoloPostprocessor (NMS, coordinate normalization)
+ * 4. Return capped list
      *
      * @param bitmap Input image to detect food items in
      * @return List of DetectionResult, capped at maxDetections
@@ -111,23 +120,26 @@ class MnnYoloEngine @Inject constructor(
             val originalWidth = bitmap.width
             val originalHeight = bitmap.height
 
-            // Step 1: Preprocess — letterbox resize to 640x640
-            val preprocessed = preprocessBitmap(bitmap)
+            // Step 1: Encode bitmap to JPEG byte array for JNI transfer
+            val stream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream)
+            val byteArray = stream.toByteArray()
 
-            // Step 2: Run MNN inference (stub — returns empty until native bridge ready)
-            // TODO: Replace with actual MNN native inference call
-            // val outputArray = MnnYoloNative.nativeRunDetection(nativeHandle, preprocessed)
-            val outputArray = floatArrayOf() // Stub: no detections until native bridge implemented
-            val numDetections = 0
-            val numValues = 6
+            // Step 2: Run YOLO inference via native bridge
+            val outputArray = MnnYoloNative.nativeRunDetection(nativeHandle, byteArray, originalWidth, originalHeight)
 
-            // Step 3: Postprocess results
+            // Step 3: Determine detection count and value count from output
+            // Per D-05: Output format is [x1,y1,x2,y2,confidence,class_id,...] per row (6+ values)
+            val numValues = 6  // Minimum values per detection row
+            val numDetections = outputArray.size / numValues
+
+            // Step 4: Postprocess results
             val detections = MnnYoloPostprocessor.parseDetections(
                 outputArray, numDetections, numValues,
                 originalWidth, originalHeight
             )
 
-            // Step 4: Apply NMS and cap at maxDetections
+            // Step 5: Apply NMS and cap at maxDetections
             val nmsResults = MnnYoloPostprocessor.applyNms(detections, config.iouThreshold)
 
             nmsResults.take(config.maxDetections)
@@ -143,12 +155,16 @@ class MnnYoloEngine @Inject constructor(
      */
     suspend fun unloadModel() = withContext(Dispatchers.IO) {
         try {
-            // TODO: Free MNN YOLO session via JNI when native bridge is ready
-            // MnnYoloNative.nativeDestroyYolo(nativeHandle)
+            if (nativeHandle != 0L) {
+                MnnYoloNative.nativeDestroyYolo(nativeHandle)
+                Log.d(TAG, "YOLO model unloaded (native handle released)")
+            }
+            nativeHandle = 0L
             isLoaded = false
-            Log.d(TAG, "YOLO model unloaded")
         } catch (e: Exception) {
             Log.e(TAG, "Error unloading YOLO model", e)
+            nativeHandle = 0L
+            isLoaded = false
         }
         lifecycleManager.release(ModelLifecycleManager.ModelType.YOLO)
     }
@@ -157,24 +173,4 @@ class MnnYoloEngine @Inject constructor(
      * Checks if the YOLO model is currently loaded.
      */
     fun isModelLoaded(): Boolean = isLoaded
-
-    /**
-     * Preprocesses a bitmap for YOLO inference.
-     * Applies letterbox resize to 640x640 and normalization.
-     *
-     * Per D-03: YOLO model expects 640x640 normalized input.
-     */
-    private fun preprocessBitmap(bitmap: Bitmap): Bitmap {
-        val inputSize = config.inputSize
-
-        // Letterbox resize: maintain aspect ratio, pad to square
-        val width = bitmap.width
-        val height = bitmap.height
-        val scale = inputSize.toFloat() / maxOf(width, height)
-
-        val scaledWidth = (width * scale).toInt()
-        val scaledHeight = (height * scale).toInt()
-
-        return Bitmap.createScaledBitmap(bitmap, scaledWidth, scaledHeight, true)
-    }
 }
