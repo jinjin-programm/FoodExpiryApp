@@ -112,6 +112,9 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
   6. `ConfirmationViewModel.saveAll()` reports errors instead of silent swallowing
   7. Hardcoded colors in `DetectionResultAdapter` extracted to `colors.xml`
 **Plans**: 3 plans
+- [ ] 08-01-PLAN.md — YOLO native JNI bridge (MnnYoloNative, mnn_yolo_bridge.cpp, MnnYoloEngine wiring)
+- [ ] 08-02-PLAN.md — Overlay wiring + code hardening (DetectionOverlayView, bitmap safety, color extraction, error reporting)
+- [ ] 08-03-PLAN.md — Unit tests + device verification (MnnYoloPostprocessorTest, YoloScanViewModel detections, human checkpoint)
 
 ### Phase 9: Verification & Artifact Cleanup
 **Goal**: All phases have formal verification artifacts, planning state reflects reality, untracked files committed
