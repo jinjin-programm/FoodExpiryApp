@@ -107,8 +107,8 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeRunInference(
 
     try {
         ChatMessages chat = {
-            {"system", "You are a food identification assistant. Identify the main food item in the image and respond with ONLY a JSON object like: {\"name\": \"apple\", \"category\": \"fruit\"}. Be concise. If no food is visible, respond with: {\"name\": \"Unknown\"}"},
-            {"user", "<img>in_memory_image</img>Identify the food in this image. Respond with JSON only."}
+            {"system", "You are a food identifier. Look at the image and identify the main food item. Respond in exactly this format: [FOOD]food name[/FOOD]. Example: [FOOD]banana[/FOOD]. If no food is visible, respond: [FOOD]Unknown[/FOOD]. Respond with ONLY this one line, nothing else."},
+            {"user", "<img>in_memory_image</img>What food is in this image?"}
         };
 
         std::string templated = instance->llm->apply_chat_template(chat);
@@ -190,10 +190,10 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeRunInferenceWith
     LOGI("nativeRunInferenceWithHint: image size=%d bytes, hint=%s", len, hint_str);
 
     try {
-        std::string user_msg = "<img>in_memory_image</img>Identify the food in this image. It might be a " + std::string(hint_str) + ". Respond with JSON only: {\"name\": \"food_name\", \"category\": \"category\"}";
+        std::string user_msg = "<img>in_memory_image</img>What food is in this image? Respond: [FOOD]food name[/FOOD].";
 
         ChatMessages chat = {
-            {"system", "You are a food identification assistant. Respond with ONLY a JSON object like: {\"name\": \"apple\", \"category\": \"fruit\"}. Be concise."},
+            {"system", "You are a food identifier. Identify the main food in the image. Respond in exactly this format: [FOOD]food name[/FOOD]. Example: [FOOD]banana[/FOOD]. If no food is visible, respond: [FOOD]Unknown[/FOOD]. Respond with ONLY this one line."},
             {"user", user_msg}
         };
 
