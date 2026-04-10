@@ -6,49 +6,30 @@ import com.example.foodexpiryapp.domain.model.FoodIdentification
 object StructuredOutputParser {
     private const val TAG = "StructuredOutputParser"
 
-    private val FOOD_TAG_REGEX = Regex("""\[FOOD\](.+?)\[/FOOD]""", RegexOption.IGNORE_CASE)
-    private val STOP_TOKEN_REGEX = Regex("""\[/FOOD]\s*$""", RegexOption.IGNORE_CASE)
+    private val THINKING_STEP_RE = Regex("""^\d+\.\s+\*\*\*""")
 
     fun parse(rawResponse: String?): FoodIdentification? {
         if (rawResponse.isNullOrBlank()) return null
 
-        val match = FOOD_TAG_REGEX.findAll(rawResponse).lastOrNull()
-        if (match != null) {
-            val foodName = match.groupValues[1].trim()
-            if (foodName.isNotBlank() && foodName.lowercase() != "unknown") {
-                Log.d(TAG, "Parsed food: '$foodName'")
-                return FoodIdentification(
-                    name = foodName,
-                    nameZh = foodName,
-                    confidence = 1.0f,
-                    rawResponse = rawResponse
-                )
-            }
-            Log.d(TAG, "Parsed as Unknown food")
-            return FoodIdentification(
-                name = "Unknown",
-                nameZh = "Unknown",
-                confidence = 0.0f,
-                rawResponse = rawResponse
-            )
-        }
+        val lines = rawResponse.lines().map { it.trim() }.filter { it.isNotBlank() }
 
-        val stopMatch = STOP_TOKEN_REGEX.find(rawResponse)
-        if (stopMatch != null) {
-            val beforeStop = rawResponse.substring(0, stopMatch.range.first).trim()
-            val lastSentence = beforeStop.split(Regex("[.!?\\n]")).lastOrNull { it.isNotBlank() }?.trim()
-            if (lastSentence != null && lastSentence.length > 1) {
-                Log.d(TAG, "Parsed food from pre-stop context: '$lastSentence'")
+        for (line in lines.reversed()) {
+            if (THINKING_STEP_RE.containsMatchIn(line)) continue
+            if (line.length < 2 || line.length > 60) continue
+            val name = line.replace(Regex("""^[`\"]+"""), "").replace(Regex("""[`"]+$"""), "")
+                .trim()
+            if (name.isNotBlank()) {
+                Log.d(TAG, "Parsed food: '$name'")
                 return FoodIdentification(
-                    name = lastSentence,
-                    nameZh = lastSentence,
+                    name = name,
+                    nameZh = name,
                     confidence = 1.0f,
                     rawResponse = rawResponse
                 )
             }
         }
 
-        Log.w(TAG, "No [FOOD] tag found in response")
+        Log.w(TAG, "No food name found in response")
         return null
     }
 }
