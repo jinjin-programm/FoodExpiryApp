@@ -17,3 +17,20 @@
 
 **UAT:** 14/14 tests passed across all phases
 **Timeline:** Feb 10, 2026 → Apr 8, 2026 (~58 days)
+
+## v2.0 AI Vision Engine Overhaul (In Progress)
+
+**Phases completed:** 4/6 (Phases 4-7), 18/25 plans
+
+**Key accomplishments:**
+- MNN v3.5.0 replaces llama.cpp as inference runtime
+- Qwen3.5-2B-MNN (4-bit quantized) model with dynamic download from HuggingFace
+- YOLO+LLM batch detection pipeline with bounding box rendering
+- Full scan UI overhaul: NoActionBar theme, horizontal frame, capture animations
+- **BREAKTHROUGH (2026-04-10):** First successful on-device food identification via MNN LLM!
+  - Fixed missing `libMNNAudio.so` (DT_NEEDED dependency of libllm.so)
+  - Fixed prompt engineering: food-specific JSON-only output
+  - Qwen3.5-2B-MNN correctly identifies banana via vision scan
+
+**Remaining:** Phase 8 (YOLO Hardening), Phase 9 (Verification)
+**Timeline:** Apr 8, 2026 → in progress

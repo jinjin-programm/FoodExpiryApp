@@ -10,20 +10,27 @@ import android.util.Log
 object MnnLlmNative {
     private const val TAG = "MnnLlmNative"
 
+    var nativeLoaded = false
+        private set
+
     init {
         try {
-            System.loadLibrary("c++_shared")
-            System.loadLibrary("MNN")
-            System.loadLibrary("MNN_Express")
-            System.loadLibrary("llm")
-            // Optional: GPU backends
-            try { System.loadLibrary("MNN_CL") } catch (e: UnsatisfiedLinkError) { Log.d(TAG, "MNN_CL not available (OpenCL)") }
-            try { System.loadLibrary("MNN_Vulkan") } catch (e: UnsatisfiedLinkError) { Log.d(TAG, "MNN_Vulkan not available") }
-            // Load our JNI bridge last
-            System.loadLibrary("mnn_llm_bridge")
+            try {
+                System.loadLibrary("c++_shared")
+                Log.i(TAG, "c++_shared loaded")
+            } catch (e: UnsatisfiedLinkError) {
+                Log.i(TAG, "c++_shared already loaded or not available: ${e.message}")
+            }
+            System.loadLibrary("MNN"); Log.i(TAG, "MNN loaded")
+            System.loadLibrary("MNN_Express"); Log.i(TAG, "MNN_Express loaded")
+            System.loadLibrary("llm"); Log.i(TAG, "llm loaded")
+            try { System.loadLibrary("MNN_CL") } catch (_: UnsatisfiedLinkError) { }
+            try { System.loadLibrary("MNN_Vulkan") } catch (_: UnsatisfiedLinkError) { }
+            System.loadLibrary("mnn_llm_bridge"); Log.i(TAG, "mnn_llm_bridge loaded")
+            nativeLoaded = true
             Log.i(TAG, "All MNN libraries loaded successfully")
         } catch (e: UnsatisfiedLinkError) {
-            Log.w(TAG, "MNN libraries not found — LLM native features unavailable", e)
+            Log.e(TAG, "FAILED to load native libraries: ${e.message}", e)
         }
     }
 
@@ -38,15 +45,15 @@ object MnnLlmNative {
     external fun nativeCreateLlm(modelDir: String, threadNum: Int, memoryMode: String): Long
 
     /**
-     * Runs inference on image data using the LLM.
+     * Runs inference on an image file using the LLM.
      *
      * @param nativeHandle Handle returned by nativeCreateLlm
-     * @param imageData JPEG-compressed image bytes
-     * @param width Image width in pixels
-     * @param height Image height in pixels
+     * @param imageData In-memory JPEG image byte array
      * @return LLM response string (JSON food identification)
      */
-    external fun nativeRunInference(nativeHandle: Long, imageData: ByteArray, width: Int, height: Int): String
+    external fun nativeRunInference(nativeHandle: Long, imageData: ByteArray): String
+
+    external fun nativeRunInferenceWithHint(nativeHandle: Long, imageData: ByteArray, hint: String): String
 
     /**
      * Destroys the native LLM instance and releases all resources.

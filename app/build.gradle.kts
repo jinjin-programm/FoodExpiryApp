@@ -73,6 +73,7 @@ android {
         buildConfigField("String", "API_NINJAS_KEY", "\"test_key\"")
         buildConfigField("String", "FOODDATA_CENTRAL_KEY", "\"test_key\"")
         buildConfigField("String", "THEMEALDB_API_KEY", "\"1\"")
+        buildConfigField("String", "HF_TOKEN", "\"${localProperty("HF_TOKEN") ?: ""}\"")
     }
 
     buildTypes {

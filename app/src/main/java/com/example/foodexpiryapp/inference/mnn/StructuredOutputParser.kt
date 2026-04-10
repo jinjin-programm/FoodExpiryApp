@@ -4,93 +4,149 @@ import android.util.Log
 import com.example.foodexpiryapp.domain.model.FoodIdentification
 import org.json.JSONObject
 
-/**
- * Parses LLM response into FoodIdentification.
- * Per MNN-04: Extracts {"name", "name_zh"} from JSON output.
- * Handles malformed JSON gracefully.
- */
 object StructuredOutputParser {
     private const val TAG = "StructuredOutputParser"
 
-    /**
-     * Parses raw LLM text response into FoodIdentification.
-     * Handles various output formats:
-     * 1. Clean JSON: {"name": "apple", "name_zh": "蘋果"}
-     * 2. JSON in markdown: ```json\n{...}\n```
-     * 3. JSON with preamble text: "Here is the food: {...}"
-     * 4. Malformed JSON: best-effort extraction
-     */
+    private val FOOD_PATTERNS = listOf(
+        Regex("""The food is\s+(?:\[)?([^\]\.]+)""", RegexOption.IGNORE_CASE),
+        Regex("""(?:it's|it is|this is|that is|this appears to be|this looks like)\s+(?:a\s+|an\s+)?(.+?)(?:\.|$)""", RegexOption.IGNORE_CASE),
+        Regex("""(?:identified as|recognized as|appears to be)\s+(?:a\s+|an\s+)?(.+?)(?:\.|$)""", RegexOption.IGNORE_CASE),
+        Regex("""(?:I (?:can |am able to )?see|I (?:can |am able to )?identify|I (?:can |am able to )?observe)\s+(?:a\s+|an\s+)?(.+?)(?:\s+in\s|(?:\.|$))""", RegexOption.IGNORE_CASE),
+        Regex("""(?:there is|there's)\s+(?:a\s+|an\s+)?(.+?)(?:\s+in\s|(?:\.|$))""", RegexOption.IGNORE_CASE),
+        Regex("""(?:the\s+(?:food|item|object|fruit|vegetable|meat)\s+(?:in\s+the\s+image\s+)?(?:is|appears to be))\s+(?:a\s+|an\s+)?(.+?)(?:\.|$)""", RegexOption.IGNORE_CASE)
+    )
+
+    private val STOP_WORDS = setOf(
+        "the", "a", "an", "this", "that", "it", "is", "are", "was", "were",
+        "in", "on", "at", "to", "of", "for", "with", "from", "by",
+        "i", "you", "he", "she", "we", "they", "my", "your", "his", "her",
+        "image", "picture", "photo", "photograph", "photo's", "appears",
+        "looks", "like", "seems", "would", "could", "should", "can",
+        "not", "no", "yes", "and", "or", "but", "if", "then",
+        "unable", "sorry", "cannot", "don't", "doesn't", "isn't",
+        "identify", "determine", "tell", "see", "observe", "recognize"
+    )
+
     fun parse(rawResponse: String?): FoodIdentification? {
         if (rawResponse.isNullOrBlank()) return null
 
         val cleaned = rawResponse.trim()
 
-        // Try direct JSON parse
         try {
             return parseJson(cleaned)
-        } catch (e: Exception) {
-            Log.d(TAG, "Direct JSON parse failed, trying extraction")
-        }
+        } catch (_: Exception) {}
 
-        // Extract JSON from markdown code block
         val jsonBlockRegex = Regex("""```(?:json)?\s*(\{[^`]*\})\s*```""")
         val blockMatch = jsonBlockRegex.find(cleaned)
         if (blockMatch != null) {
             try {
                 return parseJson(blockMatch.groupValues[1])
-            } catch (e: Exception) {
-                Log.d(TAG, "Code block JSON parse failed")
-            }
+            } catch (_: Exception) {}
         }
 
-        // Extract JSON object from surrounding text
-        val jsonRegex = Regex("""\{[^{}]*"name"[^{}]*\}""")
+        val jsonRegex = Regex("""\{[^{}]*"name_en"[^{}]*\}""")
         val jsonMatch = jsonRegex.find(cleaned)
         if (jsonMatch != null) {
             try {
                 return parseJson(jsonMatch.value)
-            } catch (e: Exception) {
-                Log.d(TAG, "Extracted JSON parse failed")
-            }
+            } catch (_: Exception) {}
         }
 
-        // Last resort: try to find name patterns
-        return parseFallback(cleaned)
+        val jsonRegex2 = Regex("""\{[^{}]*"name"[^{}]*\}""")
+        val jsonMatch2 = jsonRegex2.find(cleaned)
+        if (jsonMatch2 != null) {
+            try {
+                return parseJson(jsonMatch2.value)
+            } catch (_: Exception) {}
+        }
+
+        return parsePlainText(cleaned)
     }
 
     private fun parseJson(json: String): FoodIdentification {
         val obj = JSONObject(json)
 
-        val name = obj.optString("name", "Unknown")
+        val nameEn = obj.optString("name_en", "")
+        val name = if (nameEn.isNotBlank()) nameEn else obj.optString("name", "Unknown")
+
         val nameZh = obj.optString("name_zh", obj.optString("nameZh", ""))
-        val confidence = obj.optDouble("confidence", 0.8).toFloat()
+        val confidence = 1.0f
         val category = obj.optString("category", null)
         val expiryHint = obj.optString("expiry_hint", obj.optString("expiryHint", null))
 
         return FoodIdentification(
             name = name.ifBlank { "Unknown" },
-            nameZh = nameZh.ifBlank { name },  // Fallback to English name
+            nameZh = nameZh.ifBlank { name },
             confidence = confidence.coerceIn(0f, 1f),
             expiryHint = expiryHint.ifBlank { null },
             rawResponse = json
         )
     }
 
-    private fun parseFallback(text: String): FoodIdentification? {
-        // Try to extract "name": "..." and "name_zh": "..." patterns
-        val nameMatch = Regex(""""name"\s*:\s*"([^"]+)"""").find(text)
-        val nameZhMatch = Regex(""""name_zh"\s*:\s*"([^"]+)"""").find(text)
+    private fun parsePlainText(text: String): FoodIdentification? {
+        var extractedName = ""
 
-        if (nameMatch != null) {
-            return FoodIdentification(
-                name = nameMatch.groupValues[1],
-                nameZh = nameZhMatch?.groupValues?.get(1) ?: nameMatch.groupValues[1],
-                confidence = 0.5f,  // Lower confidence for fallback parse
-                rawResponse = text
-            )
+        for (pattern in FOOD_PATTERNS) {
+            val match = pattern.find(text)
+            if (match != null && match.groupValues.size > 1) {
+                val candidate = match.groupValues[1].trim()
+                if (candidate.isNotBlank() && candidate.length > 1) {
+                    extractedName = candidate
+                    break
+                }
+            }
         }
 
-        Log.w(TAG, "Could not parse food identification from: ${text.take(100)}")
-        return null
+        if (extractedName.isBlank()) {
+            val lines = text.lines().filter { it.isNotBlank() }
+            val lastLine = lines.lastOrNull()?.trim() ?: return null
+
+            if (lastLine.length in 2..60 && !lastLine.contains(" ")) {
+                extractedName = lastLine
+            } else {
+                val words = lastLine.split(Regex("\\s+"))
+                val meaningfulWords = words.filter { word ->
+                    word.lowercase() !in STOP_WORDS && word.length > 1
+                }
+                if (meaningfulWords.isNotEmpty()) {
+                    extractedName = meaningfulWords.joinToString(" ")
+                }
+            }
+        }
+
+        if (extractedName.isBlank()) return null
+
+        extractedName = extractedName
+            .replace(Regex("""^[\s`"'\[(]+"""), "")
+            .replace(Regex("""[\s`"'\])]+$"""), "")
+            .replace(Regex("""[.!?;,]+$"""), "")
+            .trim()
+
+        if (extractedName.isBlank()) return null
+
+        val upper = extractedName.uppercase()
+        val isUnknown = upper == "UNKNOWN" ||
+                upper == "NONE" ||
+                upper == "NOTHING" ||
+                upper == "NO FOOD" ||
+                upper == "ERROR" ||
+                upper.contains("UNABLE TO") ||
+                upper.contains("CANNOT") ||
+                upper.contains("CAN'T") ||
+                upper.contains("DON'T") ||
+                upper.contains("SORRY") ||
+                upper.contains("I'M NOT") ||
+                upper.contains("NO OBJECT")
+
+        val name = if (isUnknown) "Unknown" else extractedName
+
+        Log.d(TAG, "Parsed food name: '$name' from: '$text'")
+
+        return FoodIdentification(
+            name = name,
+            nameZh = name,
+            confidence = if (isUnknown) 0.0f else 1.0f,
+            rawResponse = text
+        )
     }
 }

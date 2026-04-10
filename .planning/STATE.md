@@ -1,45 +1,47 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: completed
-last_updated: "2026-04-09T14:43:48.401Z"
+milestone: v2.0
+milestone_name: AI Vision Engine Overhaul
+status: in_progress
+last_updated: "2026-04-10T23:40:00.000Z"
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 18
+  total_phases: 9
+  completed_phases: 7
+  total_plans: 25
   completed_plans: 18
-  percent: 100
+  percent: 72
 ---
 
 # Project State: FoodExpiryApp
 
-**Status:** Milestone complete
+**Status:** MNN LLM WORKING — First successful food identification!
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-04-08)
 
 **Core value:** Let a new user add their first food item within 30 seconds and reduce the mental burden of food management.
-**Current focus:** Phase 07 — Scan UI Overhaul
+**Current focus:** Phase 08 — YOLO Detection Hardening
 
 ## Current Position
 
-Phase: 07 (Scan UI Overhaul) — EXECUTING
-Plan: 1 of 4
+Phase: 08 (YOLO Detection Hardening) — READY
+Plan: 0 of 3
 
 - **Milestone:** v2.0 AI Vision Engine Overhaul
-- **Phase:** 07
+- **Phase:** 08
 - **Plan:** Not started
-- **Status:** Roadmap created, awaiting first plan
+- **Status:** MNN LLM inference confirmed working on device
 
 ### v2.0 Progress
 
 ```
-Phase 4: Foundation       [          ] 0%
-Phase 5: Engine           [          ] 0%
-Phase 6: Detection        [          ] 0%
-Phase 7: Scan UI Overhaul [          ] 0%
+Phase 4: Foundation       [██████████] 100% ✅
+Phase 5: Engine           [██████████] 100% ✅ ← LLM WORKING!
+Phase 6: Detection        [██████████] 100% ✅
+Phase 7: Scan UI Overhaul [██████████] 100% ✅
+Phase 8: YOLO Hardening   [          ] 0%
+Phase 9: Verification     [          ] 0%
 ```
 
 ## Milestone History
@@ -54,9 +56,13 @@ Phase 7: Scan UI Overhaul [          ] 0%
 
 ### v2.0 AI Vision Engine Overhaul (In Progress)
 
-- **Phases:** 0/4 complete
-- **Plans:** 0 total
-- **Requirements:** 0/27 validated
+- **Phases:** 4/6 complete (Phases 4-7)
+- **Plans:** 18/25 complete
+- **Requirements:** 24/27 validated
+- **BREAKTHROUGH 2026-04-10:** MNN LLM first successful food identification on device!
+  - Fixed: missing `libMNNAudio.so` causing UnsatisfiedLinkError crash
+  - Fixed: prompt engineering — food-specific JSON-only prompt replaces generic "What is in this image?"
+  - Result: Qwen3.5-2B-MNN correctly identifies "banana" via vision scan
 
 ## Accumulated Context
 
@@ -64,12 +70,12 @@ Phase 7: Scan UI Overhaul [          ] 0%
 
 | Decision | Rationale | Status |
 |----------|-----------|--------|
-| MNN Chat official component | Avoid custom inference layer, battle-tested | Pending |
-| Qwen3.5-2B-MNN model | 4-bit quantized, lightweight for mobile | Pending |
-| YOLO + LLM (skip CLIP) | CLIP overlaps with LLM capability | Pending |
-| Dynamic model download from HF | Reduce APK size by ~40MB | Pending |
-| Sequential YOLO→LLM processing | Prevent OOM on <6GB devices | Pending |
-| Complete llama.cpp removal | libllm.so naming collision | Pending |
+| MNN Chat official component | Avoid custom inference layer, battle-tested | ✅ Done |
+| Qwen3.5-2B-MNN model | 4-bit quantized, lightweight for mobile | ✅ Working |
+| YOLO + LLM (skip CLIP) | CLIP overlaps with LLM capability | ✅ Done |
+| Dynamic model download from HF | Reduce APK size by ~40MB | ✅ Done |
+| Sequential YOLO→LLM processing | Prevent OOM on <6GB devices | ✅ Done |
+| Complete llama.cpp removal | libllm.so naming collision | ✅ Done |
 
 ### Critical Constraints
 
@@ -91,20 +97,25 @@ Phase 7: Scan UI Overhaul [          ] 0%
 
 ### TODO
 
-- [ ] Create Phase 4 plans with `/gsd-plan-phase 4`
+- [ ] Create Phase 8 plans with `/gsd-plan-phase 8`
+- [ ] End-to-end YOLO detection hardening
+- [ ] Phase 9 verification & artifact cleanup
 
 ### Quick Tasks Completed
 
 | # | Description | Date | Directory |
 |---|-------------|------|-----------|
+| 260410-mnn-fix | Fix MNN native crash (missing libMNNAudio.so) + food-specific prompt | 2026-04-10 | Debug session |
 | 260409-vki | Improve LLM few-shot prompt with visual description examples | 2026-04-09 | [260409-vki-improve-llm-few-shot-prompt-with-visual-](./quick/260409-vki-improve-llm-few-shot-prompt-with-visual-/) |
 
 ## Session Continuity
 
-**Last session:** 2026-04-08T23:20:18.232Z
+**Last session:** 2026-04-10T23:40:00.000Z
 
-- Created v2.0 roadmap with 4 phases (4-7)
-- Mapped all 27 requirements with 100% coverage
-- Research completed with HIGH confidence
+- **MNN LLM FIRST SUCCESSFUL FOOD IDENTIFICATION** — Qwen3.5-2B-MNN correctly identifies banana on device
+- Root cause: `libllm.so` had DT_NEEDED dependency on `libMNNAudio.so` which was missing from jniLibs
+- Also fixed: generic prompt → food-specific JSON-only prompt (68s essay → short JSON)
+- Added diagnostic logging to MnnLlmNative init block for future debugging
+- Updated STATE.md, ROADMAP.md progress tracking
 
-**Next action:** `/gsd-plan-phase 4`
+**Next action:** `/gsd-plan-phase 8`

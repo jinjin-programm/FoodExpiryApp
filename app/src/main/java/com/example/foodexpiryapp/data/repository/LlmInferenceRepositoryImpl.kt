@@ -44,6 +44,13 @@ class LlmInferenceRepositoryImpl @Inject constructor(
 
     companion object {
         private const val TAG = "LlmInferenceRepo"
+        private val GENERIC_CATEGORIES = setOf(
+            "vegetable", "fruit", "meat", "dairy", "drink", "beverage",
+            "snack", "seafood", "grain", "food", "dessert", "condiment",
+            "herb", "spice", "sauce", "soup", "bread", " pastry",
+            "蔬菜", "水果", "肉類", "肉", "海鮮", "飲品", "飲料", "零食",
+            "甜品", "甜點", "穀物", "調味料", "湯", "麵包"
+        )
     }
 
     private val inferenceMutex = Mutex()
@@ -129,7 +136,16 @@ class LlmInferenceRepositoryImpl @Inject constructor(
 
                 // Step 3: Run inference
                 Log.d(TAG, "Running food inference on ${bitmap.width}x${bitmap.height} bitmap")
-                val result = engine.runInference(bitmap)
+                var result = engine.runInference(bitmap)
+
+                if (result != null && isGenericCategory(result.name)) {
+                    Log.d(TAG, "Got generic category '${result.name}', retrying with refined prompt")
+                    val retryResult = engine.runInference(bitmap, retryHint = result.name)
+                    if (retryResult != null && !isGenericCategory(retryResult.name)) {
+                        result = retryResult
+                        Log.d(TAG, "Retry succeeded: ${result.name}")
+                    }
+                }
 
                 if (result != null) {
                     Log.d(TAG, "Inference result: ${result.name} / ${result.nameZh} (confidence: ${result.confidence})")
@@ -157,5 +173,10 @@ class LlmInferenceRepositoryImpl @Inject constructor(
                 )
             }
         }
+    }
+
+    private fun isGenericCategory(name: String): Boolean {
+        val lower = name.lowercase().trim()
+        return GENERIC_CATEGORIES.any { lower == it.lowercase() || lower.contains(it.lowercase()) }
     }
 }

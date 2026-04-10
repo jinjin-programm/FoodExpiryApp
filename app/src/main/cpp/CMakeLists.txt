@@ -9,6 +9,7 @@ set(MNN_SOURCE_ROOT "C:/Users/jinjin/AndroidStudioProjects/MNN")
 include_directories(${MNN_SOURCE_ROOT}/include)
 include_directories(${MNN_SOURCE_ROOT}/include/MNN)
 include_directories(${MNN_SOURCE_ROOT}/transformers/llm/engine/include)
+include_directories(${MNN_SOURCE_ROOT}/tools/cv/include)
 
 # 2. 導入你手動編譯並複製到 jniLibs 的 .so 檔案
 set(MNN_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a")
@@ -28,6 +29,9 @@ set_target_properties(MNN_CL PROPERTIES IMPORTED_LOCATION ${MNN_LIB_DIR}/libMNN_
 add_library(MNN_Vulkan SHARED IMPORTED)
 set_target_properties(MNN_Vulkan PROPERTIES IMPORTED_LOCATION ${MNN_LIB_DIR}/libMNN_Vulkan.so)
 
+add_library(MNNOpenCV SHARED IMPORTED)
+set_target_properties(MNNOpenCV PROPERTIES IMPORTED_LOCATION ${MNN_LIB_DIR}/libMNNOpenCV.so)
+
 # 3. 建立你自己的 C++ 實作檔
 # 庫名必須與 MnnLlmNative.kt 中的 System.loadLibrary("mnn_llm_bridge") 一致
 add_library(mnn_llm_bridge SHARED mnn_llm_bridge.cpp)
@@ -39,6 +43,7 @@ target_link_libraries(mnn_llm_bridge
     llm
     MNN_CL
     MNN_Vulkan
+    MNNOpenCV
     log
     android
     jnigraphics

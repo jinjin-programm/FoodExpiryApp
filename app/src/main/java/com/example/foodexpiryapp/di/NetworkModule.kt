@@ -1,5 +1,7 @@
 package com.example.foodexpiryapp.di
 
+import com.example.foodexpiryapp.BuildConfig
+import com.example.foodexpiryapp.data.remote.HfTokenProvider
 import com.example.foodexpiryapp.data.remote.OpenFoodFactsApi
 import com.example.foodexpiryapp.data.remote.TheMealDbApi
 import com.google.gson.Gson
@@ -20,6 +22,14 @@ object NetworkModule {
     @Singleton
     fun provideGson(): Gson {
         return GsonBuilder().create()
+    }
+
+    @Provides
+    @Singleton
+    fun provideHfTokenProvider(): HfTokenProvider {
+        return object : HfTokenProvider {
+            override fun getToken(): String = BuildConfig.HF_TOKEN
+        }
     }
     
     @Provides

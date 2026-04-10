@@ -25,7 +25,6 @@ import com.example.foodexpiryapp.databinding.FragmentVisionScanBinding
 import com.example.foodexpiryapp.domain.usecase.IdentifyFoodUseCase
 import com.example.foodexpiryapp.data.remote.ModelDownloadManager
 import com.example.foodexpiryapp.domain.model.DownloadUiState
-import com.example.foodexpiryapp.domain.vision.FoodClassifier
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
@@ -64,7 +63,6 @@ class VisionScanFragment : Fragment() {
     private var progressTickerJob: Job? = null
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-    private lateinit var foodClassifier: FoodClassifier
 
     @Inject lateinit var identifyFoodUseCase: IdentifyFoodUseCase
     @Inject lateinit var modelDownloadManager: ModelDownloadManager
@@ -94,8 +92,6 @@ class VisionScanFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         cameraExecutor = Executors.newSingleThreadExecutor()
-        foodClassifier = FoodClassifier(requireContext())
-        foodClassifier.initialize()
 
         updateStatus("Loading Qwen3-VL-2B...", Status.INITIALIZING)
 
@@ -184,13 +180,14 @@ class VisionScanFragment : Fragment() {
                 }
 
             val imageAnalyzer = ImageAnalysis.Builder()
+                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
                 .also {
                     it.setAnalyzer(cameraExecutor) { imageProxy ->
                         val bm = imageProxy.toBitmap()
                         val rotation = imageProxy.imageInfo.rotationDegrees
-                        if (bm != null && rotation != 0) {
+                        if (rotation != 0) {
                             val matrix = android.graphics.Matrix()
                             matrix.postRotate(rotation.toFloat())
                             latestBitmap = Bitmap.createBitmap(bm, 0, 0, bm.width, bm.height, matrix, true)
@@ -220,7 +217,7 @@ class VisionScanFragment : Fragment() {
     private fun captureAndAnalyze() {
         if (isProcessing) return
 
-        var bitmap = latestBitmap
+        val bitmap = latestBitmap
         if (bitmap == null) {
             Toast.makeText(context, "No image captured", Toast.LENGTH_SHORT).show()
             return
@@ -233,16 +230,7 @@ class VisionScanFragment : Fragment() {
             // Show progress overlay on top of the frozen camera preview.
 
             // No more cropToBoundingBox — simulated_box is removed (D-05)
-            // Quick Scan Flow
-            if (foodClassifier.isInitialized()) {
-                val result = foodClassifier.classify(bitmap)
-                if (result != null) {
-                    displayQuickScanResult(result)
-                    return@showFlashAnimation
-                }
-            }
-
-            // Fallback to Ask AI
+            // Directly run Ask AI flow (TFLite FoodClassifier removed in MNN migration)
             runAskAiInference(bitmap)
         }
     }
@@ -279,34 +267,34 @@ class VisionScanFragment : Fragment() {
         binding.progressOverlay.visibility = View.GONE
     }
 
-    private fun displayQuickScanResult(result: com.example.foodexpiryapp.domain.vision.ClassificationResult) {
-        hideProgressOverlay()
-        binding.resultCard.visibility = View.VISIBLE
-        binding.rawResponseCard.visibility = View.GONE
+    private fun cropToCenterSquare(bitmap: Bitmap): Bitmap {
+        val width = bitmap.width
+        val height = bitmap.height
         
-        binding.tvFoodName.text = result.category.nameTw
-        binding.tvExpiryDate.text = "建議保存: ${result.category.displayDays}"
-        
-        binding.tvConfidence.visibility = View.VISIBLE
-        val confPct = (result.confidence * 100).toInt()
-        binding.tvConfidence.text = "Confidence: $confPct% - ${result.category.description}"
-        
-        binding.btnAskAi.visibility = View.VISIBLE
-        
-        // Suggest AI if confidence is low
-        if (result.confidence < 0.6f) {
-            Toast.makeText(context, "信心較低，建議點擊「AI 深度分析」", Toast.LENGTH_LONG).show()
-        }
-        updateStatus("Quick Scan complete", Status.READY)
+        // Make it a square based on the shorter side
+        val size = Math.min(width, height)
+        // Take 80% of the shortest side to really focus on the center
+        // and eliminate the screen moiré/bezels at the edges
+        val cropSize = (size * 0.8).toInt()
+
+        val x = (width - cropSize) / 2
+        val y = (height - cropSize) / 2
+
+        return Bitmap.createBitmap(bitmap, x, y, cropSize, cropSize)
     }
 
     private fun runAskAiInference(customBitmap: Bitmap? = null) {
         if (isProcessing) return
 
-        var bitmap = customBitmap ?: latestBitmap
+        var bitmap = customBitmap
         if (bitmap == null) {
-            Toast.makeText(context, "No image captured", Toast.LENGTH_SHORT).show()
-            return
+            val rawBitmap = latestBitmap
+            if (rawBitmap == null) {
+                Toast.makeText(context, "No image captured", Toast.LENGTH_SHORT).show()
+                return
+            }
+            // Center crop the camera preview to remove noisy background
+            bitmap = cropToCenterSquare(rawBitmap)
         }
 
         // Check if model needs download first
@@ -318,7 +306,7 @@ class VisionScanFragment : Fragment() {
                     when (state) {
                         is DownloadUiState.WifiCheckRequired -> {
                             // Show WiFi warning dialog
-                            showWifiWarningDialog(state.estimatedSizeMB)
+                            showWifiWarningDialog(state.estimatedSizeMB, bitmap)
                         }
                         is DownloadUiState.Downloading -> {
                             isProcessing = true
@@ -388,7 +376,7 @@ class VisionScanFragment : Fragment() {
         }
     }
 
-    private fun showWifiWarningDialog(estimatedSizeMB: Double) {
+    private fun showWifiWarningDialog(estimatedSizeMB: Double, bitmap: Bitmap) {
         val message = "The AI model is approximately ${String.format("%.0f", estimatedSizeMB)}MB. " +
                      "Download over cellular may use significant data.\n\nDownload anyway?"
 
@@ -410,7 +398,7 @@ class VisionScanFragment : Fragment() {
                                 isProcessing = false
                                 hideProgressOverlay()
                                 Toast.makeText(context, "Model downloaded! Starting analysis...", Toast.LENGTH_SHORT).show()
-                                runAskAiInference()
+                                runAskAiInference(bitmap)
                             }
                             is DownloadUiState.Error -> {
                                 isProcessing = false
@@ -554,34 +542,9 @@ class VisionScanFragment : Fragment() {
         scope.cancel()
         cameraProvider?.unbindAll()
         cameraExecutor.shutdown()
-        if (::foodClassifier.isInitialized) {
-            foodClassifier.close()
-        }
         
         _binding = null
     }
-}
-
-private fun ImageProxy.toBitmap(): Bitmap? {
-    val yBuffer = planes[0].buffer
-    val uBuffer = planes[1].buffer
-    val vBuffer = planes[2].buffer
-
-    val ySize = yBuffer.remaining()
-    val uSize = uBuffer.remaining()
-    val vSize = vBuffer.remaining()
-
-    val nv21 = ByteArray(ySize + uSize + vSize)
-
-    yBuffer.get(nv21, 0, ySize)
-    vBuffer.get(nv21, ySize, vSize)
-    uBuffer.get(nv21, ySize + vSize, uSize)
-
-    val yuvImage = YuvImage(nv21, ImageFormat.NV21, width, height, null)
-    val out = ByteArrayOutputStream()
-    yuvImage.compressToJpeg(Rect(0, 0, width, height), 100, out)
-    val imageBytes = out.toByteArray()
-    return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
 }
 
 // ML Kit Tasks utility (for awaiting results)

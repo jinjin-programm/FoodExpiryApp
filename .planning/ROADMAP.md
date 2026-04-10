@@ -130,11 +130,11 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 4. Foundation | 3/3 | Complete | 2026-04-09 |
-| 5. Engine | 7/7 | Complete | 2026-04-09 |
+| 5. Engine | 7/7 | Complete ✅ LLM WORKING | 2026-04-10 |
 | 6. Detection | 4/4 | Complete | 2026-04-09 |
 | 7. Scan UI Overhaul | 4/4 | Complete | 2026-04-09 |
 | 8. YOLO Detection Hardening | 0/3 | Not started | - |
 | 9. Verification & Artifact Cleanup | 0/2 | Not started | - |
 
 ---
-*Roadmap updated: 2026-04-09 — gap closure phases 8-9 added from v2.0-MILESTONE-AUDIT*
+*Roadmap updated: 2026-04-10 — Phase 5 engine confirmed working: Qwen3.5-2B-MNN successfully identifies food on device*

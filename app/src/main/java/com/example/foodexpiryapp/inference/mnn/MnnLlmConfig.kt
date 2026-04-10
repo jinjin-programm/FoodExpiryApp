@@ -14,7 +14,7 @@ data class MnnLlmConfig(
     val useMmap: Boolean = true,             // Memory-mapped weight loading
     val memoryMode: String = "low",          // Low memory mode (runtime quantization)
     val chunkSize: Int = 128,                // Per-token memory limit
-    val maxNewTokens: Int = 128,             // Low for classification (per PITFALL-6)
+    val maxNewTokens: Int = 512,
     val temperature: Float = 0.6f,           // Lower for deterministic classification
     val topP: Float = 0.9f
 ) {
