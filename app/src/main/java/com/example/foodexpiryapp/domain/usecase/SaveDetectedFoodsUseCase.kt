@@ -26,7 +26,8 @@ class SaveDetectedFoodsUseCase @Inject constructor(
     data class SaveResult(
         val savedCount: Int,
         val skippedCount: Int,
-        val sessionId: String
+        val sessionId: String,
+        val error: String? = null  // Per D-12: Error message for UI display
     )
 
     /**

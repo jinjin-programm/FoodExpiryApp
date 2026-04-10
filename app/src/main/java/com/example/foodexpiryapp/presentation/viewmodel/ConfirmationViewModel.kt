@@ -102,7 +102,13 @@ class ConfirmationViewModel @Inject constructor(
                 val result = saveDetectedFoodsUseCase(sessionId)
                 _saveResult.value = result
             } catch (e: Exception) {
-                // Save failed — keep session data so user can retry
+                // Per D-12: Report errors via StateFlow instead of silent swallowing
+                _saveResult.value = SaveDetectedFoodsUseCase.SaveResult(
+                    savedCount = 0,
+                    skippedCount = getActiveResults().size,
+                    sessionId = sessionId,
+                    error = e.message ?: "Save failed"
+                )
             } finally {
                 _isSaving.value = false
             }

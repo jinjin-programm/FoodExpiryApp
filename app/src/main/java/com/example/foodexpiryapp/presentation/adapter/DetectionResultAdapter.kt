@@ -1,6 +1,5 @@
 package com.example.foodexpiryapp.presentation.adapter
 
-import android.graphics.Color
 import android.graphics.Typeface
 import android.text.InputType
 import android.view.LayoutInflater
@@ -9,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.LinearLayout
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -21,6 +21,7 @@ import com.example.foodexpiryapp.databinding.ItemDetectionResultBinding
  *
  * Per D-09: Each row shows food name, confidence badge (High/Medium/Low), edit/delete icons.
  * Per D-11: Failed items show "Unknown item" gray italic, orange background, "Fix" button.
+ * Per D-13: All colors extracted to colors.xml resource references.
  */
 class DetectionResultAdapter(
     private val onEditClick: (DetectionResultEntity) -> Unit,
@@ -78,7 +79,9 @@ class DetectionResultAdapter(
 
         private fun bindClassifiedItem(entity: DetectionResultEntity) {
             binding.tvFoodName.text = entity.foodName.ifBlank { "Unknown" }
-            binding.tvFoodName.setTextColor(Color.parseColor("#212121"))
+            binding.tvFoodName.setTextColor(
+                ContextCompat.getColor(binding.root.context, R.color.detection_text_primary)
+            )
             binding.tvFoodName.setTypeface(null, Typeface.NORMAL)
 
             // Confidence badge colors: High (green, ≥0.8), Medium (yellow, ≥0.5), Low (red, <0.5)
@@ -86,20 +89,26 @@ class DetectionResultAdapter(
             when {
                 confidence >= 0.8f -> {
                     binding.tvConfidenceBadge.text = "High"
-                    binding.tvConfidenceBadge.setTextColor(Color.parseColor("#2E7D32"))
+                    binding.tvConfidenceBadge.setTextColor(
+                        ContextCompat.getColor(binding.root.context, R.color.detection_confidence_high)
+                    )
                 }
                 confidence >= 0.5f -> {
                     binding.tvConfidenceBadge.text = "Medium"
-                    binding.tvConfidenceBadge.setTextColor(Color.parseColor("#F57F17"))
+                    binding.tvConfidenceBadge.setTextColor(
+                        ContextCompat.getColor(binding.root.context, R.color.detection_confidence_medium)
+                    )
                 }
                 else -> {
                     binding.tvConfidenceBadge.text = "Low"
-                    binding.tvConfidenceBadge.setTextColor(Color.parseColor("#C62828"))
+                    binding.tvConfidenceBadge.setTextColor(
+                        ContextCompat.getColor(binding.root.context, R.color.detection_confidence_low)
+                    )
                 }
             }
 
             // Normal background
-            binding.root.setBackgroundColor(Color.TRANSPARENT)
+            binding.root.setBackgroundColor(android.graphics.Color.TRANSPARENT)
         }
 
         /**
@@ -107,14 +116,20 @@ class DetectionResultAdapter(
          */
         private fun bindFailedItem(entity: DetectionResultEntity) {
             binding.tvFoodName.text = "Unknown item"
-            binding.tvFoodName.setTextColor(Color.parseColor("#9E9E9E"))
+            binding.tvFoodName.setTextColor(
+                ContextCompat.getColor(binding.root.context, R.color.detection_failed_text)
+            )
             binding.tvFoodName.setTypeface(null, Typeface.ITALIC)
 
             binding.tvConfidenceBadge.text = "Failed"
-            binding.tvConfidenceBadge.setTextColor(Color.parseColor("#E65100"))
+            binding.tvConfidenceBadge.setTextColor(
+                ContextCompat.getColor(binding.root.context, R.color.detection_failed_badge)
+            )
 
             // Orange/yellow tint background
-            binding.root.setBackgroundColor(Color.parseColor("#FFF3E0"))
+            binding.root.setBackgroundColor(
+                ContextCompat.getColor(binding.root.context, R.color.detection_failed_background)
+            )
         }
 
         /**
