@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: AI Vision Engine Overhaul
 status: in_progress
-last_updated: "2026-04-11T01:45:00.000Z"
+last_updated: "2026-04-11T05:30:00.000Z"
 progress:
   total_phases: 9
   completed_phases: 7
@@ -73,6 +73,7 @@ Phase 9: Verification     [          ] 0%
 |----------|-----------|--------|
 | MNN Chat official component | Avoid custom inference layer, battle-tested | ✅ Done |
 | Qwen3.5-2B-MNN model | 4-bit quantized, lightweight for mobile | ✅ Working |
+| Qwen3.5-0.8B-MNN evaluated | Too weak for visual food classification | ❌ Rejected |
 | YOLO + LLM (skip CLIP) | CLIP overlaps with LLM capability | ✅ Done |
 | Dynamic model download from HF | Reduce APK size by ~40MB | ✅ Done |
 | Sequential YOLO→LLM processing | Prevent OOM on <6GB devices | ✅ Done |
@@ -89,6 +90,7 @@ Phase 9: Verification     [          ] 0%
 
 - MNN v3.5.0: https://github.com/alibaba/MNN
 - Model: taobao-mnn/Qwen3.5-2B-MNN (4-bit quantized)
+- Model (rejected): taobao-mnn/Qwen3.5-0.8B-MNN (too weak for VLM)
 - MNN Chat Android: apps/Android/MnnLlmChat
 - User HuggingFace: jinjin06/Qwen3.5-2B-MNN
 
@@ -106,6 +108,7 @@ Phase 9: Verification     [          ] 0%
 
 | # | Description | Date | Directory |
 |---|-------------|------|-----------|
+| 260411-model-perf | Model perf experiments: 0.8B migration (rejected), configurable precision (retained), image/threads tuning | 2026-04-11 | [260411-precision-low](./quick/260411-precision-low/) — Reverted to 2B |
 | 260411-no-think | Disable Qwen3.5 CoT via MNN `set_config({"jinja":{"context":{"enable_thinking":false}}})` (67s → expected <5s) | 2026-04-11 | Debug session |
 | 260411-perf | Early stopping ([/FOOD] stop token) + 8 threads (was 4) | 2026-04-11 | Debug session |
 | 260411-food-tag | Switch to [FOOD]...[/FOOD] tag-based extraction (replaces fragile JSON parsing) | 2026-04-11 | Debug session |
@@ -114,17 +117,44 @@ Phase 9: Verification     [          ] 0%
 
 ## Session Continuity
 
-**Last session:** 2026-04-11T01:45:00.000Z
+**Last session:** 2026-04-11T05:30:00.000Z
+
+- **Camera UX optimization + Retake/Cancel buttons**
+  - Camera stops during inference (frees ~30MB RAM, reduces GC pressure)
+  - Blurred photo background behind progress overlay (instead of black screen)
+  - Flash overlay fades to semi-transparent white (0.3f) during inference
+  - Added **Retake button** (outlined, in result card) — dismisses result, restarts camera
+  - Added **Cancel button** (red solid, bottom position) — replaces capture button during inference
+  - Hidden center `btnCancelProgress`, replaced with `btn_cancel_bottom`
+  - Added `showCancelButton()` / `hideCancelButton()` helpers
+  - Simplified `btnCapture` — no more 2-tap confusion (Retake handles restart)
+- **Configurable precision parameter retained** from model perf experiments
+- Updated GSD planning docs (SUMMARY.md + STATE.md)
+
+**Previous session:** 2026-04-11T04:30:00.000Z
+
+- **Model performance optimization experiments (quick task 260411-model-perf)**
+  - Baseline: Qwen3.5-2B-MNN, ~28.6s inference, correct food identification
+  - **Exp 1: Qwen3.5-0.8B + precision=low + maxSide=420 + threads=4**
+    - Inference: ~11.6s (2.5x faster)
+    - Result: `"44444444444444444444444444444444"` — garbage repetition loop
+    - Cause: over-quantization (4-bit + INT8), tiny image, low JPEG quality
+  - **Exp 2: Qwen3.5-0.8B + precision=high + maxSide=1024 + threads=8**
+    - Still poor — model fundamentally too weak for visual food classification
+    - 0.8B VLM cannot reliably identify foods from camera images
+  - **Decision: Reverted to Qwen3.5-2B-MNN** as minimum viable model
+  - **Retained improvement:** `precision` parameter is now configurable (was hardcoded in C++)
+  - Backup branch: `backup/pre-0.8b-migration` on origin
+
+**Previous session:** 2026-04-11T03:25:00.000Z
+
+- Performance profiling: on-device inference benchmarking on SD855
+  - Baseline: ~28.6s for VLM inference (480x640 → "watermelon")
+  - Identified: `precision` hardcoded to `"high"` in `mnn_llm_bridge.cpp:59`
+
+**Previous session:** 2026-04-11T01:45:00.000Z
 
 - Performance optimization: disable Qwen3.5 chain-of-thought via MNN jinja config
-  - Problem: Qwen3.5-2B generates 664-829 char reasoning (Analyze, Final check, etc.) before answer → 67-75s inference
-  - Failed attempt: `/no_think` in system prompt text — MNN ignores it, only jinja template `enable_thinking` var works
-  - Fix: `llm->set_config(R"({"jinja":{"context":{"enable_thinking":false}}})")` in nativeCreateLlm after initial set_config
-  - This merges into config, triggers `setChatTemplate()`, which passes `enable_thinking=false` as extra_ctx to jinja template
-  - Template then skips appending `block thinking tokens` to assistant message
-  - Reference: MNN `llm_demo.cpp:296-302`, `tokenizer.cpp:1007-1013`
-  - Removed `/no_think` from system prompt (wasted tokens, no effect)
-  - Expected: 67s → <5s inference time
-- Updated STATE.md
+  - Fix: `llm->set_config(R"({"jinja":{"context":{"enable_thinking":false}}})")` in nativeCreateLlm
 
-**Next action:** `/gsd-plan-phase 8`
+**Next action:** `/gsd-plan-phase 8` — YOLO Detection Hardening

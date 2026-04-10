@@ -51,7 +51,7 @@ class ModelDownloadManager @Inject constructor(
     companion object {
         private const val TAG = "ModelDownloadManager"
 
-        /** Default manifest — SHA-256 values populated from HuggingFace API at resolve time. */
+        /** Default manifest — Qwen3.5-2B-MNN model. */
         private val DEFAULT_MANIFEST = ModelManifest(
             version = "1.0.0",
             modelId = "taobao-mnn/Qwen3.5-2B-MNN",

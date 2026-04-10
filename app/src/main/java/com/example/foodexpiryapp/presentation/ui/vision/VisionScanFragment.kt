@@ -12,10 +12,12 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -58,9 +60,11 @@ class VisionScanFragment : Fragment() {
     private var cameraProvider: ProcessCameraProvider? = null
     private var latestBitmap: Bitmap? = null
     private var isProcessing = false
+    private var isCameraActive = true
     private var detectionJob: Job? = null
     private var modelLoadJob: Job? = null
     private var progressTickerJob: Job? = null
+    private var blurredBg: ImageView? = null
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
@@ -93,7 +97,7 @@ class VisionScanFragment : Fragment() {
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
-        updateStatus("Loading Qwen3-VL-2B...", Status.INITIALIZING)
+        updateStatus("Loading Qwen3.5-2B-VL...", Status.INITIALIZING)
 
         loadModelIfNeeded()
 
@@ -150,10 +154,23 @@ class VisionScanFragment : Fragment() {
         }
 
         binding.btnCapture.setOnClickListener {
+            if (isProcessing) return@setOnClickListener
             captureAndAnalyze()
         }
 
+        binding.btnRetake.setOnClickListener {
+            binding.resultCard.visibility = View.GONE
+            binding.rawResponseCard.visibility = View.GONE
+            hideBlurredBackground()
+            binding.flashOverlay.visibility = View.GONE
+            restartCamera()
+        }
+
         binding.btnCancelProgress.setOnClickListener {
+            cancelOngoingInference()
+        }
+
+        binding.btnCancelBottom.setOnClickListener {
             cancelOngoingInference()
         }
 
@@ -214,6 +231,50 @@ class VisionScanFragment : Fragment() {
         }, ContextCompat.getMainExecutor(requireContext()))
     }
 
+    private fun stopCamera() {
+        cameraProvider?.unbindAll()
+        isCameraActive = false
+    }
+
+    private fun restartCamera() {
+        startCamera()
+        isCameraActive = true
+    }
+
+    private fun showBlurredBackground(bitmap: Bitmap) {
+        val w = binding.previewView.width.coerceAtLeast(1)
+        val h = binding.previewView.height.coerceAtLeast(1)
+        val small = Bitmap.createScaledBitmap(bitmap, 48, 48, true)
+        val blurred = Bitmap.createScaledBitmap(small, w, h, true)
+
+        if (blurredBg == null) {
+            blurredBg = ImageView(requireContext()).also {
+                it.layoutParams = ConstraintLayout.LayoutParams(
+                    ConstraintLayout.LayoutParams.MATCH_PARENT,
+                    ConstraintLayout.LayoutParams.MATCH_PARENT
+                )
+                it.scaleType = ImageView.ScaleType.CENTER_CROP
+                (binding.root as ViewGroup).addView(it, 0)
+            }
+        }
+        blurredBg?.setImageBitmap(blurred)
+        blurredBg?.visibility = View.VISIBLE
+    }
+
+    private fun hideBlurredBackground() {
+        blurredBg?.visibility = View.GONE
+    }
+
+    private fun showCancelButton() {
+        binding.captureButtonContainer.visibility = View.GONE
+        binding.btnCancelBottom.visibility = View.VISIBLE
+    }
+
+    private fun hideCancelButton() {
+        binding.btnCancelBottom.visibility = View.GONE
+        binding.captureButtonContainer.visibility = View.VISIBLE
+    }
+
     private fun captureAndAnalyze() {
         if (isProcessing) return
 
@@ -223,30 +284,22 @@ class VisionScanFragment : Fragment() {
             return
         }
 
-        // D-08: White flash animation (100-150ms)
-        showFlashAnimation {
-            // D-09: Freeze frame handled by stopping camera feed — but since we already
-            // captured latestBitmap, the "frozen frame" is the bitmap we have.
-            // Show progress overlay on top of the frozen camera preview.
+        stopCamera()
+        showBlurredBackground(bitmap)
 
-            // No more cropToBoundingBox — simulated_box is removed (D-05)
-            // Directly run Ask AI flow (TFLite FoodClassifier removed in MNN migration)
+showFlashAnimation {
             runAskAiInference(bitmap)
         }
     }
 
-    // D-08: White flash animation helper
     private fun showFlashAnimation(onComplete: () -> Unit) {
         binding.flashOverlay.visibility = View.VISIBLE
         binding.flashOverlay.alpha = 1f
 
-        // D-08: 100-150ms white flash
         binding.flashOverlay.animate()
-            .alpha(0f)
+            .alpha(0.3f)
             .setDuration(150L)
             .withEndAction {
-                binding.flashOverlay.visibility = View.GONE
-                // D-09: Show progress overlay after flash
                 showProgressOverlay()
                 onComplete()
             }
@@ -341,18 +394,22 @@ class VisionScanFragment : Fragment() {
             binding.tvProgressDetailOverlay.text = "Preparing analysis"
             updateStatus("Analyzing food...", Status.ANALYZING)
             startProgressTicker()
+            showCancelButton()
 
             try {
                 identifyFoodUseCase.invoke(bitmap).collect { result ->
                     isProcessing = false
                     stopProgressTicker()
                     hideProgressOverlay()
+                    hideCancelButton()
+                    binding.flashOverlay.animate().alpha(0f).setDuration(200L).withEndAction {
+                        binding.flashOverlay.visibility = View.GONE
+                    }.start()
 
                     if (result.name == "Error") {
                         displayAiResult(result.name, null, result.rawResponse ?: "Error")
                         updateStatus("Analysis failed", Status.ERROR)
                     } else {
-                        // Send result to InventoryFragment via FragmentResultListener
                         val bundle = android.os.Bundle().apply {
                             putString("food_name", result.name)
                             putString("food_name_zh", result.nameZh)
@@ -369,6 +426,8 @@ class VisionScanFragment : Fragment() {
                 isProcessing = false
                 stopProgressTicker()
                 hideProgressOverlay()
+                hideCancelButton()
+                binding.flashOverlay.visibility = View.GONE
                 Log.e(TAG, "Inference error", e)
                 Toast.makeText(context, "AI analysis failed: ${e.message}", Toast.LENGTH_LONG).show()
                 updateStatus("Analysis failed", Status.ERROR)
@@ -450,7 +509,10 @@ class VisionScanFragment : Fragment() {
         stopProgressTicker()
         isProcessing = false
         hideProgressOverlay()
-        binding.btnCapture.isEnabled = true
+        hideCancelButton()
+        binding.flashOverlay.visibility = View.GONE
+        hideBlurredBackground()
+        restartCamera()
         Toast.makeText(requireContext(), "Inference cancelled", Toast.LENGTH_SHORT).show()
     }
 
@@ -542,7 +604,8 @@ class VisionScanFragment : Fragment() {
         scope.cancel()
         cameraProvider?.unbindAll()
         cameraExecutor.shutdown()
-        
+        blurredBg?.let { (_binding?.root as? ViewGroup)?.removeView(it) }
+        blurredBg = null
         _binding = null
     }
 }

@@ -59,7 +59,7 @@ class MnnLlmEngine @Inject constructor(
             val modelDir = storageManager.getModelDirectory().absolutePath
             Log.d(TAG, "Loading LLM model from: $modelDir")
 
-            nativeHandle = MnnLlmNative.nativeCreateLlm(modelDir, config.threadNum, config.memoryMode)
+            nativeHandle = MnnLlmNative.nativeCreateLlm(modelDir, config.threadNum, config.memoryMode, config.precision)
 
             if (nativeHandle == 0L) {
                 Log.e(TAG, "Failed to create LLM native instance")

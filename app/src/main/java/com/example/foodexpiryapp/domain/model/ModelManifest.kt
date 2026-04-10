@@ -7,7 +7,7 @@ package com.example.foodexpiryapp.domain.model
  */
 data class ModelManifest(
     val version: String = "1.0.0",
-    val modelId: String = "jinjin06/Qwen3.5-2B-MNN",
+    val modelId: String = "taobao-mnn/Qwen3.5-2B-MNN",
     val files: List<ModelFile> = emptyList()
 )
 

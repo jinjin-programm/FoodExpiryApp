@@ -31,12 +31,13 @@ static std::string stripThinkingProcess(const std::string& text);
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeCreateLlm(
-        JNIEnv *env, jobject thiz, jstring modelDir, jint threadNum, jstring memoryMode) {
+        JNIEnv *env, jobject thiz, jstring modelDir, jint threadNum, jstring memoryMode, jstring precision) {
     std::lock_guard<std::mutex> lock(g_llm_mutex);
 
     const char *dir = env->GetStringUTFChars(modelDir, nullptr);
     const char *mode = env->GetStringUTFChars(memoryMode, nullptr);
-    LOGI("nativeCreateLlm: modelDir=%s, threadNum=%d, memoryMode=%s", dir, threadNum, mode);
+    const char *prec = env->GetStringUTFChars(precision, nullptr);
+    LOGI("nativeCreateLlm: modelDir=%s, threadNum=%d, memoryMode=%s, precision=%s", dir, threadNum, mode, prec);
 
     try {
         auto* instance = new LlmInstance();
@@ -47,6 +48,7 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeCreateLlm(
             LOGE("nativeCreateLlm: createLLM failed for %s", config_path.c_str());
             env->ReleaseStringUTFChars(modelDir, dir);
             env->ReleaseStringUTFChars(memoryMode, mode);
+            env->ReleaseStringUTFChars(precision, prec);
             delete instance;
             return 0;
         }
@@ -56,7 +58,7 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeCreateLlm(
         config_json += "\"use_mmap\":true,";
         config_json += "\"tmp_path\":\"" + std::string(dir) + "\",";
         config_json += "\"memory_mode\":\"" + std::string(mode) + "\",";
-        config_json += "\"precision\":\"high\",";
+        config_json += "\"precision\":\"" + std::string(prec) + "\",";
         config_json += "\"use_template\":false,";
         config_json += "\"async\":false";
         config_json += "}";
@@ -79,12 +81,14 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeCreateLlm(
             LOGE("nativeCreateLlm: load() failed");
             env->ReleaseStringUTFChars(modelDir, dir);
             env->ReleaseStringUTFChars(memoryMode, mode);
+            env->ReleaseStringUTFChars(precision, prec);
             delete instance;
             return 0;
         }
 
         env->ReleaseStringUTFChars(modelDir, dir);
         env->ReleaseStringUTFChars(memoryMode, mode);
+        env->ReleaseStringUTFChars(precision, prec);
 
         LOGI("nativeCreateLlm: success (instance=%p)", instance);
         return reinterpret_cast<jlong>(instance);
@@ -92,6 +96,7 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeCreateLlm(
         LOGE("nativeCreateLlm: exception: %s", e.what());
         env->ReleaseStringUTFChars(modelDir, dir);
         env->ReleaseStringUTFChars(memoryMode, mode);
+        env->ReleaseStringUTFChars(precision, prec);
         return 0;
     }
 }
