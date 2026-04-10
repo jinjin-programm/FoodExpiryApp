@@ -10,7 +10,7 @@ import com.taobao.android.mnn.MNNForwardType
 data class MnnLlmConfig(
     val modelDirPath: String = "",           // Directory containing model files
     val backendType: Int = MNNForwardType.FORWARD_CPU.type,  // 0 = CPU
-    val threadNum: Int = 4,                  // Capped at min(availableCores - 1, 4)
+    val threadNum: Int = 8,
     val useMmap: Boolean = true,             // Memory-mapped weight loading
     val memoryMode: String = "low",          // Low memory mode (runtime quantization)
     val chunkSize: Int = 128,                // Per-token memory limit
@@ -26,7 +26,7 @@ data class MnnLlmConfig(
          */
         fun createOptimal(): MnnLlmConfig {
             val availableCores = Runtime.getRuntime().availableProcessors()
-            val threadCount = minOf(availableCores - 1, 4).coerceAtLeast(1)
+            val threadCount = minOf(availableCores, 8).coerceAtLeast(1)
             return MnnLlmConfig(threadNum = threadCount)
         }
     }

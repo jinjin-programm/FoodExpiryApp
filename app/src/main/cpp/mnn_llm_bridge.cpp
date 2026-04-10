@@ -152,18 +152,16 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeRunInference(
 
         std::stringstream response_stream;
 
-        instance->llm->response(mm_prompt, &response_stream, "\n", 512);
+        instance->llm->response(mm_prompt, &response_stream, "[/FOOD]", 512);
 
         std::string response_str = response_stream.str();
         LOGI("nativeRunInference: raw response=%s (len=%zu)", response_str.c_str(), response_str.length());
 
-        std::string cleaned = stripThinkingProcess(response_str);
-
         instance->last_response = response_str;
 
         instance->llm->reset();
-        LOGI("nativeRunInference: context reset, returning: %s (len=%zu)", cleaned.c_str(), cleaned.length());
-        return env->NewStringUTF(cleaned.c_str());
+        LOGI("nativeRunInference: context reset, returning: %s (len=%zu)", response_str.c_str(), response_str.length());
+        return env->NewStringUTF(response_str.c_str());
     } catch (const std::exception& e) {
         LOGE("nativeRunInference: exception: %s", e.what());
         return env->NewStringUTF("Error");
@@ -238,20 +236,18 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeRunInferenceWith
 
         std::stringstream response_stream;
 
-        instance->llm->response(mm_prompt, &response_stream, "\n", 512);
+        instance->llm->response(mm_prompt, &response_stream, "[/FOOD]", 512);
 
         std::string response_str = response_stream.str();
         LOGI("nativeRunInferenceWithHint: raw response=%s (len=%zu)", response_str.c_str(), response_str.length());
 
         env->ReleaseStringUTFChars(hint, hint_str);
 
-        std::string cleaned = stripThinkingProcess(response_str);
-
         instance->last_response = response_str;
 
         instance->llm->reset();
-        LOGI("nativeRunInferenceWithHint: context reset, returning: %s (len=%zu)", cleaned.c_str(), cleaned.length());
-        return env->NewStringUTF(cleaned.c_str());
+        LOGI("nativeRunInferenceWithHint: context reset, returning: %s (len=%zu)", response_str.c_str(), response_str.length());
+        return env->NewStringUTF(response_str.c_str());
     } catch (const std::exception& e) {
         LOGE("nativeRunInferenceWithHint: exception: %s", e.what());
         env->ReleaseStringUTFChars(hint, hint_str);

@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: AI Vision Engine Overhaul
 status: in_progress
-last_updated: "2026-04-11T00:21:00.000Z"
+last_updated: "2026-04-11T00:32:00.000Z"
 progress:
   total_phases: 9
   completed_phases: 7
@@ -106,15 +106,20 @@ Phase 9: Verification     [          ] 0%
 
 | # | Description | Date | Directory |
 |---|-------------|------|-----------|
+| 260411-perf | Early stopping ([/FOOD] stop token) + 8 threads (was 4) | 2026-04-11 | Debug session |
 | 260411-food-tag | Switch to [FOOD]...[/FOOD] tag-based extraction (replaces fragile JSON parsing) | 2026-04-11 | Debug session |
 | 260410-mnn-fix | Fix MNN native crash (missing libMNNAudio.so) + food-specific prompt | 2026-04-10 | Debug session |
 | 260409-vki | Improve LLM few-shot prompt with visual description examples | 2026-04-09 | [260409-vki-improve-llm-few-shot-prompt-with-visual-](./quick/260409-vki-improve-llm-few-shot-prompt-with-visual-/) |
 
 ## Session Continuity
 
-**Last session:** 2026-04-11T00:21:00.000Z
+**Last session:** 2026-04-11T00:32:00.000Z
 
-- Fixed [FOOD] tag parser: use `findAll().lastOrNull()` to get last occurrence (model's thinking contains `[FOOD]name[/FOOD]` template placeholder)
+- Performance optimization: early stopping + more threads
+  - Changed stop token from "\n" to "[/FOOD]" — model stops generating immediately after food answer
+  - Increased thread count: minOf(cores, 8) instead of minOf(cores-1, 4)
+  - Removed stripThinkingProcess call (unnecessary with [FOOD] tag extraction)
+  - Expected: ~80s → ~5-10s inference time
 - Updated STATE.md
 
 **Next action:** `/gsd-plan-phase 8`

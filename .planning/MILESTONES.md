@@ -34,8 +34,8 @@
   - Qwen3.5-2B-MNN correctly identifies banana via vision scan
 
 **Known issues (in progress):**
-- Inference time ~30-75s per scan (model generates thinking before [FOOD] tag) — acceptable for now
 - Output format: [FOOD]food name[/FOOD] — simple and reliable
+- Performance optimizations applied: early stopping + 8 threads — awaiting test results
 
 **Remaining:** Phase 8 (YOLO Hardening), Phase 9 (Verification)
 **Timeline:** Apr 8, 2026 → in progress
