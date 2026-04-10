@@ -64,6 +64,15 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeCreateLlm(
         LOGI("nativeCreateLlm: config=%s", config_json.c_str());
         instance->llm->set_config(config_json);
 
+        instance->llm->set_config(R"({
+            "jinja": {
+                "context": {
+                    "enable_thinking": false
+                }
+            }
+        })");
+        LOGI("nativeCreateLlm: disabled Qwen3 thinking mode (enable_thinking=false)");
+
         LOGI("nativeCreateLlm: loading model...");
         instance->is_loaded = instance->llm->load();
         if (!instance->is_loaded) {
@@ -107,8 +116,8 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeRunInference(
 
     try {
         ChatMessages chat = {
-            {"system", "You are a helpful assistant. Answer briefly."},
-            {"user", "<img>in_memory_image</img>What food is in this image? Reply with just the food name, nothing else."}
+            {"system", "You are a food classifier. Reply with ONLY the food name, nothing else."},
+            {"user", "<img>in_memory_image</img>What food is in this image? Reply with just the food name."}
         };
 
         std::string templated = instance->llm->apply_chat_template(chat);
@@ -152,8 +161,7 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeRunInference(
 
         std::stringstream response_stream;
 
-        instance->llm->response(mm_prompt, &response_stream, "
-", 512);
+        instance->llm->response(mm_prompt, &response_stream, "\n", 512);
 
         std::string response_str = response_stream.str();
         LOGI("nativeRunInference: raw response=%s (len=%zu)", response_str.c_str(), response_str.length());
@@ -192,7 +200,7 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeRunInferenceWith
         std::string user_msg = "<img>in_memory_image</img>What food is in this image? Respond: [FOOD]food name[/FOOD].";
 
         ChatMessages chat = {
-            {"system", "You are a helpful assistant. Answer briefly."},
+            {"system", "You are a food classifier. Reply with ONLY the food name."},
             {"user", user_msg}
         };
 
@@ -237,8 +245,7 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeRunInferenceWith
 
         std::stringstream response_stream;
 
-        instance->llm->response(mm_prompt, &response_stream, "
-", 512);
+        instance->llm->response(mm_prompt, &response_stream, "\n", 512);
 
         std::string response_str = response_stream.str();
         LOGI("nativeRunInferenceWithHint: raw response=%s (len=%zu)", response_str.c_str(), response_str.length());

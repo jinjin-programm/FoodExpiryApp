@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: AI Vision Engine Overhaul
 status: in_progress
-last_updated: "2026-04-11T00:32:00.000Z"
+last_updated: "2026-04-11T01:45:00.000Z"
 progress:
   total_phases: 9
   completed_phases: 7
@@ -106,6 +106,7 @@ Phase 9: Verification     [          ] 0%
 
 | # | Description | Date | Directory |
 |---|-------------|------|-----------|
+| 260411-no-think | Disable Qwen3.5 CoT via MNN `set_config({"jinja":{"context":{"enable_thinking":false}}})` (67s → expected <5s) | 2026-04-11 | Debug session |
 | 260411-perf | Early stopping ([/FOOD] stop token) + 8 threads (was 4) | 2026-04-11 | Debug session |
 | 260411-food-tag | Switch to [FOOD]...[/FOOD] tag-based extraction (replaces fragile JSON parsing) | 2026-04-11 | Debug session |
 | 260410-mnn-fix | Fix MNN native crash (missing libMNNAudio.so) + food-specific prompt | 2026-04-10 | Debug session |
@@ -113,13 +114,17 @@ Phase 9: Verification     [          ] 0%
 
 ## Session Continuity
 
-**Last session:** 2026-04-11T00:32:00.000Z
+**Last session:** 2026-04-11T01:45:00.000Z
 
-- Performance optimization: early stopping + more threads
-  - Changed stop token from "\n" to "[/FOOD]" — model stops generating immediately after food answer
-  - Increased thread count: minOf(cores, 8) instead of minOf(cores-1, 4)
-  - Removed stripThinkingProcess call (unnecessary with [FOOD] tag extraction)
-  - Expected: ~80s → ~5-10s inference time
+- Performance optimization: disable Qwen3.5 chain-of-thought via MNN jinja config
+  - Problem: Qwen3.5-2B generates 664-829 char reasoning (Analyze, Final check, etc.) before answer → 67-75s inference
+  - Failed attempt: `/no_think` in system prompt text — MNN ignores it, only jinja template `enable_thinking` var works
+  - Fix: `llm->set_config(R"({"jinja":{"context":{"enable_thinking":false}}})")` in nativeCreateLlm after initial set_config
+  - This merges into config, triggers `setChatTemplate()`, which passes `enable_thinking=false` as extra_ctx to jinja template
+  - Template then skips appending `block thinking tokens` to assistant message
+  - Reference: MNN `llm_demo.cpp:296-302`, `tokenizer.cpp:1007-1013`
+  - Removed `/no_think` from system prompt (wasted tokens, no effect)
+  - Expected: 67s → <5s inference time
 - Updated STATE.md
 
 **Next action:** `/gsd-plan-phase 8`
