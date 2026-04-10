@@ -107,8 +107,8 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeRunInference(
 
     try {
         ChatMessages chat = {
-            {"system", "You are a food identifier. Look at the image and identify the main food item. Respond in exactly this format: [FOOD]food name[/FOOD]. Example: [FOOD]banana[/FOOD]. If no food is visible, respond: [FOOD]Unknown[/FOOD]. Respond with ONLY this one line, nothing else."},
-            {"user", "<img>in_memory_image</img>What food is in this image?"}
+            {"system", "You are a helpful assistant. Answer briefly."},
+            {"user", "<img>in_memory_image</img>What food is in this image? Reply with just the food name, nothing else."}
         };
 
         std::string templated = instance->llm->apply_chat_template(chat);
@@ -152,7 +152,8 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeRunInference(
 
         std::stringstream response_stream;
 
-        instance->llm->response(mm_prompt, &response_stream, "[/FOOD]", 512);
+        instance->llm->response(mm_prompt, &response_stream, "
+", 512);
 
         std::string response_str = response_stream.str();
         LOGI("nativeRunInference: raw response=%s (len=%zu)", response_str.c_str(), response_str.length());
@@ -191,7 +192,7 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeRunInferenceWith
         std::string user_msg = "<img>in_memory_image</img>What food is in this image? Respond: [FOOD]food name[/FOOD].";
 
         ChatMessages chat = {
-            {"system", "You are a food identifier. Identify the main food in the image. Respond in exactly this format: [FOOD]food name[/FOOD]. Example: [FOOD]banana[/FOOD]. If no food is visible, respond: [FOOD]Unknown[/FOOD]. Respond with ONLY this one line."},
+            {"system", "You are a helpful assistant. Answer briefly."},
             {"user", user_msg}
         };
 
@@ -236,7 +237,8 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeRunInferenceWith
 
         std::stringstream response_stream;
 
-        instance->llm->response(mm_prompt, &response_stream, "[/FOOD]", 512);
+        instance->llm->response(mm_prompt, &response_stream, "
+", 512);
 
         std::string response_str = response_stream.str();
         LOGI("nativeRunInferenceWithHint: raw response=%s (len=%zu)", response_str.c_str(), response_str.length());

@@ -7,11 +7,12 @@ object StructuredOutputParser {
     private const val TAG = "StructuredOutputParser"
 
     private val FOOD_TAG_REGEX = Regex("""\[FOOD\](.+?)\[/FOOD]""", RegexOption.IGNORE_CASE)
+    private val STOP_TOKEN_REGEX = Regex("""\[/FOOD]\s*$""", RegexOption.IGNORE_CASE)
 
     fun parse(rawResponse: String?): FoodIdentification? {
         if (rawResponse.isNullOrBlank()) return null
 
-        val match = FOOD_TAG_REGEX.findAll(rawResponse).lastOrNull {
+        val match = FOOD_TAG_REGEX.findAll(rawResponse).lastOrNull()
         if (match != null) {
             val foodName = match.groupValues[1].trim()
             if (foodName.isNotBlank() && foodName.lowercase() != "unknown") {
@@ -30,6 +31,21 @@ object StructuredOutputParser {
                 confidence = 0.0f,
                 rawResponse = rawResponse
             )
+        }
+
+        val stopMatch = STOP_TOKEN_REGEX.find(rawResponse)
+        if (stopMatch != null) {
+            val beforeStop = rawResponse.substring(0, stopMatch.range.first).trim()
+            val lastSentence = beforeStop.split(Regex("[.!?\\n]")).lastOrNull { it.isNotBlank() }?.trim()
+            if (lastSentence != null && lastSentence.length > 1) {
+                Log.d(TAG, "Parsed food from pre-stop context: '$lastSentence'")
+                return FoodIdentification(
+                    name = lastSentence,
+                    nameZh = lastSentence,
+                    confidence = 1.0f,
+                    rawResponse = rawResponse
+                )
+            }
         }
 
         Log.w(TAG, "No [FOOD] tag found in response")
