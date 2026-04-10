@@ -42,6 +42,13 @@ class YoloScanViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<YoloScanUiState>(YoloScanUiState.Ready)
     val uiState: StateFlow<YoloScanUiState> = _uiState.asStateFlow()
 
+    /**
+     * Per D-06: Expose detection results for overlay rendering.
+     * Updated as each item progresses through the pipeline.
+     */
+    private val _detections = MutableStateFlow<List<DetectionResult>>(emptyList())
+    val detections: StateFlow<List<DetectionResult>> = _detections.asStateFlow()
+
     private var pipelineJob: Job? = null
 
     /**
@@ -51,14 +58,23 @@ class YoloScanViewModel @Inject constructor(
      */
     fun startDetection(bitmap: Bitmap) {
         pipelineJob?.cancel()
+        _detections.value = emptyList()
         pipelineJob = viewModelScope.launch {
             yoloDetectionRepository.detectFoods(bitmap).collect { state ->
                 _uiState.value = when (state) {
                     is PipelineState.Detecting -> YoloScanUiState.Detecting
-                    is PipelineState.Classifying -> YoloScanUiState.Classifying(state.current, state.total)
+                    // Per D-06: Show bounding boxes immediately after YOLO completes
+                    is PipelineState.Detected -> {
+                        _detections.value = state.detections
+                        YoloScanUiState.Detecting // Still in detection phase from UI perspective
+                    }
+                    is PipelineState.Classifying -> {
+                        YoloScanUiState.Classifying(state.current, state.total)
+                    }
                     is PipelineState.Complete -> {
                         // Save results to Room for process death survival (D-17/D-20)
                         saveResults(state.result.results, state.result.sessionId)
+                        _detections.value = state.result.results
                         if (state.result.results.isEmpty()) {
                             YoloScanUiState.NoDetection // D-19
                         } else {
@@ -81,6 +97,7 @@ class YoloScanViewModel @Inject constructor(
         pipelineJob?.cancel()
         viewModelScope.launch { yoloDetectionRepository.cancelDetection() }
         _uiState.value = YoloScanUiState.Ready
+        _detections.value = emptyList()
     }
 
     /**

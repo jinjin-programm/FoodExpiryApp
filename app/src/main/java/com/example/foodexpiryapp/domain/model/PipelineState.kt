@@ -15,6 +15,12 @@ sealed class PipelineState {
     /** Stage 1: YOLO model is running detection on the camera frame. */
     data object Detecting : PipelineState()
 
+    /**
+     * YOLO detection complete, raw detections available for overlay rendering.
+     * Per D-06: Emitted before LLM classification starts so overlay can show bounding boxes.
+     */
+    data class Detected(val detections: List<DetectionResult>) : PipelineState()
+
     /** Stage 2: LLM is classifying crop [current] of [total]. */
     data class Classifying(val current: Int, val total: Int) : PipelineState()
 

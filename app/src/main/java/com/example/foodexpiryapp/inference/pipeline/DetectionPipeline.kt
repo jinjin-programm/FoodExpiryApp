@@ -89,6 +89,9 @@ class DetectionPipeline @Inject constructor(
                 det.copy(id = index, cropBitmap = crop)
             }
 
+            // Per D-06: Emit raw detections for overlay rendering before LLM starts
+            send(PipelineState.Detected(croppedDetections))
+
             // Stage 2: Sequential LLM classification
             val results = mutableListOf<DetectionResult>()
 
@@ -101,7 +104,7 @@ class DetectionPipeline @Inject constructor(
             }
 
             for ((index, detection) in croppedDetections.withIndex()) {
-                // Check cancellation per YOLO-03
+                // Per D-14: Cancel propagation — isActive is false when ViewModel job is cancelled
                 if (!isActive) {
                     send(PipelineState.Cancelled)
                     return@channelFlow

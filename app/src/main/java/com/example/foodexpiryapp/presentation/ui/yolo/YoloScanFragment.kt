@@ -65,6 +65,9 @@ class YoloScanFragment : Fragment() {
     private var latestBitmap: Bitmap? = null
     private var isCapturing = false
 
+    // Per D-06: Overlay for bounding box rendering
+    private lateinit var detectionOverlay: DetectionOverlayView
+
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) {
@@ -89,6 +92,9 @@ class YoloScanFragment : Fragment() {
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
+        // Per D-06: Initialize detection overlay for bounding box rendering
+        detectionOverlay = binding.detectionOverlay
+
         if (allPermissionsGranted()) {
             startCamera()
         } else {
@@ -97,6 +103,7 @@ class YoloScanFragment : Fragment() {
 
         setupUI()
         observeUiState()
+        observeDetections()
         setupViewPagerCallback()
         setupSaveResultListener()
     }
@@ -161,6 +168,26 @@ class YoloScanFragment : Fragment() {
                             showNoDetectionMessage()
                             isCapturing = false
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Per D-06: Observe detections for overlay rendering.
+     * Updates bounding boxes as YOLO detects items and LLM classifies them.
+     */
+    private fun observeDetections() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.detections.collect { detections ->
+                    if (detections.isNotEmpty() && latestBitmap != null) {
+                        detectionOverlay.setDetections(
+                            detections,
+                            latestBitmap!!.width,
+                            latestBitmap!!.height
+                        )
                     }
                 }
             }
@@ -294,11 +321,19 @@ class YoloScanFragment : Fragment() {
 
         isCapturing = true
 
+        // Per D-11: Defensive copy — latestBitmap can be recycled by camera callback during inference
+        val safeBitmap = bitmap.copy(bitmap.config ?: Bitmap.Config.ARGB_8888, false)
+            ?: run {
+                isCapturing = false
+                Toast.makeText(context, "Image capture failed", Toast.LENGTH_SHORT).show()
+                return
+            }
+
         // D-08: White flash animation
         showFlashAnimation {
             // D-09: Show progress overlay over frozen frame
             showProgressOverlayWithFadeIn()
-            viewModel.startDetection(bitmap)
+            viewModel.startDetection(safeBitmap)
         }
     }
 
@@ -390,6 +425,9 @@ class YoloScanFragment : Fragment() {
         cameraProvider?.unbindAll()
         cameraExecutor.shutdown()
         viewModel.cancelDetection()
+        if (::detectionOverlay.isInitialized) {
+            detectionOverlay.clearDetections()
+        }
         _binding = null
     }
 }
