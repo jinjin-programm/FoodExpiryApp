@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: AI Vision Engine Overhaul
 status: in_progress
-last_updated: "2026-04-10T23:40:00.000Z"
+last_updated: "2026-04-11T00:00:00.000Z"
 progress:
   total_phases: 9
   completed_phases: 7
@@ -62,7 +62,8 @@ Phase 9: Verification     [          ] 0%
 - **BREAKTHROUGH 2026-04-10:** MNN LLM first successful food identification on device!
   - Fixed: missing `libMNNAudio.so` causing UnsatisfiedLinkError crash
   - Fixed: prompt engineering — food-specific JSON-only prompt replaces generic "What is in this image?"
-  - Result: Qwen3.5-2B-MNN correctly identifies "banana" via vision scan
+  - Fixed: StructuredOutputParser — robust JSON extraction that skips template placeholders (e.g. `{"name": ..., "category": ...}`)
+  - Result: Qwen3.5-2B-MNN correctly identifies "banana" via vision scan, outputs valid JSON
 
 ## Accumulated Context
 
@@ -105,16 +106,18 @@ Phase 9: Verification     [          ] 0%
 
 | # | Description | Date | Directory |
 |---|-------------|------|-----------|
+| 260410-parser-fix | Rewrite StructuredOutputParser for robust JSON extraction from LLM thinking output | 2026-04-11 | Debug session |
 | 260410-mnn-fix | Fix MNN native crash (missing libMNNAudio.so) + food-specific prompt | 2026-04-10 | Debug session |
 | 260409-vki | Improve LLM few-shot prompt with visual description examples | 2026-04-09 | [260409-vki-improve-llm-few-shot-prompt-with-visual-](./quick/260409-vki-improve-llm-few-shot-prompt-with-visual-/) |
 
 ## Session Continuity
 
-**Last session:** 2026-04-10T23:40:00.000Z
+**Last session:** 2026-04-11T00:00:00.000Z
 
-- **MNN LLM FIRST SUCCESSFUL FOOD IDENTIFICATION** — Qwen3.5-2B-MNN correctly identifies banana on device
-- Root cause: `libllm.so` had DT_NEEDED dependency on `libMNNAudio.so` which was missing from jniLibs
-- Also fixed: generic prompt → food-specific JSON-only prompt (68s essay → short JSON)
+- Rewrote StructuredOutputParser to robustly extract JSON from LLM thinking output
+  - Old parser: used fragile regex chain, matched template placeholders like `{"name": ..., "category": ...}`
+  - New parser: finds all `{...}` blocks, validates each is real JSON with non-placeholder values, picks first valid
+  - max_tokens kept at 512 (not optimizing speed per user request)
 - Added diagnostic logging to MnnLlmNative init block for future debugging
 - Updated STATE.md, ROADMAP.md progress tracking
 

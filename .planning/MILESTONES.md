@@ -30,7 +30,12 @@
 - **BREAKTHROUGH (2026-04-10):** First successful on-device food identification via MNN LLM!
   - Fixed missing `libMNNAudio.so` (DT_NEEDED dependency of libllm.so)
   - Fixed prompt engineering: food-specific JSON-only output
+  - Fixed StructuredOutputParser: robust JSON extraction from thinking output
   - Qwen3.5-2B-MNN correctly identifies banana via vision scan
+
+**Known issues (in progress):**
+- Inference time ~30-40s per scan (model generates thinking before JSON) — acceptable for now
+- StructuredOutputParser rewritten to handle model's chain-of-thought + JSON output format
 
 **Remaining:** Phase 8 (YOLO Hardening), Phase 9 (Verification)
 **Timeline:** Apr 8, 2026 → in progress
