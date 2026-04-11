@@ -196,12 +196,18 @@ class YoloScanFragment : Fragment() {
 
     /**
      * Per D-21: Cancel pending analysis and unload YOLO model when swiping away.
+     * Re-bind camera when swiping back to YOLO tab — other fragments call
+     * ProcessCameraProvider.unbindAll() which removes our use cases.
      */
     private fun setupViewPagerCallback() {
         val viewPager = requireParentFragment().view?.findViewById<ViewPager2>(R.id.viewPager) ?: return
         viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
-                if (position != ScanPagerAdapter.TAB_YOLO) {
+                if (position == ScanPagerAdapter.TAB_YOLO) {
+                    // Re-bind camera use cases — another fragment's unbindAll() may
+                    // have removed our preview / analyzer from the shared ProcessCameraProvider.
+                    bindCameraUseCases()
+                } else {
                     // Cancel any ongoing pipeline when leaving YOLO tab
                     viewModel.cancelDetection()
                     showProgressOverlay(false)

@@ -23,6 +23,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
 import androidx.navigation.fragment.findNavController
 import com.example.foodexpiryapp.databinding.FragmentScanBinding
+import com.example.foodexpiryapp.presentation.ui.yolo.YoloScanFragment
+import com.google.android.material.snackbar.Snackbar
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
@@ -34,6 +36,8 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.regex.Pattern
+import androidx.viewpager2.widget.ViewPager2
+import com.example.foodexpiryapp.R
 
 @AndroidEntryPoint
 class ScanFragment : Fragment() {
@@ -89,6 +93,7 @@ class ScanFragment : Fragment() {
         }
 
         setupUI()
+        setupViewPagerCallback()
     }
 
     private fun setupUI() {
@@ -110,6 +115,22 @@ class ScanFragment : Fragment() {
             )
             findNavController().popBackStack()
         }
+    }
+
+    /**
+     * Re-bind camera when swiping back to this tab — other fragments share the
+     * same ProcessCameraProvider singleton and call unbindAll(), which removes our use cases.
+     */
+    private fun setupViewPagerCallback() {
+        val viewPager = requireParentFragment().view?.findViewById<ViewPager2>(R.id.viewPager) ?: return
+        viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                if (position == ScanPagerAdapter.TAB_BARCODE) {
+                    // Re-bind camera use cases — another fragment may have unbound them.
+                    bindCameraUseCases()
+                }
+            }
+        })
     }
 
     // ────────────────────────────────────────────────────────────────────────
