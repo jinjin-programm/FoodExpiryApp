@@ -39,11 +39,17 @@ object MnnLlmNative {
      *
      * @param modelDir Absolute path to directory containing llm.mnn, llm.mnn.weight, etc.
      * @param threadNum Number of CPU threads to use for inference
-     * @param memoryMode Memory mode: "low" for runtime quantization, "high" for fp32
-     * @param precision Precision: "low" for INT8 (faster), "high" for FP16/FP32 (more accurate)
+     * @param temperature Sampling temperature
+     * @param topP Top-p sampling threshold
+     * @param topK Top-k sampling limit
+     * @param repetitionPenalty Repetition penalty
+     * @param maxNewTokens Maximum number of tokens to generate
      * @return Native handle (>0) on success, 0 on failure
      */
-    external fun nativeCreateLlm(modelDir: String, threadNum: Int, memoryMode: String, precision: String): Long
+    external fun nativeCreateLlm(
+        modelDir: String, threadNum: Int,
+        temperature: Float, topP: Float, topK: Int, repetitionPenalty: Float, maxNewTokens: Int
+    ): Long
 
     /**
      * Runs inference on an image file using the LLM.

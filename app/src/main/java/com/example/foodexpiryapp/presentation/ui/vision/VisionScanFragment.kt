@@ -216,7 +216,6 @@ class VisionScanFragment : Fragment() {
                 }
 
             val imageAnalyzer = ImageAnalysis.Builder()
-                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
                 .also {
@@ -365,9 +364,12 @@ showFlashAnimation {
                 Toast.makeText(context, "No image captured", Toast.LENGTH_SHORT).show()
                 return
             }
-            // Center crop the camera preview to remove noisy background
-            bitmap = cropToCenterSquare(rawBitmap)
+            bitmap = rawBitmap
         }
+
+        // Always center-crop before inference so the model focuses on the food,
+        // not the full preview frame/background.
+        bitmap = cropToCenterSquare(bitmap)
 
         // Check if model needs download first
         viewLifecycleOwner.lifecycleScope.launch {

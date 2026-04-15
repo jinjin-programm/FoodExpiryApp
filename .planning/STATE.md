@@ -2,31 +2,31 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: MNN LLM WORKING — First successful food identification!
-last_updated: "2026-04-10T22:49:52.086Z"
+status: executing
+last_updated: "2026-04-10T23:02:37.494Z"
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 18
+  total_plans: 21
   completed_plans: 18
-  percent: 100
+  percent: 86
 ---
 
 # Project State: FoodExpiryApp
 
-**Status:** MNN LLM WORKING — First successful food identification!
+**Status:** Executing Phase 08
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-04-08)
 
 **Core value:** Let a new user add their first food item within 30 seconds and reduce the mental burden of food management.
-**Current focus:** Phase 08 — YOLO Detection Hardening
+**Current focus:** Phase 08 — yolo-hardening
 
 ## Current Position
 
-Phase: 08 (YOLO Detection Hardening) — READY
-Plan: 0 of 3
+Phase: 08 (yolo-hardening) — EXECUTING
+Plan: 1 of 3
 
 - **Milestone:** v2.0 AI Vision Engine Overhaul
 - **Phase:** 08
@@ -109,6 +109,7 @@ Phase 9: Verification     [          ] 0%
 | # | Description | Date | Directory |
 |---|-------------|------|-----------|
 | 260411-model-perf | Model perf experiments: 0.8B migration (rejected), configurable precision (retained), image/threads tuning | 2026-04-11 | [260411-precision-low](./quick/260411-precision-low/) — Reverted to 2B |
+| 260412-snapdragon-fix | Fix LLM garbage output ("4444..."/"HHHH...") on Snapdragon 8 Gen 3 (Z Fold6): match MNN Chat proven config (precision=low, threadNum=4, topK=20, topP=0.95, penalty=1.02) | 2026-04-12 | Debug session |
 | 260411-no-think | Disable Qwen3.5 CoT via MNN `set_config({"jinja":{"context":{"enable_thinking":false}}})` (67s → expected <5s) | 2026-04-11 | Debug session |
 | 260411-perf | Early stopping ([/FOOD] stop token) + 8 threads (was 4) | 2026-04-11 | Debug session |
 | 260411-food-tag | Switch to [FOOD]...[/FOOD] tag-based extraction (replaces fragile JSON parsing) | 2026-04-11 | Debug session |
@@ -117,7 +118,45 @@ Phase 9: Verification     [          ] 0%
 
 ## Session Continuity
 
-**Last session:** 2026-04-10T22:49:52.082Z
+**Last session:** 2026-04-12T01:30:00.000Z
+
+- **Snapdragon 8 Gen 3 (Z Fold6) LLM garbage output fix**
+  - Device: Samsung SM-F956U (Galaxy Z Fold6), Snapdragon 8 Gen 3, heterogeneous 4-cluster CPU
+  - Symptom: `response()` produces `"4444..."` or `"HHHH..."` instead of food names (garbage token repetition)
+  - Same Qwen3.5-2B-MNN model works correctly on Galaxy S10+ (Exynos 9820)
+  - Same model works correctly in MNN Chat app on the same Z Fold6 device
+  - **Root cause:** Our MNN config diverged from MNN Chat's proven defaults:
+    - Used `threadNum=8` (spans all 4 CPU clusters → numerical issues on heterogeneous cores)
+    - Used `precision="high"`/`"normal"` (FP16 SIMD on Snapdragon → logit overflow)
+    - Missing sampling params (temperature, topP, topK, repetitionPenalty not passed to native)
+    - Hardcoded `maxNewTokens=512` in `response()` call
+  - **Investigation steps:**
+    1. Tried `memoryMode="high"` → same garbage output
+    2. Added full sampling params (temperature=0.6, topP=0.9, repetitionPenalty=1.1) → output changed from "4444..." to "HHHH..." (different garbage token, same problem)
+    3. Tried `precision="normal"` → MNN ignores it (only checks "high"/"low"), defaults to FP16
+    4. Confirmed MNN Chat works on same device → compared MNN Chat source code defaults
+    5. **Final fix:** Matched MNN Chat's proven config defaults
+  - **Fix applied (matches MNN Chat defaults):**
+
+    | Setting | Before | After |
+    |---------|--------|-------|
+    | `precision` | "high" | "low" (INT8) |
+    | `threadNum` | 8 | 4 |
+    | `topP` | 0.9 | 0.95 |
+    | `topK` | 40 (hardcoded in C++) | 20 (configurable) |
+    | `repetitionPenalty` | 1.1 | 1.02 |
+    | `memoryMode` | "low" → "high" | "high" |
+    | `maxNewTokens` | 512 | 128 |
+    | `createOptimal()` | Dynamic `threadNum = min(cores, 8)` | Fixed defaults (no override) |
+
+  - Files changed:
+    - `MnnLlmConfig.kt` — new defaults: precision="low", threadNum=4, topP=0.95, topK=20, repetitionPenalty=1.02
+    - `MnnLlmNative.kt` — added `topK` param to JNI signature
+    - `MnnLlmEngine.kt` — passes `config.topK` to native call
+    - `mnn_llm_bridge.cpp` — accepts `topK` param, uses dynamic value instead of hardcoded 40
+  - **Pending:** Testing on Z Fold6 to confirm fix
+
+**Previous session:** 2026-04-10T22:49:52.088Z
 
 - **Camera UX optimization + Retake/Cancel buttons**
   - Camera stops during inference (frees ~30MB RAM, reduces GC pressure)

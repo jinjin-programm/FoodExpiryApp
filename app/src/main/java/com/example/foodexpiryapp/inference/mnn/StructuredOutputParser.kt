@@ -1,35 +1,37 @@
 package com.example.foodexpiryapp.inference.mnn
 
-import android.util.Log
 import com.example.foodexpiryapp.domain.model.FoodIdentification
 
 object StructuredOutputParser {
-    private const val TAG = "StructuredOutputParser"
-
-    private val THINKING_STEP_RE = Regex("""^\d+\.\s+\*\*\*""")
+    private val CHAT_TEMPLATE_TOKEN_RE = Regex("""<\|im_start\|>|<\|im_end\|>|<\|endoftext\|>|<\|[^|]+\|>|```(?:json)?|```""")
 
     fun parse(rawResponse: String?): FoodIdentification? {
         if (rawResponse.isNullOrBlank()) return null
 
-        val lines = rawResponse.lines().map { it.trim() }.filter { it.isNotBlank() }
+        val cleaned = rawResponse
+            .replace(CHAT_TEMPLATE_TOKEN_RE, "")
+            .trim()
 
-        for (line in lines.reversed()) {
-            if (THINKING_STEP_RE.containsMatchIn(line)) continue
-            if (line.length < 2 || line.length > 60) continue
-            val name = line.replace(Regex("""^[`\"]+"""), "").replace(Regex("""[`"]+$"""), "")
-                .trim()
-            if (name.isNotBlank()) {
-                Log.d(TAG, "Parsed food: '$name'")
-                return FoodIdentification(
-                    name = name,
-                    nameZh = name,
-                    confidence = 1.0f,
-                    rawResponse = rawResponse
-                )
-            }
+        if (cleaned.isBlank()) return null
+
+        val firstLine = cleaned.lineSequence()
+            .map { it.trim() }
+            .firstOrNull { it.isNotBlank() }
+            .orEmpty()
+
+        val name = firstLine
+            .removePrefix("-")
+            .trim()
+
+        return if (name.isNotBlank()) {
+            FoodIdentification(
+                name = name,
+                nameZh = name,
+                confidence = 1.0f,
+                rawResponse = rawResponse
+            )
+        } else {
+            null
         }
-
-        Log.w(TAG, "No food name found in response")
-        return null
     }
 }

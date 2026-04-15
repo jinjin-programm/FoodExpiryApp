@@ -10,7 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.FileOutputStream
+import java.security.MessageDigest
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -36,6 +36,9 @@ class MnnLlmEngine @Inject constructor(
 
     private var nativeHandle: Long = 0L
     private var isLoaded = false
+    private val debugImageSaver by lazy {
+        DebugImageSaver(File(context.getExternalFilesDir(null), "mnn_debug_images"))
+    }
 
     suspend fun loadModel(): Boolean = withContext(Dispatchers.IO) {
         if (isLoaded) return@withContext true
@@ -59,7 +62,10 @@ class MnnLlmEngine @Inject constructor(
             val modelDir = storageManager.getModelDirectory().absolutePath
             Log.d(TAG, "Loading LLM model from: $modelDir")
 
-            nativeHandle = MnnLlmNative.nativeCreateLlm(modelDir, config.threadNum, config.memoryMode, config.precision)
+            nativeHandle = MnnLlmNative.nativeCreateLlm(
+                modelDir, config.threadNum,
+                config.temperature, config.topP, config.topK, config.repetitionPenalty, config.maxNewTokens
+            )
 
             if (nativeHandle == 0L) {
                 Log.e(TAG, "Failed to create LLM native instance")
@@ -99,8 +105,14 @@ class MnnLlmEngine @Inject constructor(
             val stream = ByteArrayOutputStream()
             resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream)
             val byteArray = stream.toByteArray()
+            val fingerprint = MessageDigest.getInstance("SHA-256")
+                .digest(byteArray)
+                .joinToString("") { "%02x".format(it) }
+                .take(16)
 
-            Log.d(TAG, "Prepared in-memory image: ${byteArray.size} bytes, ${resizedBitmap.width}x${resizedBitmap.height}")
+            Log.d(TAG, "Prepared in-memory image: ${byteArray.size} bytes, ${resizedBitmap.width}x${resizedBitmap.height}, sha256=$fingerprint")
+            val savedFile = debugImageSaver.saveJpeg(byteArray, "vision_input_$fingerprint")
+            Log.d(TAG, "Saved debug input image to ${savedFile.absolutePath}")
 
             val rawResponse = if (retryHint != null) {
                 MnnLlmNative.nativeRunInferenceWithHint(nativeHandle, byteArray, retryHint)
