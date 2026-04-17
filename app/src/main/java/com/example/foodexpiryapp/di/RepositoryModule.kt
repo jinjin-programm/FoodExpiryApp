@@ -6,6 +6,7 @@ import com.example.foodexpiryapp.data.repository.LocalRecipeRepositoryImpl
 import com.example.foodexpiryapp.data.repository.MealPlanRepositoryImpl
 import com.example.foodexpiryapp.data.repository.NotificationSettingsRepositoryImpl
 import com.example.foodexpiryapp.data.repository.RecipeRepositoryImpl
+import com.example.foodexpiryapp.data.repository.ShelfLifeRepositoryImpl
 import com.example.foodexpiryapp.data.repository.ShoppingRepositoryImpl
 import com.example.foodexpiryapp.data.repository.UserRepositoryImpl
 import com.example.foodexpiryapp.domain.repository.CookedRecipeRepository
@@ -14,6 +15,7 @@ import com.example.foodexpiryapp.domain.repository.LocalRecipeRepository
 import com.example.foodexpiryapp.domain.repository.MealPlanRepository
 import com.example.foodexpiryapp.domain.repository.NotificationSettingsRepository
 import com.example.foodexpiryapp.domain.repository.RecipeRepository
+import com.example.foodexpiryapp.domain.repository.ShelfLifeRepository
 import com.example.foodexpiryapp.domain.repository.ShoppingRepository
 import com.example.foodexpiryapp.domain.repository.UserRepository
 import dagger.Binds
@@ -57,4 +59,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindLocalRecipeRepository(impl: LocalRecipeRepositoryImpl): LocalRecipeRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindShelfLifeRepository(impl: ShelfLifeRepositoryImpl): ShelfLifeRepository
 }

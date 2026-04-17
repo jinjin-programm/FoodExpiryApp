@@ -12,5 +12,6 @@ data class FoodIdentification(
     val nameZh: String,             // Chinese food name (per MNN-04 requirement)
     val confidence: Float = 0.0f,   // Confidence score from model
     val expiryHint: String? = null, // Optional expiry date hint from LLM
+    val shelfLifeDays: Int? = null,  // Shelf life in days from LLM
     val rawResponse: String? = null // Raw JSON for debugging
 )

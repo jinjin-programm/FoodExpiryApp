@@ -48,6 +48,12 @@ class DetectionResultAdapter(
         fun bind(entity: DetectionResultEntity) {
             val isFailed = entity.status == DetectionResultEntity.STATUS_FAILED
 
+            if (entity.shelfLifeSource == "auto") {
+                binding.tvAiBadge.visibility = View.VISIBLE
+            } else {
+                binding.tvAiBadge.visibility = View.GONE
+            }
+
             if (isFailed) {
                 bindFailedItem(entity)
             } else {

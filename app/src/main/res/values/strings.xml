@@ -10,4 +10,25 @@
     <string name="feedback_error_empty">Please enter your feedback before sending</string>
     <string name="feedback_chooser_title">Send feedback via</string>
     <string name="feedback_no_email_app">No email app found. Please install an email app to send feedback.</string>
+
+    <string-array name="food_categories">
+        <item>DAIRY</item>
+        <item>MEAT</item>
+        <item>VEGETABLES</item>
+        <item>FRUITS</item>
+        <item>GRAINS</item>
+        <item>BEVERAGES</item>
+        <item>SNACKS</item>
+        <item>CONDIMENTS</item>
+        <item>FROZEN</item>
+        <item>LEFTOVERS</item>
+        <item>OTHER</item>
+    </string-array>
+
+    <string-array name="storage_locations">
+        <item>FRIDGE</item>
+        <item>FREEZER</item>
+        <item>PANTRY</item>
+        <item>COUNTER</item>
+    </string-array>
 </resources>

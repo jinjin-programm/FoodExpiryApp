@@ -14,10 +14,11 @@ import com.example.foodexpiryapp.data.local.dao.LocalRecipeDao
 import com.example.foodexpiryapp.data.local.dao.ShoppingTemplateDao
 import com.example.foodexpiryapp.data.local.dao.DownloadStateDao
 import com.example.foodexpiryapp.data.local.dao.DetectionResultDao
+import com.example.foodexpiryapp.data.local.dao.ShelfLifeDao
 
 @Database(
-    entities = [FoodItemEntity::class, AnalyticsEventEntity::class, MealPlanEntity::class, ShoppingItemEntity::class, CookedRecipeEntity::class, LocalRecipeEntity::class, ShoppingTemplateEntity::class, DownloadStateEntity::class, DetectionResultEntity::class],
-    version = 11,
+    entities = [FoodItemEntity::class, AnalyticsEventEntity::class, MealPlanEntity::class, ShoppingItemEntity::class, CookedRecipeEntity::class, LocalRecipeEntity::class, ShoppingTemplateEntity::class, DownloadStateEntity::class, DetectionResultEntity::class, ShelfLifeEntity::class],
+    version = 12,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -30,6 +31,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun shoppingTemplateDao(): ShoppingTemplateDao
     abstract fun downloadStateDao(): DownloadStateDao
     abstract fun detectionResultDao(): DetectionResultDao
+    abstract fun shelfLifeDao(): ShelfLifeDao
 
     companion object {
         val MIGRATION_4_5 = object : Migration(4, 5) {
@@ -178,6 +180,27 @@ abstract class AppDatabase : RoomDatabase() {
                         createdAt INTEGER NOT NULL
                     )
                 """.trimIndent())
+            }
+        }
+
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("""
+                    CREATE TABLE IF NOT EXISTS shelf_life_entries (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        foodName TEXT NOT NULL,
+                        shelfLifeDays INTEGER NOT NULL,
+                        category TEXT NOT NULL,
+                        location TEXT NOT NULL,
+                        source TEXT NOT NULL,
+                        hitCount INTEGER NOT NULL DEFAULT 0,
+                        createdAt INTEGER NOT NULL,
+                        updatedAt INTEGER NOT NULL
+                    )
+                """.trimIndent())
+                database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_shelf_life_entries_foodName ON shelf_life_entries(foodName)")
+                database.execSQL("ALTER TABLE detection_results ADD COLUMN shelfLifeDays INTEGER")
+                database.execSQL("ALTER TABLE detection_results ADD COLUMN shelfLifeSource TEXT NOT NULL DEFAULT 'fallback'")
             }
         }
     }

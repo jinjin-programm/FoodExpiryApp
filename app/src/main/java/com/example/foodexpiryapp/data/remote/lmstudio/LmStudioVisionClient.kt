@@ -38,7 +38,7 @@ class LmStudioVisionClient @Inject constructor(
                     if (!hint.isNullOrBlank()) {
                         append(" Additional context: $hint")
                     }
-                    append(" Respond with JSON containing: name (English), name_zh (Chinese), confidence (0-1), expiry_hint (optional).")
+                    append(" Respond with JSON containing: name (English), confidence (0-1), shelf_life_days (typical shelf life in days as an integer, e.g. 7 for 1 week, 365 for 1 year).")
                 }
 
                 val contentParts = mutableListOf<Any>(
@@ -119,20 +119,25 @@ class LmStudioVisionClient @Inject constructor(
             }
 
             val name = json.optString("name", "").trim()
-            val nameZh = json.optString("name_zh", "").trim()
             val confidence = json.optDouble("confidence", 0.0).toFloat()
-            val expiryHint = json.optString("expiry_hint", null)?.takeIf { it.isNotBlank() }
+            val shelfLifeDays = json.optInt("shelf_life_days", 0)
+            val expiryHint = if (shelfLifeDays > 0) {
+                val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                val expiryDate = java.util.Date(System.currentTimeMillis() + shelfLifeDays.toLong() * 24 * 60 * 60 * 1000)
+                sdf.format(expiryDate)
+            } else null
 
-            if (name.isBlank() && nameZh.isBlank()) {
+            if (name.isBlank()) {
                 Log.w(TAG, "Empty food name in response")
                 return null
             }
 
             FoodIdentification(
-                name = name.ifBlank { nameZh },
-                nameZh = nameZh.ifBlank { name },
+                name = name,
+                nameZh = name,
                 confidence = confidence.coerceIn(0f, 1f),
                 expiryHint = expiryHint,
+                shelfLifeDays = if (shelfLifeDays > 0) shelfLifeDays else null,
                 rawResponse = jsonContent
             )
         } catch (e: Exception) {

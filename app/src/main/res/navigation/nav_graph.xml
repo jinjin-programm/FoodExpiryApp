@@ -57,7 +57,11 @@
     <fragment
         android:id="@+id/navigation_profile"
         android:name="com.example.foodexpiryapp.presentation.ui.profile.ProfileFragment"
-        android:label="Profile" />
+        android:label="Profile">
+        <action
+            android:id="@+id/action_profile_to_shelfLifeManagement"
+            app:destination="@id/shelfLifeManagement" />
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_scan"
@@ -104,5 +108,10 @@
         android:id="@+id/navigation_chat"
         android:name="com.example.foodexpiryapp.presentation.ui.chat.ChatFragment"
         android:label="Chat" />
+
+    <fragment
+        android:id="@+id/shelfLifeManagement"
+        android:name="com.example.foodexpiryapp.presentation.ui.shelflife.ShelfLifeManagementFragment"
+        android:label="Shelf Life Database" />
 
 </navigation>

@@ -11,6 +11,7 @@ import com.example.foodexpiryapp.data.local.dao.CookedRecipeDao
 import com.example.foodexpiryapp.data.local.dao.LocalRecipeDao
 import com.example.foodexpiryapp.data.local.dao.DetectionResultDao
 import com.example.foodexpiryapp.data.local.dao.DownloadStateDao
+import com.example.foodexpiryapp.data.local.dao.ShelfLifeDao
 import com.example.foodexpiryapp.data.local.database.AppDatabase
 import dagger.Module
 import dagger.Provides
@@ -47,7 +48,8 @@ object DatabaseModule {
             AppDatabase.MIGRATION_7_8,
             AppDatabase.MIGRATION_8_9,
             AppDatabase.MIGRATION_9_10,
-            AppDatabase.MIGRATION_10_11
+            AppDatabase.MIGRATION_10_11,
+            AppDatabase.MIGRATION_11_12
         ).build()
     }
 
@@ -97,5 +99,11 @@ object DatabaseModule {
     @Singleton
     fun provideDetectionResultDao(database: AppDatabase): DetectionResultDao {
         return database.detectionResultDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideShelfLifeDao(database: AppDatabase): ShelfLifeDao {
+        return database.shelfLifeDao()
     }
 }

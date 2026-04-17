@@ -45,6 +45,12 @@ data class DetectionResultEntity(
     val boundingBoxRight: Float = 0.0f,
     val boundingBoxBottom: Float = 0.0f,
 
+    /** Shelf life days from LLM classification */
+    val shelfLifeDays: Int? = null,
+
+    /** Source of shelf life: "manual", "auto", or "fallback" */
+    val shelfLifeSource: String = "fallback",
+
     /** Timestamp when this result was created */
     val createdAt: Long = System.currentTimeMillis()
 ) {

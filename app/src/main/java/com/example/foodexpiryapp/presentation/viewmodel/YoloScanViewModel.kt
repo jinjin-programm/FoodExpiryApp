@@ -129,7 +129,8 @@ class YoloScanViewModel @Inject constructor(
                 boundingBoxLeft = result.boundingBox.left,
                 boundingBoxTop = result.boundingBox.top,
                 boundingBoxRight = result.boundingBox.right,
-                boundingBoxBottom = result.boundingBox.bottom
+                boundingBoxBottom = result.boundingBox.bottom,
+                shelfLifeDays = result.foodIdentification?.shelfLifeDays
             )
         }
         detectionResultRepository.insertResults(entities)

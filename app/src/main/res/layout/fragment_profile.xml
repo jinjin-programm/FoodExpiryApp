@@ -773,6 +773,22 @@
                         android:layout_marginTop="4dp"
                         android:text="• You can delete all your data anytime from your device settings."
                         android:textAppearance="?attr/textAppearanceBody2" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnShelfLifeManagement"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="Food Shelf Life Database"
+                        android:textAllCaps="false"
+                        android:textColor="@color/primary"
+                        android:textStyle="bold"
+                        app:cornerRadius="12dp"
+                        app:icon="@android:drawable/ic_menu_agenda"
+                        app:iconGravity="textStart"
+                        app:iconTint="@color/primary"
+                        app:strokeColor="@color/primary_fixed" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

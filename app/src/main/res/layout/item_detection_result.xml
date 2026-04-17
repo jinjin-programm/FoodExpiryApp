@@ -57,6 +57,25 @@
         app:layout_constraintStart_toEndOf="@id/cardThumbnail"
         app:layout_constraintTop_toBottomOf="@id/tvFoodName" />
 
+    <!-- AI Estimated badge -->
+    <TextView
+        android:id="@+id/tvAiBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/shape_pill_glass"
+        android:backgroundTint="@color/primary_fixed"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="2dp"
+        android:text="AI \u9810\u4f30"
+        android:textColor="@color/primary"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintStart_toEndOf="@id/tvConfidenceBadge"
+        app:layout_constraintTop_toBottomOf="@id/tvFoodName" />
+
     <!-- Edit icon / Fix button -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnEdit"
