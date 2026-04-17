@@ -5,6 +5,9 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
+import com.example.foodexpiryapp.data.remote.lmstudio.LmStudioServerConfig
+import com.example.foodexpiryapp.data.remote.ollama.OllamaServerConfig
+import com.example.foodexpiryapp.data.remote.ProviderConfig
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,5 +27,23 @@ object DataStoreModule {
         return PreferenceDataStoreFactory.create(
             produceFile = { context.preferencesDataStoreFile(USER_PREFERENCES_NAME) }
         )
+    }
+
+    @Provides
+    @Singleton
+    fun provideOllamaServerConfig(dataStore: DataStore<Preferences>): OllamaServerConfig {
+        return OllamaServerConfig(dataStore)
+    }
+
+    @Provides
+    @Singleton
+    fun provideLmStudioServerConfig(dataStore: DataStore<Preferences>): LmStudioServerConfig {
+        return LmStudioServerConfig(dataStore)
+    }
+
+    @Provides
+    @Singleton
+    fun provideProviderConfig(dataStore: DataStore<Preferences>): ProviderConfig {
+        return ProviderConfig(dataStore)
     }
 }

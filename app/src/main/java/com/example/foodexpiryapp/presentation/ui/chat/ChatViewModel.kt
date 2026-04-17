@@ -4,8 +4,12 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.foodexpiryapp.data.remote.ModelDownloadManager
-import com.example.foodexpiryapp.domain.model.DownloadUiState
+import com.example.foodexpiryapp.data.remote.ProviderConfig
+import com.example.foodexpiryapp.data.remote.lmstudio.LmStudioServerConfig
+import com.example.foodexpiryapp.data.remote.lmstudio.LmStudioVisionClient
+import com.example.foodexpiryapp.data.remote.ollama.OllamaServerConfig
+import com.example.foodexpiryapp.data.remote.ollama.OllamaVisionClient
+import com.example.foodexpiryapp.domain.client.FoodVisionClient
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +21,11 @@ import javax.inject.Inject
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val modelDownloadManager: ModelDownloadManager
+    private val ollamaClient: OllamaVisionClient,
+    private val lmStudioClient: LmStudioVisionClient,
+    private val ollamaServerConfig: OllamaServerConfig,
+    private val lmStudioServerConfig: LmStudioServerConfig,
+    private val providerConfig: ProviderConfig
 ) : ViewModel() {
 
     companion object {
@@ -30,35 +38,53 @@ class ChatViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    private val _isModelLoaded = MutableStateFlow(false)
-    val isModelLoaded: StateFlow<Boolean> = _isModelLoaded.asStateFlow()
+    private val _isServerConnected = MutableStateFlow(false)
+    val isServerConnected: StateFlow<Boolean> = _isServerConnected.asStateFlow()
 
-    private val _statusText = MutableStateFlow("Checking model status...")
+    private val _statusText = MutableStateFlow("Checking server connection...")
     val statusText: StateFlow<String> = _statusText.asStateFlow()
 
-    init {
-        checkModelStatus()
+    private suspend fun getActiveClient(): FoodVisionClient {
+        val provider = providerConfig.getProvider()
+        return if (provider == ProviderConfig.PROVIDER_LMSTUDIO) lmStudioClient else ollamaClient
     }
 
-    fun checkModelStatus() {
+    init {
+        checkServerConnection()
+    }
+
+    fun checkServerConnection() {
         viewModelScope.launch {
             try {
-                val isReady = modelDownloadManager.isModelReady()
-                _isModelLoaded.value = isReady
-                _statusText.value = if (isReady) "AI model ready" else "AI model not downloaded"
+                val client = getActiveClient()
+                val provider = providerConfig.getProvider()
+                val providerName = if (provider == ProviderConfig.PROVIDER_LMSTUDIO) "LM Studio" else "Ollama"
+                val modelName = if (provider == ProviderConfig.PROVIDER_LMSTUDIO) {
+                    lmStudioServerConfig.getModelName()
+                } else {
+                    ollamaServerConfig.getModelName()
+                }
 
-                if (!isReady) {
+                val isConnected = client.testConnection()
+                _isServerConnected.value = isConnected
+                _statusText.value = if (isConnected) {
+                    "$providerName connected ($modelName)"
+                } else {
+                    "$providerName not connected"
+                }
+
+                if (!isConnected) {
                     _messages.value = listOf(
                         ChatMessage(
-                            content = "AI chat requires the on-device model (~1.2GB). Please use the photo scan feature to trigger the model download first.",
+                            content = "AI chat requires a connection to the $providerName server. Please configure the server settings first.",
                             isFromUser = false
                         )
                     )
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error checking model status", e)
-                _isModelLoaded.value = false
-                _statusText.value = "Error checking model: ${e.message}"
+                Log.e(TAG, "Error checking server connection", e)
+                _isServerConnected.value = false
+                _statusText.value = "Error checking server: ${e.message}"
             }
         }
     }
@@ -72,9 +98,9 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
 
-            if (!_isModelLoaded.value) {
+            if (!_isServerConnected.value) {
                 val aiMessage = ChatMessage(
-                    content = "AI model is not available. Please download the model first by using the photo scan feature.",
+                    content = "AI server is not connected. Please check the server settings.",
                     isFromUser = false
                 )
                 _messages.value = _messages.value + aiMessage
@@ -82,33 +108,14 @@ class ChatViewModel @Inject constructor(
                 return@launch
             }
 
-            // Note: Full chat LLM integration (free-form conversation) will be enhanced
-            // in a future phase. For now, the model is available for food identification.
+            val provider = providerConfig.getProvider()
+            val providerName = if (provider == ProviderConfig.PROVIDER_LMSTUDIO) "LM Studio" else "Ollama"
             val aiMessage = ChatMessage(
-                content = "AI chat is now powered by MNN! The model is loaded and ready. Food identification is available through the photo scan feature. Free-form chat will be enhanced in a future update.",
+                content = "AI chat is powered by $providerName! The server is connected and ready. Food identification is available through the photo scan feature.",
                 isFromUser = false
             )
             _messages.value = _messages.value + aiMessage
             _isLoading.value = false
-        }
-    }
-
-    fun startModelDownload() {
-        viewModelScope.launch {
-            modelDownloadManager.downloadModel().collect { state ->
-                when (state) {
-                    is DownloadUiState.Complete -> {
-                        _isModelLoaded.value = true
-                        _statusText.value = "AI model ready"
-                    }
-                    is DownloadUiState.Error -> {
-                        _statusText.value = "Download failed: ${state.message}"
-                    }
-                    else -> {
-                        _statusText.value = state::class.simpleName ?: "Downloading..."
-                    }
-                }
-            }
         }
     }
 

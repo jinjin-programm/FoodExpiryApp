@@ -3,10 +3,6 @@ package com.example.foodexpiryapp.presentation.ui.vision
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.ImageFormat
-import android.graphics.Rect
-import android.graphics.YuvImage
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -24,23 +20,15 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.widget.ViewPager2
 import com.example.foodexpiryapp.R
+import com.example.foodexpiryapp.data.remote.ollama.OllamaServerConfig
+import com.example.foodexpiryapp.data.repository.LlmInferenceRepositoryImpl
 import com.example.foodexpiryapp.databinding.FragmentVisionScanBinding
+import com.example.foodexpiryapp.domain.repository.LlmInferenceRepository
 import com.example.foodexpiryapp.domain.usecase.IdentifyFoodUseCase
-import com.example.foodexpiryapp.data.remote.ModelDownloadManager
-import com.example.foodexpiryapp.domain.model.DownloadUiState
 import com.example.foodexpiryapp.presentation.ui.scan.ScanPagerAdapter
-import com.google.mlkit.vision.barcode.BarcodeScanner
-import com.google.mlkit.vision.barcode.BarcodeScanning
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.label.ImageLabeler
-import com.google.mlkit.vision.label.ImageLabeling
-import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.*
-import java.io.ByteArrayOutputStream
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.max
@@ -50,8 +38,6 @@ class VisionScanFragment : Fragment() {
 
     companion object {
         private const val TAG = "VisionScanFragment"
-        private const val MAX_TOKENS = 24
-        private const val TARGET_IMAGE_MAX_SIDE = 224
         private const val PROGRESS_TICK_MS = 400L
     }
 
@@ -64,16 +50,14 @@ class VisionScanFragment : Fragment() {
     private var isProcessing = false
     private var isCameraActive = true
     private var detectionJob: Job? = null
-    private var modelLoadJob: Job? = null
     private var progressTickerJob: Job? = null
     private var blurredBg: ImageView? = null
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     @Inject lateinit var identifyFoodUseCase: IdentifyFoodUseCase
-    @Inject lateinit var modelDownloadManager: ModelDownloadManager
-
-    // ML Kit processors removed for true vision
+    @Inject lateinit var llmRepository: LlmInferenceRepository
+    @Inject lateinit var serverConfig: OllamaServerConfig
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -99,9 +83,8 @@ class VisionScanFragment : Fragment() {
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
-        updateStatus("Loading Qwen3.5-2B-VL...", Status.INITIALIZING)
-
-        loadModelIfNeeded()
+        updateStatus("Connecting to AI server...", Status.INITIALIZING)
+        checkServerConnection()
 
         if (allPermissionsGranted()) {
             startCamera()
@@ -113,39 +96,15 @@ class VisionScanFragment : Fragment() {
         setupViewPagerCallback()
     }
 
-    private fun loadModelIfNeeded() {
+    private fun checkServerConnection() {
         viewLifecycleOwner.lifecycleScope.launch {
-            // Check if model is ready
-            var isReady = false
-            try {
-                isReady = modelDownloadManager.isModelReady()
-            } catch (e: Exception) {
-                Log.e(TAG, "Error checking model status", e)
-            }
-
-            if (isReady) {
-                updateStatus("AI model ready", Status.READY)
-            } else {
-                // Check download state
-                modelDownloadManager.observeDownloadState().collect { state ->
-                    when (state) {
-                        is DownloadUiState.Ready,
-                        is DownloadUiState.Complete -> {
-                            updateStatus("AI model ready", Status.READY)
-                        }
-                        is DownloadUiState.NotDownloaded -> {
-                            updateStatus("AI model not downloaded — tap 'AI 深度分析' to download", Status.READY)
-                        }
-                        is DownloadUiState.Downloading -> {
-                            updateStatus("Downloading model... ${state.overallProgress}%", Status.INITIALIZING)
-                        }
-                        is DownloadUiState.Error -> {
-                            updateStatus("Download error: ${state.message}", Status.ERROR)
-                        }
-                        else -> {
-                            updateStatus("AI model ${state::class.simpleName}", Status.INITIALIZING)
-                        }
-                    }
+            val repoImpl = llmRepository as? LlmInferenceRepositoryImpl
+            if (repoImpl != null) {
+                val isConnected = repoImpl.checkServerConnection()
+                if (isConnected) {
+                    updateStatus("AI server connected", Status.READY)
+                } else {
+                    updateStatus("AI server not connected — tap settings to configure", Status.ERROR)
                 }
             }
         }
@@ -154,6 +113,10 @@ class VisionScanFragment : Fragment() {
     private fun setupUI() {
         binding.btnBack.setOnClickListener {
             findNavController().popBackStack()
+        }
+
+        binding.btnSettings.setOnClickListener {
+            OllamaSettingsDialog().show(parentFragmentManager, "ollama_settings")
         }
 
         binding.btnCapture.setOnClickListener {
@@ -178,20 +141,15 @@ class VisionScanFragment : Fragment() {
         }
 
         binding.btnAskAi.setOnClickListener {
-            runAskAiInference()
+            runOllamaAnalysis()
         }
     }
 
-    /**
-     * Re-bind camera when swiping back to this tab — other fragments share the
-     * same ProcessCameraProvider singleton and call unbindAll(), which removes our use cases.
-     */
     private fun setupViewPagerCallback() {
         val viewPager = requireParentFragment().view?.findViewById<ViewPager2>(R.id.viewPager) ?: return
         viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 if (position == ScanPagerAdapter.TAB_PHOTO) {
-                    // Re-bind camera use cases — another fragment may have unbound them.
                     startCamera()
                 }
             }
@@ -305,8 +263,8 @@ class VisionScanFragment : Fragment() {
         stopCamera()
         showBlurredBackground(bitmap)
 
-showFlashAnimation {
-            runAskAiInference(bitmap)
+        showFlashAnimation {
+            runOllamaAnalysis(bitmap)
         }
     }
 
@@ -324,7 +282,6 @@ showFlashAnimation {
             .start()
     }
 
-    // D-09: Semi-transparent overlay fades in on frozen frame
     private fun showProgressOverlay() {
         binding.progressOverlay.visibility = View.VISIBLE
         binding.progressOverlay.alpha = 0f
@@ -338,23 +295,40 @@ showFlashAnimation {
         binding.progressOverlay.visibility = View.GONE
     }
 
-    private fun cropToCenterSquare(bitmap: Bitmap): Bitmap {
-        val width = bitmap.width
-        val height = bitmap.height
-        
-        // Make it a square based on the shorter side
-        val size = Math.min(width, height)
-        // Take 80% of the shortest side to really focus on the center
-        // and eliminate the screen moiré/bezels at the edges
-        val cropSize = (size * 0.8).toInt()
+    private fun cropToFocusRect(bitmap: Bitmap): Bitmap {
+        val focusRect = binding.focusRectangle
+        val preview = binding.previewView
 
-        val x = (width - cropSize) / 2
-        val y = (height - cropSize) / 2
+        val previewW = preview.width
+        val previewH = preview.height
+        if (previewW <= 0 || previewH <= 0) return bitmap
 
-        return Bitmap.createBitmap(bitmap, x, y, cropSize, cropSize)
+        val rectW = focusRect.width
+        val rectH = focusRect.height
+        if (rectW <= 0 || rectH <= 0) return bitmap
+
+        val location = IntArray(2)
+        focusRect.getLocationOnScreen(location)
+        val previewLocation = IntArray(2)
+        preview.getLocationOnScreen(previewLocation)
+
+        val rectLeft = location[0] - previewLocation[0]
+        val rectTop = location[1] - previewLocation[1]
+
+        val scaleX = bitmap.width.toFloat() / previewW.toFloat()
+        val scaleY = bitmap.height.toFloat() / previewH.toFloat()
+
+        val x = (rectLeft * scaleX).toInt().coerceIn(0, bitmap.width - 1)
+        val y = (rectTop * scaleY).toInt().coerceIn(0, bitmap.height - 1)
+        val w = (rectW * scaleX).toInt().coerceAtMost(bitmap.width - x)
+        val h = (rectH * scaleY).toInt().coerceAtMost(bitmap.height - y)
+
+        if (w <= 0 || h <= 0) return bitmap
+
+        return Bitmap.createBitmap(bitmap, x, y, w, h)
     }
 
-    private fun runAskAiInference(customBitmap: Bitmap? = null) {
+    private fun runOllamaAnalysis(customBitmap: Bitmap? = null) {
         if (isProcessing) return
 
         var bitmap = customBitmap
@@ -367,52 +341,13 @@ showFlashAnimation {
             bitmap = rawBitmap
         }
 
-        // Always center-crop before inference so the model focuses on the food,
-        // not the full preview frame/background.
-        bitmap = cropToCenterSquare(bitmap)
+        bitmap = cropToFocusRect(bitmap)
 
-        // Check if model needs download first
         viewLifecycleOwner.lifecycleScope.launch {
-            val isReady = modelDownloadManager.isModelReady()
-            if (!isReady) {
-                // Start download with WiFi check
-                modelDownloadManager.downloadModel().collect { state ->
-                    when (state) {
-                        is DownloadUiState.WifiCheckRequired -> {
-                            // Show WiFi warning dialog
-                            showWifiWarningDialog(state.estimatedSizeMB, bitmap)
-                        }
-                        is DownloadUiState.Downloading -> {
-                            isProcessing = true
-                            showProgressOverlay()
-                            binding.tvProgressTitle.text = "Downloading AI model..."
-                            binding.tvProgressDetailOverlay.text = "Downloading model... ${state.overallProgress}%"
-                            updateStatus("Downloading AI model...", Status.INITIALIZING)
-                        }
-                        is DownloadUiState.Complete -> {
-                            isProcessing = false
-                            hideProgressOverlay()
-                            Toast.makeText(context, "Model downloaded! Starting analysis...", Toast.LENGTH_SHORT).show()
-                            // Retry inference after download
-                            runAskAiInference(bitmap)
-                        }
-                        is DownloadUiState.Error -> {
-                            isProcessing = false
-                            hideProgressOverlay()
-                            Toast.makeText(context, "Download failed: ${state.message}", Toast.LENGTH_LONG).show()
-                            updateStatus("Download failed", Status.ERROR)
-                        }
-                        else -> { /* ignore other states during download */ }
-                    }
-                }
-                return@launch
-            }
-
-            // Model ready — run inference
             isProcessing = true
             showProgressOverlay()
             binding.tvProgressTitle.text = "Analyzing food..."
-            binding.tvProgressDetailOverlay.text = "Preparing analysis"
+            binding.tvProgressDetailOverlay.text = "Sending to AI server..."
             updateStatus("Analyzing food...", Status.ANALYZING)
             startProgressTicker()
             showCancelButton()
@@ -427,9 +362,9 @@ showFlashAnimation {
                         binding.flashOverlay.visibility = View.GONE
                     }.start()
 
-                    if (result.name == "Error") {
-                        displayAiResult(result.name, null, result.rawResponse ?: "Error")
-                        updateStatus("Analysis failed", Status.ERROR)
+                    if (result.name == "Error" || result.name == "Unknown") {
+                        displayAiResult(result.nameZh, result.expiryHint, result.rawResponse ?: "Error")
+                        updateStatus("Analysis: ${result.nameZh}", Status.ERROR)
                     } else {
                         val bundle = android.os.Bundle().apply {
                             putString("food_name", result.name)
@@ -439,7 +374,7 @@ showFlashAnimation {
                         }
                         requireActivity().supportFragmentManager.setFragmentResult("llm_scan_result", bundle)
 
-                        displayAiResult(result.name, result.nameZh, result.rawResponse ?: "")
+                        displayAiResult(result.nameZh, result.expiryHint, result.rawResponse ?: "")
                         updateStatus("Analysis complete", Status.READY)
                     }
                 }
@@ -449,52 +384,11 @@ showFlashAnimation {
                 hideProgressOverlay()
                 hideCancelButton()
                 binding.flashOverlay.visibility = View.GONE
-                Log.e(TAG, "Inference error", e)
-                Toast.makeText(context, "AI analysis failed: ${e.message}", Toast.LENGTH_LONG).show()
+                Log.e(TAG, "Analysis error", e)
+                Toast.makeText(context, "AI 分析失敗: ${e.message}", Toast.LENGTH_LONG).show()
                 updateStatus("Analysis failed", Status.ERROR)
             }
         }
-    }
-
-    private fun showWifiWarningDialog(estimatedSizeMB: Double, bitmap: Bitmap) {
-        val message = "The AI model is approximately ${String.format("%.0f", estimatedSizeMB)}MB. " +
-                     "Download over cellular may use significant data.\n\nDownload anyway?"
-
-        androidx.appcompat.app.AlertDialog.Builder(requireContext())
-            .setTitle("Download Over Cellular")
-            .setMessage(message)
-            .setPositiveButton("Download") { _, _ ->
-                viewLifecycleOwner.lifecycleScope.launch {
-                    modelDownloadManager.downloadModel(skipWifiCheck = true).collect { state ->
-                        when (state) {
-                            is DownloadUiState.Downloading -> {
-                                isProcessing = true
-                                showProgressOverlay()
-                                binding.tvProgressTitle.text = "Downloading AI model..."
-                                binding.tvProgressDetailOverlay.text = "Downloading model... ${state.overallProgress}%"
-                                updateStatus("Downloading AI model...", Status.INITIALIZING)
-                            }
-                            is DownloadUiState.Complete -> {
-                                isProcessing = false
-                                hideProgressOverlay()
-                                Toast.makeText(context, "Model downloaded! Starting analysis...", Toast.LENGTH_SHORT).show()
-                                runAskAiInference(bitmap)
-                            }
-                            is DownloadUiState.Error -> {
-                                isProcessing = false
-                                hideProgressOverlay()
-                                Toast.makeText(context, "Download failed: ${state.message}", Toast.LENGTH_LONG).show()
-                                updateStatus("Download failed", Status.ERROR)
-                            }
-                            else -> { /* ignore other states during download */ }
-                        }
-                    }
-                }
-            }
-            .setNegativeButton("Wait for WiFi") { _, _ ->
-                Toast.makeText(context, "Download will start when WiFi is available", Toast.LENGTH_SHORT).show()
-            }
-            .show()
     }
 
     private fun startProgressTicker() {
@@ -503,17 +397,12 @@ showFlashAnimation {
         progressTickerJob = scope.launch {
             while (isActive && isProcessing) {
                 val elapsedSec = (System.currentTimeMillis() - start) / 1000.0
-                val etaSec = when {
-                    elapsedSec < 3 -> 8.0
-                    elapsedSec < 8 -> 5.0
-                    else -> max(2.0, 10.0 - elapsedSec)
-                }
-                // D-10: Staged progress text
                 val stage = when {
-                    elapsedSec < 3 -> "Identifying food item..."
+                    elapsedSec < 3 -> "Sending image to server..."
+                    elapsedSec < 10 -> "AI analyzing food..."
                     else -> "Almost done..."
                 }
-                _binding?.tvProgressDetailOverlay?.text = "$stage ${"%.1f".format(elapsedSec)}s elapsed"
+                _binding?.tvProgressDetailOverlay?.text = "$stage ${"%.1f".format(elapsedSec)}s"
                 delay(PROGRESS_TICK_MS)
             }
         }
@@ -534,68 +423,18 @@ showFlashAnimation {
         binding.flashOverlay.visibility = View.GONE
         hideBlurredBackground()
         restartCamera()
-        Toast.makeText(requireContext(), "Inference cancelled", Toast.LENGTH_SHORT).show()
+        Toast.makeText(requireContext(), "Analysis cancelled", Toast.LENGTH_SHORT).show()
     }
 
-    private fun resizeForVision(source: Bitmap, maxSide: Int): Bitmap {
-        val width = source.width
-        val height = source.height
-        val longest = max(width, height)
-        if (longest <= maxSide) return source
-
-        val scale = maxSide.toFloat() / longest.toFloat()
-        val targetW = (width * scale).toInt().coerceAtLeast(1)
-        val targetH = (height * scale).toInt().coerceAtLeast(1)
-        return Bitmap.createScaledBitmap(source, targetW, targetH, true)
-    }
-
-    private data class FoodResult(
-        val foodName: String,
-        val expiryDate: String?,
-        val rawResponse: String
-    )
-
-    private fun parseFoodResponse(response: String): FoodResult {
-        val foodRegex = Regex("""FOOD:\s*\[?([^\[\]\n]+)\]?"?""", RegexOption.IGNORE_CASE)
-        val foodMatch = foodRegex.find(response)
-        if (foodMatch != null) {
-            val foodName = foodMatch.groupValues[1].trim()
-            val expiryRegex = Regex("""EXPIRY:\s*\[?([^\[\]\n]+)\]?"?""", RegexOption.IGNORE_CASE)
-            val expiryMatch = expiryRegex.find(response)
-            val expiryDate = expiryMatch?.groupValues?.get(1)?.trim()
-            val cleanExpiry = expiryDate?.takeIf { 
-                !it.equals("not visible", ignoreCase = true) && 
-                !it.equals("not shown", ignoreCase = true) &&
-                it.isNotBlank() 
-            }
-            return FoodResult(foodName, cleanExpiry, response)
-        }
-        
-        val clean = response.trim()
-        val foodName = if (clean.length < 40 && clean.isNotBlank()) {
-            clean.removeSuffix(".").removeSuffix("!").trim()
-        } else {
-            val lines = response.lines().map { it.trim() }.filter { it.isNotEmpty() }
-            val firstLine = lines.firstOrNull()
-            if (firstLine != null && firstLine.length < 40) {
-                firstLine.removeSuffix(".").removeSuffix("!").trim()
-            } else {
-                response.take(30).trim()
-            }
-        }.ifBlank { "Unknown" }
-        
-        return FoodResult(foodName, null, response)
-    }
-
-    private fun displayAiResult(foodName: String, expiryDate: String?, rawResponse: String) {
-        binding.tvFoodName.text = "AI Result: $foodName"
-        binding.tvExpiryDate.text = "Expiry: ${expiryDate ?: "Not detected"}"
+    private fun displayAiResult(foodName: String?, expiryDate: String?, rawResponse: String) {
+        binding.tvFoodName.text = "AI 識別: ${foodName ?: "未知"}"
+        binding.tvExpiryDate.text = "有效日期: ${expiryDate ?: "未偵測到"}"
         binding.tvConfidence.visibility = View.GONE
         binding.tvRawResponse.text = rawResponse
-        
+
         binding.resultCard.visibility = View.VISIBLE
         binding.rawResponseCard.visibility = View.VISIBLE
-        updateStatus("AI Analysis complete", Status.READY)
+        updateStatus("AI 分析完成", Status.READY)
     }
 
     private enum class Status {
@@ -605,14 +444,14 @@ showFlashAnimation {
     private fun updateStatus(message: String, status: Status = Status.READY) {
         _binding?.let { binding ->
             binding.tvStatus.text = message
-            
+
             val color = when (status) {
                 Status.INITIALIZING -> android.graphics.Color.BLUE
                 Status.READY -> android.graphics.Color.GREEN
                 Status.ANALYZING -> android.graphics.Color.YELLOW
                 Status.ERROR -> android.graphics.Color.RED
             }
-            binding.viewStatusIndicator.backgroundTintList = 
+            binding.viewStatusIndicator.backgroundTintList =
                 android.content.res.ColorStateList.valueOf(color)
         }
     }
@@ -620,7 +459,6 @@ showFlashAnimation {
     override fun onDestroyView() {
         super.onDestroyView()
         detectionJob?.cancel()
-        modelLoadJob?.cancel()
         progressTickerJob?.cancel()
         scope.cancel()
         cameraProvider?.unbindAll()
@@ -631,13 +469,12 @@ showFlashAnimation {
     }
 }
 
-// ML Kit Tasks utility (for awaiting results)
 object Tasks {
     fun <TResult : Any?> await(task: com.google.android.gms.tasks.Task<TResult>): TResult? {
         var result: TResult? = null
         var exception: Exception? = null
         val latch = java.util.concurrent.CountDownLatch(1)
-        
+
         task.addOnSuccessListener {
             result = it
             latch.countDown()
@@ -645,13 +482,13 @@ object Tasks {
             exception = it
             latch.countDown()
         }
-        
+
         latch.await()
-        
+
         if (exception != null) {
             throw exception!!
         }
-        
+
         return result
     }
 }

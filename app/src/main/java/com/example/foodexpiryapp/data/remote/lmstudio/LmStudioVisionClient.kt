@@ -1,0 +1,143 @@
+package com.example.foodexpiryapp.data.remote.lmstudio
+
+import android.graphics.Bitmap
+import android.util.Base64
+import android.util.Log
+import com.example.foodexpiryapp.data.remote.lmstudio.dto.OpenAiChatRequest
+import com.example.foodexpiryapp.data.remote.lmstudio.dto.OpenAiImageContent
+import com.example.foodexpiryapp.data.remote.lmstudio.dto.OpenAiImageUrl
+import com.example.foodexpiryapp.data.remote.lmstudio.dto.OpenAiMessage
+import com.example.foodexpiryapp.data.remote.lmstudio.dto.OpenAiTextContent
+import com.example.foodexpiryapp.domain.client.FoodVisionClient
+import com.example.foodexpiryapp.domain.model.FoodIdentification
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
+class LmStudioVisionClient @Inject constructor(
+    private val apiClient: LmStudioApiClient,
+    private val serverConfig: LmStudioServerConfig
+) : FoodVisionClient {
+    companion object {
+        private const val TAG = "LmStudioVisionClient"
+        private const val MAX_IMAGE_SIZE = 512
+        private const val JPEG_QUALITY = 85
+    }
+
+    override suspend fun analyzeFood(bitmap: Bitmap, hint: String?): FoodIdentification? =
+        withContext(Dispatchers.IO) {
+            try {
+                val config = serverConfig.getConfig()
+                val base64Image = bitmapToBase64(bitmap)
+
+                val prompt = buildString {
+                    append("Identify the food in this image.")
+                    if (!hint.isNullOrBlank()) {
+                        append(" Additional context: $hint")
+                    }
+                    append(" Respond with JSON containing: name (English), name_zh (Chinese), confidence (0-1), expiry_hint (optional).")
+                }
+
+                val contentParts = mutableListOf<Any>(
+                    OpenAiTextContent(text = prompt),
+                    OpenAiImageContent(imageUrl = OpenAiImageUrl(url = "data:image/jpeg;base64,$base64Image"))
+                )
+
+                val messages = listOf(
+                    OpenAiMessage(role = "user", content = contentParts)
+                )
+
+                val request = OpenAiChatRequest(
+                    model = config.modelName,
+                    messages = messages,
+                    temperature = 0.1f,
+                    topP = 0.9f,
+                    maxTokens = 100,
+                    stream = false
+                )
+
+                val response = apiClient.chat(request)
+                val content = response.choices?.firstOrNull()?.message?.content
+
+                if (content != null) {
+                    parseFoodIdentification(content)
+                } else {
+                    Log.e(TAG, "Empty response message")
+                    null
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error analyzing food", e)
+                null
+            }
+        }
+
+    override suspend fun testConnection(): Boolean = withContext(Dispatchers.IO) {
+        try {
+            apiClient.testConnection()
+        } catch (e: Exception) {
+            Log.e(TAG, "Connection test failed", e)
+            false
+        }
+    }
+
+    private fun bitmapToBase64(bitmap: Bitmap): String {
+        val resizedBitmap = resizeBitmapIfNeeded(bitmap)
+        val outputStream = ByteArrayOutputStream()
+        resizedBitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, outputStream)
+        val bytes = outputStream.toByteArray()
+        return Base64.encodeToString(bytes, Base64.NO_WRAP)
+    }
+
+    private fun resizeBitmapIfNeeded(bitmap: Bitmap): Bitmap {
+        val width = bitmap.width
+        val height = bitmap.height
+        if (width <= MAX_IMAGE_SIZE && height <= MAX_IMAGE_SIZE) {
+            return bitmap
+        }
+        val scale = MAX_IMAGE_SIZE.toFloat() / maxOf(width, height)
+        val newWidth = (width * scale).toInt()
+        val newHeight = (height * scale).toInt()
+        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+    }
+
+    private fun parseFoodIdentification(jsonContent: String): FoodIdentification? {
+        return try {
+            val cleaned = jsonContent
+                .trim()
+                .removePrefix("```json")
+                .removePrefix("```")
+                .removeSuffix("```")
+                .trim()
+            val json = if (cleaned.startsWith("[")) {
+                val arr = org.json.JSONArray(cleaned)
+                if (arr.length() > 0) arr.getJSONObject(0) else throw Exception("Empty array")
+            } else {
+                org.json.JSONObject(cleaned)
+            }
+
+            val name = json.optString("name", "").trim()
+            val nameZh = json.optString("name_zh", "").trim()
+            val confidence = json.optDouble("confidence", 0.0).toFloat()
+            val expiryHint = json.optString("expiry_hint", null)?.takeIf { it.isNotBlank() }
+
+            if (name.isBlank() && nameZh.isBlank()) {
+                Log.w(TAG, "Empty food name in response")
+                return null
+            }
+
+            FoodIdentification(
+                name = name.ifBlank { nameZh },
+                nameZh = nameZh.ifBlank { name },
+                confidence = confidence.coerceIn(0f, 1f),
+                expiryHint = expiryHint,
+                rawResponse = jsonContent
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to parse JSON response", e)
+            null
+        }
+    }
+}

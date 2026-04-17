@@ -2,12 +2,14 @@ package com.example.foodexpiryapp.inference.pipeline
 
 import android.graphics.Bitmap
 import android.util.Log
+import com.example.foodexpiryapp.data.remote.ProviderConfig
+import com.example.foodexpiryapp.data.remote.lmstudio.LmStudioVisionClient
+import com.example.foodexpiryapp.data.remote.ollama.OllamaVisionClient
+import com.example.foodexpiryapp.domain.client.FoodVisionClient
 import com.example.foodexpiryapp.domain.model.BatchDetectionResult
 import com.example.foodexpiryapp.domain.model.DetectionResult
 import com.example.foodexpiryapp.domain.model.DetectionStatus
 import com.example.foodexpiryapp.domain.model.PipelineState
-import com.example.foodexpiryapp.inference.mnn.MnnLlmEngine
-import com.example.foodexpiryapp.inference.mnn.ModelLifecycleManager
 import com.example.foodexpiryapp.inference.yolo.MnnYoloEngine
 import com.example.foodexpiryapp.inference.yolo.MnnYoloPostprocessor
 import kotlinx.coroutines.CancellationException
@@ -30,17 +32,23 @@ import javax.inject.Singleton
  * Pipeline stages:
  * 1. YOLO Detection — detect food items in camera frame
  * 2. Crop Regions — extract bounding box regions from original bitmap
- * 3. Sequential LLM Classification — classify each crop one at a time
+ * 3. Sequential LLM Classification — classify each crop one at a time via Ollama API
  * 4. Complete — emit BatchDetectionResult with all results
  */
 @Singleton
 class DetectionPipeline @Inject constructor(
     private val yoloEngine: MnnYoloEngine,
-    private val llmEngine: MnnLlmEngine,
-    private val lifecycleManager: ModelLifecycleManager
+    private val ollamaClient: OllamaVisionClient,
+    private val lmStudioClient: LmStudioVisionClient,
+    private val providerConfig: ProviderConfig
 ) {
     companion object {
         private const val TAG = "DetectionPipeline"
+    }
+
+    private suspend fun getActiveClient(): FoodVisionClient {
+        val provider = providerConfig.getProvider()
+        return if (provider == ProviderConfig.PROVIDER_LMSTUDIO) lmStudioClient else ollamaClient
     }
 
     /**
@@ -93,15 +101,8 @@ class DetectionPipeline @Inject constructor(
             send(PipelineState.Detected(croppedDetections))
 
             // Stage 2: Sequential LLM classification
+            val client = getActiveClient()
             val results = mutableListOf<DetectionResult>()
-
-            if (!llmEngine.isModelLoaded()) {
-                val loaded = llmEngine.loadModel()
-                if (!loaded) {
-                    send(PipelineState.Error("LLM model load failed"))
-                    return@channelFlow
-                }
-            }
 
             for ((index, detection) in croppedDetections.withIndex()) {
                 // Per D-14: Cancel propagation — isActive is false when ViewModel job is cancelled
@@ -114,7 +115,7 @@ class DetectionPipeline @Inject constructor(
 
                 val result = if (detection.cropBitmap != null) {
                     try {
-                        val identification = llmEngine.runInference(detection.cropBitmap)
+                        val identification = client.analyzeFood(detection.cropBitmap)
                         if (identification != null) {
                             detection.copy(
                                 foodIdentification = identification,
@@ -135,7 +136,6 @@ class DetectionPipeline @Inject constructor(
                 detection.cropBitmap?.recycle()
 
                 // Per D-10: Null out cropBitmap on result to prevent stale reference
-                // The bitmap is recycled above; result should not hold a reference to it
                 results.add(result.copy(cropBitmap = null))
             }
 
@@ -156,8 +156,8 @@ class DetectionPipeline @Inject constructor(
             Log.e(TAG, "Pipeline error", e)
             send(PipelineState.Error(e.message ?: "Unknown error"))
         } finally {
-            // Ensure LLM is unloaded after pipeline completes
-            try { llmEngine.unloadModel() } catch (_: Exception) {}
+            // Release YOLO model after pipeline completes
+            try { yoloEngine.unloadModel() } catch (_: Exception) {}
         }
     }
 }

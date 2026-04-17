@@ -1,46 +1,45 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
+milestone: v2.0
+milestone_name: AI Vision Engine Overhaul
 status: executing
-last_updated: "2026-04-10T23:02:37.494Z"
+last_updated: "2026-04-18T03:10:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 21
-  completed_plans: 18
-  percent: 86
+  completed_plans: 20
+  percent: 95
 ---
 
 # Project State: FoodExpiryApp
 
-**Status:** Executing Phase 08
+**Status:** Executing Phase 8 (YOLO Hardening) — 2/3 plans complete
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-04-08)
 
 **Core value:** Let a new user add their first food item within 30 seconds and reduce the mental burden of food management.
-**Current focus:** Phase 08 — yolo-hardening
+**Current focus:** Phase 8 YOLO Hardening + dual-provider inference (Ollama + LM Studio)
 
 ## Current Position
 
-Phase: 08 (yolo-hardening) — EXECUTING
-Plan: 1 of 3
+Phase: 08 (yolo-hardening) — 2/3 plans done
+Migration: Ollama + LM Studio dual provider — COMPLETE
 
 - **Milestone:** v2.0 AI Vision Engine Overhaul
-- **Phase:** 08
-- **Plan:** Not started
-- **Status:** MNN LLM inference confirmed working on device
+- **Active Task:** Phase 8 Plan 03 (tests + ViewModel detections)
+- **Status:** Ollama migration done, LM Studio provider added, thinking mode disabled, build passing
 
 ### v2.0 Progress
 
 ```
 Phase 4: Foundation       [██████████] 100% ✅
-Phase 5: Engine           [██████████] 100% ✅ ← LLM WORKING!
+Phase 5: Engine           [██████████] 100% ✅
 Phase 6: Detection        [██████████] 100% ✅
 Phase 7: Scan UI Overhaul [██████████] 100% ✅
-Phase 8: YOLO Hardening   [          ] 0%
+Phase 8: YOLO Hardening   [██████░░░░] 67%  ← 2/3 plans done
 Phase 9: Verification     [          ] 0%
 ```
 
@@ -59,11 +58,21 @@ Phase 9: Verification     [          ] 0%
 - **Phases:** 4/6 complete (Phases 4-7)
 - **Plans:** 18/25 complete
 - **Requirements:** 24/27 validated
-- **BREAKTHROUGH 2026-04-10:** MNN LLM first successful food identification on device!
-  - Fixed: missing `libMNNAudio.so` causing UnsatisfiedLinkError crash
-  - Fixed: prompt engineering — food-specific JSON-only prompt replaces generic "What is in this image?"
-  - Fixed: StructuredOutputParser — switched to simple [FOOD]...[/FOOD] tag extraction
-  - Result: Qwen3.5-2B-MNN correctly identifies "banana" via vision scan, outputs valid JSON
+
+#### Major Events
+
+| Date | Event | Impact |
+|------|-------|--------|
+| 2026-04-10 | MNN LLM first successful food identification on device | Phase 5 complete |
+| 2026-04-12 | Snapdragon 8 Gen 3 garbage output fix | Cross-device compatibility |
+| **2026-04-15** | **Decision: migrate to remote Ollama API** | **Architecture change** |
+
+#### Ollama Migration Rationale
+
+1. **Hallucination**: Qwen3.5-2B-VL via MNN produces unreliable results across devices
+2. **Deployment complexity**: ~1.2GB model download, native .so files, JNI bridges, ABI matching
+3. **Device compatibility**: Works on some devices, breaks on others
+4. **Remote server benefits**: Larger model (qwen3.5:9b), structured JSON Schema output, no local resources needed
 
 ## Accumulated Context
 
@@ -71,129 +80,69 @@ Phase 9: Verification     [          ] 0%
 
 | Decision | Rationale | Status |
 |----------|-----------|--------|
-| MNN Chat official component | Avoid custom inference layer, battle-tested | ✅ Done |
-| Qwen3.5-2B-MNN model | 4-bit quantized, lightweight for mobile | ✅ Working |
+| MNN Chat official component | Avoid custom inference layer, battle-tested | ✅ Done → Now migrating away |
+| Qwen3.5-2B-MNN model | 4-bit quantized, lightweight for mobile | ✅ Working → Replaced by remote qwen3.5:9b |
 | Qwen3.5-0.8B-MNN evaluated | Too weak for visual food classification | ❌ Rejected |
 | YOLO + LLM (skip CLIP) | CLIP overlaps with LLM capability | ✅ Done |
-| Dynamic model download from HF | Reduce APK size by ~40MB | ✅ Done |
+| Dynamic model download from HF | Reduce APK size by ~40MB | ✅ Done → No longer needed |
 | Sequential YOLO→LLM processing | Prevent OOM on <6GB devices | ✅ Done |
 | Complete llama.cpp removal | libllm.so naming collision | ✅ Done |
+| **Remote Ollama API** | Solve hallucination, simplify deployment, use larger model | ✅ Done |
+| **Ollama + JSON Schema** | Force structured output to prevent hallucination | ✅ Done |
+| **Cloudflare Tunnel** | Public access to home Ollama server | ✅ Done |
+| **Ollama think:false** | Disable thinking mode for faster inference | ✅ Done (~16% faster) |
+| **LM Studio provider** | OpenAI-compatible alternative, faster inference | ✅ Done |
+| **Dual-provider architecture** | User can switch Ollama/LM Studio in settings | ✅ Done |
 
 ### Critical Constraints
 
-- MNN AAR + llama.cpp removal (Phase 4) blocks ALL MNN work
-- Model download (DL) must precede inference (MNN-03)
-- YOLO pipeline (Phase 6) depends on MNN engine (Phase 5)
-- Scan UI (Phase 7) is independent of ML work — can run parallel
+- Inference requires network connectivity (remote server)
+- DetectionPipeline uses FoodVisionClient interface — supports Ollama + LM Studio
+- Provider selection persisted in DataStore, switchable at runtime
+- MNN code preserved but DI bindings commented out
 
 ### References
 
-- MNN v3.5.0: https://github.com/alibaba/MNN
-- Model: taobao-mnn/Qwen3.5-2B-MNN (4-bit quantized)
-- Model (rejected): taobao-mnn/Qwen3.5-0.8B-MNN (too weak for VLM)
-- MNN Chat Android: apps/Android/MnnLlmChat
-- User HuggingFace: jinjin06/Qwen3.5-2B-MNN
+- Ollama API: https://github.com/ollama/ollama/blob/main/docs/api.md
+- LM Studio API: OpenAI-compatible (/v1/chat/completions)
+- Models: qwen3.5:9b (Ollama), qwen/qwen3.5-9b (LM Studio)
+- Server: User's home PC (AMD RX 9070 XT 16GB + iGPU)
+- Network: Cloudflare Tunnel → public domain → localhost:11434 (Ollama) / :1234 (LM Studio)
 
 ### Blockers
 
-- None currently
+None — build passing, both providers functional.
 
 ### TODO
 
-- [ ] Create Phase 8 plans with `/gsd-plan-phase 8`
-- [ ] End-to-end YOLO detection hardening
-- [ ] Phase 9 verification & artifact cleanup
+- [ ] Phase 8 Plan 03: Unit tests + ViewModel detections + device verification
+- [ ] Phase 9: Verification & Artifact Cleanup
 
 ### Quick Tasks Completed
 
 | # | Description | Date | Directory |
 |---|-------------|------|-----------|
-| 260411-model-perf | Model perf experiments: 0.8B migration (rejected), configurable precision (retained), image/threads tuning | 2026-04-11 | [260411-precision-low](./quick/260411-precision-low/) — Reverted to 2B |
-| 260412-snapdragon-fix | Fix LLM garbage output ("4444..."/"HHHH...") on Snapdragon 8 Gen 3 (Z Fold6): match MNN Chat proven config (precision=low, threadNum=4, topK=20, topP=0.95, penalty=1.02) | 2026-04-12 | Debug session |
-| 260411-no-think | Disable Qwen3.5 CoT via MNN `set_config({"jinja":{"context":{"enable_thinking":false}}})` (67s → expected <5s) | 2026-04-11 | Debug session |
-| 260411-perf | Early stopping ([/FOOD] stop token) + 8 threads (was 4) | 2026-04-11 | Debug session |
-| 260411-food-tag | Switch to [FOOD]...[/FOOD] tag-based extraction (replaces fragile JSON parsing) | 2026-04-11 | Debug session |
-| 260410-mnn-fix | Fix MNN native crash (missing libMNNAudio.so) + food-specific prompt | 2026-04-10 | Debug session |
-| 260409-vki | Improve LLM few-shot prompt with visual description examples | 2026-04-09 | [260409-vki-improve-llm-few-shot-prompt-with-visual-](./quick/260409-vki-improve-llm-few-shot-prompt-with-visual-/) |
+| 260418-lmstudio | Add LM Studio dual-provider support + Ollama think:false + debug logging | 2026-04-18 | See git log |
+| 260415-ollama | Migrate from local MNN inference to remote Ollama API server | 2026-04-15 | [ollama-remote-migration](./debug/ollama-remote-migration.md) |
 
 ## Session Continuity
 
-**Last session:** 2026-04-12T01:30:00.000Z
+**Last session:** 2026-04-18T03:10:00.000Z
 
-- **Snapdragon 8 Gen 3 (Z Fold6) LLM garbage output fix**
-  - Device: Samsung SM-F956U (Galaxy Z Fold6), Snapdragon 8 Gen 3, heterogeneous 4-cluster CPU
-  - Symptom: `response()` produces `"4444..."` or `"HHHH..."` instead of food names (garbage token repetition)
-  - Same Qwen3.5-2B-MNN model works correctly on Galaxy S10+ (Exynos 9820)
-  - Same model works correctly in MNN Chat app on the same Z Fold6 device
-  - **Root cause:** Our MNN config diverged from MNN Chat's proven defaults:
-    - Used `threadNum=8` (spans all 4 CPU clusters → numerical issues on heterogeneous cores)
-    - Used `precision="high"`/`"normal"` (FP16 SIMD on Snapdragon → logit overflow)
-    - Missing sampling params (temperature, topP, topK, repetitionPenalty not passed to native)
-    - Hardcoded `maxNewTokens=512` in `response()` call
-  - **Investigation steps:**
-    1. Tried `memoryMode="high"` → same garbage output
-    2. Added full sampling params (temperature=0.6, topP=0.9, repetitionPenalty=1.1) → output changed from "4444..." to "HHHH..." (different garbage token, same problem)
-    3. Tried `precision="normal"` → MNN ignores it (only checks "high"/"low"), defaults to FP16
-    4. Confirmed MNN Chat works on same device → compared MNN Chat source code defaults
-    5. **Final fix:** Matched MNN Chat's proven config defaults
-  - **Fix applied (matches MNN Chat defaults):**
+- **LM Studio Dual Provider + Ollama Improvements**
+  - Added LM Studio (OpenAI-compatible) as second inference provider
+  - Created `FoodVisionClient` interface — abstracts Ollama/LM Studio behind common API
+  - Created `ProviderConfig` — persisted provider selection (Ollama / LM Studio)
+  - Created `data/remote/lmstudio/` — full LM Studio client stack (ApiClient, VisionClient, ServerConfig, DTOs)
+  - Updated Settings Dialog — toggle between Ollama and LM Studio, separate configs
+  - Ollama: disabled thinking mode via `think: false` in DTO
+  - Ollama: added detailed debug logging (timing, tokens/sec, raw response)
+  - Ollama: fixed JSON parsing to handle markdown code blocks and arrays
+  - Updated DetectionPipeline to use FoodVisionClient (no longer hardcoded to Ollama)
+  - Updated ChatViewModel for dual-provider support
+  - **Build status:** PASSING ✅
+  - **Ollama tested:** Strawberry identified correctly in ~12.6s (cold) / ~900ms (warm)
+  - **LM Studio server:** Running on port 1234, qwen/qwen3.5-9b loaded, tunnel ready
+  - **LM Studio tunnel:** https://installation-freeze-companion-butterfly.trycloudflare.com
 
-    | Setting | Before | After |
-    |---------|--------|-------|
-    | `precision` | "high" | "low" (INT8) |
-    | `threadNum` | 8 | 4 |
-    | `topP` | 0.9 | 0.95 |
-    | `topK` | 40 (hardcoded in C++) | 20 (configurable) |
-    | `repetitionPenalty` | 1.1 | 1.02 |
-    | `memoryMode` | "low" → "high" | "high" |
-    | `maxNewTokens` | 512 | 128 |
-    | `createOptimal()` | Dynamic `threadNum = min(cores, 8)` | Fixed defaults (no override) |
-
-  - Files changed:
-    - `MnnLlmConfig.kt` — new defaults: precision="low", threadNum=4, topP=0.95, topK=20, repetitionPenalty=1.02
-    - `MnnLlmNative.kt` — added `topK` param to JNI signature
-    - `MnnLlmEngine.kt` — passes `config.topK` to native call
-    - `mnn_llm_bridge.cpp` — accepts `topK` param, uses dynamic value instead of hardcoded 40
-  - **Pending:** Testing on Z Fold6 to confirm fix
-
-**Previous session:** 2026-04-10T22:49:52.088Z
-
-- **Camera UX optimization + Retake/Cancel buttons**
-  - Camera stops during inference (frees ~30MB RAM, reduces GC pressure)
-  - Blurred photo background behind progress overlay (instead of black screen)
-  - Flash overlay fades to semi-transparent white (0.3f) during inference
-  - Added **Retake button** (outlined, in result card) — dismisses result, restarts camera
-  - Added **Cancel button** (red solid, bottom position) — replaces capture button during inference
-  - Hidden center `btnCancelProgress`, replaced with `btn_cancel_bottom`
-  - Added `showCancelButton()` / `hideCancelButton()` helpers
-  - Simplified `btnCapture` — no more 2-tap confusion (Retake handles restart)
-- **Configurable precision parameter retained** from model perf experiments
-- Updated GSD planning docs (SUMMARY.md + STATE.md)
-
-**Previous session:** 2026-04-11T04:30:00.000Z
-
-- **Model performance optimization experiments (quick task 260411-model-perf)**
-  - Baseline: Qwen3.5-2B-MNN, ~28.6s inference, correct food identification
-  - **Exp 1: Qwen3.5-0.8B + precision=low + maxSide=420 + threads=4**
-    - Inference: ~11.6s (2.5x faster)
-    - Result: `"44444444444444444444444444444444"` — garbage repetition loop
-    - Cause: over-quantization (4-bit + INT8), tiny image, low JPEG quality
-  - **Exp 2: Qwen3.5-0.8B + precision=high + maxSide=1024 + threads=8**
-    - Still poor — model fundamentally too weak for visual food classification
-    - 0.8B VLM cannot reliably identify foods from camera images
-  - **Decision: Reverted to Qwen3.5-2B-MNN** as minimum viable model
-  - **Retained improvement:** `precision` parameter is now configurable (was hardcoded in C++)
-  - Backup branch: `backup/pre-0.8b-migration` on origin
-
-**Previous session:** 2026-04-11T03:25:00.000Z
-
-- Performance profiling: on-device inference benchmarking on SD855
-  - Baseline: ~28.6s for VLM inference (480x640 → "watermelon")
-  - Identified: `precision` hardcoded to `"high"` in `mnn_llm_bridge.cpp:59`
-
-**Previous session:** 2026-04-11T01:45:00.000Z
-
-- Performance optimization: disable Qwen3.5 chain-of-thought via MNN jinja config
-  - Fix: `llm->set_config(R"({"jinja":{"context":{"enable_thinking":false}}})")` in nativeCreateLlm
-
-**Next action:** `/gsd-plan-phase 8` — YOLO Detection Hardening
+**Next action:** Phase 8 Plan 03 — unit tests + ViewModel detections + device verification
