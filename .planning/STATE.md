@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: AI Vision Engine Overhaul
 status: executing
-last_updated: "2026-04-18T03:10:00.000Z"
+last_updated: "2026-04-18T15:00:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 4
@@ -21,16 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-08)
 
 **Core value:** Let a new user add their first food item within 30 seconds and reduce the mental burden of food management.
-**Current focus:** Phase 8 YOLO Hardening + dual-provider inference (Ollama + LM Studio)
+**Current focus:** Phase 8 YOLO Hardening + UI food image enhancement
 
 ## Current Position
 
 Phase: 08 (yolo-hardening) — 2/3 plans done
 Migration: Ollama + LM Studio dual provider — COMPLETE
+UI Enhancement: Food image system — COMPLETE
 
 - **Milestone:** v2.0 AI Vision Engine Overhaul
 - **Active Task:** Phase 8 Plan 03 (tests + ViewModel detections)
-- **Status:** Ollama migration done, LM Studio provider added, thinking mode disabled, build passing
+- **Status:** Ollama migration done, LM Studio provider added, food images added, build passing
 
 ### v2.0 Progress
 
@@ -93,6 +94,8 @@ Phase 9: Verification     [          ] 0%
 | **Ollama think:false** | Disable thinking mode for faster inference | ✅ Done (~16% faster) |
 | **LM Studio provider** | OpenAI-compatible alternative, faster inference | ✅ Done |
 | **Dual-provider architecture** | User can switch Ollama/LM Studio in settings | ✅ Done |
+| **99 food UI images** | Real food photos for all list/card items instead of placeholder icons | ✅ Done |
+| **FoodImageResolver** | Smart name→drawable mapping with fuzzy matching + category fallback | ✅ Done |
 
 ### Critical Constraints
 
@@ -122,12 +125,26 @@ None — build passing, both providers functional.
 
 | # | Description | Date | Directory |
 |---|-------------|------|-----------|
+| 260418-food-images | Add 99 food images + FoodImageResolver + update all adapters/UI | 2026-04-18 | See git log |
 | 260418-lmstudio | Add LM Studio dual-provider support + Ollama think:false + debug logging | 2026-04-18 | See git log |
 | 260415-ollama | Migrate from local MNN inference to remote Ollama API server | 2026-04-15 | [ollama-remote-migration](./debug/ollama-remote-migration.md) |
 
 ## Session Continuity
 
-**Last session:** 2026-04-18T03:10:00.000Z
+**Last session:** 2026-04-18T15:00:00.000Z
+
+- **Food Image System (UI Enhancement)**
+  - Downloaded 99 high-quality food images (256x256 JPEG) from Lorem Flickr → `app/src/main/res/drawable/food_*.jpg`
+  - Created `FoodImageResolver.kt` in `util/` — maps food names to drawable resources with fuzzy matching and category fallback
+  - Covers all 34 original food_categories.txt items + 65 new common foods (apple, banana, bread, egg, cheese, chicken, beef, salmon, etc.)
+  - Updated `FoodListAdapter.kt` — list items now show real food images via Glide
+  - Updated `FoodItemAdapter.kt` — replaced category color bar with 48x48 rounded food image + eaten checkbox overlay
+  - Updated `item_food.xml` — new layout with MaterialCardView image container replacing old View indicator
+  - Updated `InventoryFragment.kt` — add/edit dialog dynamically updates food preview image based on typed name
+  - Updated `AddFoodBottomSheet.kt` — same dynamic image behavior when adding scanned foods
+  - **Build status:** PASSING ✅
+
+**Previous session:** 2026-04-18T03:10:00.000Z
 
 - **LM Studio Dual Provider + Ollama Improvements**
   - Added LM Studio (OpenAI-compatible) as second inference provider

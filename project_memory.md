@@ -85,6 +85,7 @@ app/src/main/java/com/example/foodexpiryapp/
 ```
 
 **Assets:** `app/src/main/assets/` — model files, labels (`yolo_labels.txt`), recipes (`recipes.json`), LLM models (`llm/model.gguf`, `llm/mmproj.gguf`)
+**Food Images:** `app/src/main/res/drawable/food_*.jpg` — 99 food images (256x256) mapped by `FoodImageResolver.kt` for UI display
 **ML models:** `app/src/main/ml/` — `foodvision_yolov8.tflite`, `yolo11n_float32.tflite`, `crawled_grocery_yolo11n.tflite`
 **JNI:** `app/src/main/jni/` — native LLM bridge (`libllama_jni.so`)
 
@@ -112,6 +113,8 @@ app/src/main/java/com/example/foodexpiryapp/
 - Planner screen (meal slots: Breakfast/Lunch/Dinner/Snack, product/recipe picker dialogs, MealPlanDao/Entity/Repository, PlannerViewModel)
 - ShelfLifeEstimator (smart expiry date estimation based on food type)
 - LlmVisionService (color-based food detection fallback using HSV histogram)
+- FoodImageResolver (99 food images with smart name→drawable mapping for UI)
+- Food item lists/cards now display real food images instead of placeholder gallery icons
 
 ### 🚧 In Progress
 - UI polishing across screens

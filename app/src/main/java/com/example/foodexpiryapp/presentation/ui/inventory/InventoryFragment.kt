@@ -35,6 +35,7 @@ import com.example.foodexpiryapp.presentation.adapter.FoodListAdapter
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryEvent
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryViewModel
 import com.example.foodexpiryapp.util.ShelfLifeEstimator
+import com.example.foodexpiryapp.util.FoodImageResolver
 import com.bumptech.glide.Glide
 import com.google.android.material.chip.Chip
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -338,9 +339,13 @@ class InventoryFragment : Fragment() {
         }
     }
 
-    private fun updateCategoryImage(dialogBinding: DialogAddFoodBinding, category: FoodCategory) {
+    private fun updateCategoryImage(dialogBinding: DialogAddFoodBinding, category: FoodCategory, foodName: String = "") {
+        val imageRes = FoodImageResolver.getFoodImage(
+            foodName.ifBlank { category.displayName },
+            category
+        )
         Glide.with(requireContext())
-            .load(getCategoryDrawable(category))
+            .load(imageRes)
             .centerCrop()
             .into(dialogBinding.imgFoodCategory)
     }
@@ -350,7 +355,7 @@ class InventoryFragment : Fragment() {
         var selectedDate: LocalDate = existingItem?.expiryDate ?: LocalDate.now().plusDays(7)
         
         val initialCategory = existingItem?.category ?: FoodCategory.OTHER
-        updateCategoryImage(dialogBinding, initialCategory)
+        updateCategoryImage(dialogBinding, initialCategory, existingItem?.name ?: "")
 
         val categoryAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, FoodCategory.values().map { it.displayName })
         (dialogBinding.dropdownCategory as AutoCompleteTextView).apply {
@@ -380,6 +385,12 @@ class InventoryFragment : Fragment() {
             dialogBinding.editQuantity.setText(existingItem.quantity.toString())
             dialogBinding.editNotes.setText(existingItem.notes)
             dialogBinding.editBarcode.setText(existingItem.barcode)
+        }
+
+        dialogBinding.editFoodName.doAfterTextChanged {
+            val name = it?.toString()?.trim() ?: ""
+            val cat = FoodCategory.values().find { c -> c.displayName == dialogBinding.dropdownCategory.text.toString() } ?: FoodCategory.OTHER
+            updateCategoryImage(dialogBinding, cat, name)
         }
 
         dialogBinding.editExpiryDate.setText(selectedDate.format(displayFormatter))

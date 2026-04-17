@@ -5,8 +5,10 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.foodexpiryapp.databinding.ItemFoodListBinding
 import com.example.foodexpiryapp.domain.model.FoodItem
+import com.example.foodexpiryapp.util.FoodImageResolver
 
 class FoodListAdapter(
     private val onItemClick: (FoodItem) -> Unit
@@ -37,6 +39,12 @@ class FoodListAdapter(
                 days == 0L -> "Today"
                 else -> "$days Days"
             }
+
+            val imageRes = FoodImageResolver.getFoodImage(item.name, item.category)
+            Glide.with(binding.root.context)
+                .load(imageRes)
+                .centerCrop()
+                .into(binding.imgFood)
 
             binding.root.setOnClickListener { onItemClick(item) }
         }

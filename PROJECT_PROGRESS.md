@@ -51,22 +51,28 @@ app/src/main/java/com/example/foodexpiryapp/
 
 ### Done
 
-- App foundation and navigation structure
-- Clean Architecture + MVVM layering
-- Profile, inventory, shopping, recipe, planner, and scan screens
-- Local LLM / vision scan support (llama.cpp + GGUF)
-- YOLO model integration
-- Analytics tracking and swipe navigation
-- Expiry notification foundation
-- Recipes Page Optimization (Phase 2-5)
-  - I Cooked This button now consumes inventory items
-  - CookedRecipeEntity + DAO + Repository for persistent history
-  - Money Saved and Waste Rescued now track real data from cooked recipes
-  - Recipe diversity: Added category/area filtering (Breakfast, Dessert, Chinese, Mexican, Japanese, Indian, Italian)
-  - GetRecipesByCategoryUseCase and GetRecipesByAreaUseCase implemented
-  - OpenFoodFacts API integration for real ingredient pricing (PriceUseCases.kt)
-  - Local recipe storage infrastructure (LocalRecipeEntity, LocalRecipeDao, LocalRecipeRepository)
-  - FAB button added to Recipes page for adding custom recipes
+ - App foundation and navigation structure
+ - Clean Architecture + MVVM layering
+ - Profile, inventory, shopping, recipe, planner, and scan screens
+ - Local LLM / vision scan support (llama.cpp + GGUF)
+ - YOLO model integration
+ - Analytics tracking and swipe navigation
+ - Expiry notification foundation
+ - Recipes Page Optimization (Phase 2-5)
+   - I Cooked This button now consumes inventory items
+   - CookedRecipeEntity + DAO + Repository for persistent history
+   - Money Saved and Waste Rescued now track real data from cooked recipes
+   - Recipe diversity: Added category/area filtering (Breakfast, Dessert, Chinese, Mexican, Japanese, Indian, Italian)
+   - GetRecipesByCategoryUseCase and GetRecipesByAreaUseCase implemented
+   - OpenFoodFacts API integration for real ingredient pricing (PriceUseCases.kt)
+   - Local recipe storage infrastructure (LocalRecipeEntity, LocalRecipeDao, LocalRecipeRepository)
+   - FAB button added to Recipes page for adding custom recipes
+ - Food Image System (2026-04-18)
+   - 99 high-quality food images downloaded to drawable/ (apple, banana, bread, cheese, chicken, beef, salmon, etc.)
+   - FoodImageResolver.kt — smart name→drawable mapping with fuzzy matching + category fallback
+   - FoodListAdapter, FoodItemAdapter updated to show real food images via Glide
+   - item_food.xml redesigned with 48x48 rounded food image + eaten checkbox overlay
+   - InventoryFragment + AddFoodBottomSheet dynamically update food preview based on typed name
 
 ### In Progress
 

@@ -6,9 +6,10 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.foodexpiryapp.databinding.ItemFoodBinding
-import com.example.foodexpiryapp.domain.model.FoodCategory
 import com.example.foodexpiryapp.domain.model.FoodItem
+import com.example.foodexpiryapp.util.FoodImageResolver
 import java.time.format.DateTimeFormatter
 
 class FoodItemAdapter(
@@ -40,6 +41,12 @@ class FoodItemAdapter(
             binding.textQuantity.text = "Qty: ${item.quantity}"
             binding.textExpiryDate.text = item.expiryDate.format(dateFormatter)
 
+            val imageRes = FoodImageResolver.getFoodImage(item.name, item.category)
+            Glide.with(binding.root.context)
+                .load(imageRes)
+                .centerCrop()
+                .into(binding.imgFoodItem)
+
             // Reset checkbox state
             binding.checkboxEaten.setOnCheckedChangeListener(null)
             binding.checkboxEaten.isChecked = false
@@ -69,33 +76,12 @@ class FoodItemAdapter(
                 }
             }
 
-            // Category color indicator
-            val categoryColor = getCategoryColor(item.category)
-            binding.categoryIndicator.setBackgroundColor(Color.parseColor(categoryColor))
-
             binding.root.setOnClickListener { onItemClick(item) }
 
-            // Eaten checkbox listener
             binding.checkboxEaten.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
                     onEatenToggle(item, true)
                 }
-            }
-        }
-
-        private fun getCategoryColor(category: FoodCategory): String {
-            return when (category) {
-                FoodCategory.DAIRY -> "#42A5F5"
-                FoodCategory.MEAT -> "#EF5350"
-                FoodCategory.VEGETABLES -> "#66BB6A"
-                FoodCategory.FRUITS -> "#FFA726"
-                FoodCategory.GRAINS -> "#8D6E63"
-                FoodCategory.BEVERAGES -> "#26C6DA"
-                FoodCategory.SNACKS -> "#AB47BC"
-                FoodCategory.CONDIMENTS -> "#FFEE58"
-                FoodCategory.FROZEN -> "#78909C"
-                FoodCategory.LEFTOVERS -> "#EC407A"
-                FoodCategory.OTHER -> "#BDBDBD"
             }
         }
     }

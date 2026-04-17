@@ -140,4 +140,26 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 | 9. Verification & Artifact Cleanup | 0/2 | Not started | - |
 
 ---
-*Roadmap updated: 2026-04-10 — Phase 5 engine confirmed working: Qwen3.5-2B-MNN successfully identifies food on device*
+*Roadmap updated: 2026-04-15 — Ollama remote migration in progress: replacing local MNN inference with remote Ollama API (qwen3.5:9b)*
+
+### Architecture Change: MNN → Ollama (2026-04-15)
+
+**Why:** Local MNN model (Qwen3.5-2B-VL) has persistent hallucination issues across devices. Remote Ollama server with qwen3.5:9b provides better results with JSON Schema enforcement.
+
+**Impact on Phases:**
+- Phase 5 (Engine): MNN engine retained in code but DI disabled. LlmInferenceRepositoryImpl now uses OllamaVisionClient.
+- Phase 6 (Detection): DetectionPipeline needs update — currently depends on MnnLlmEngine for YOLO+LLM batch classification.
+- Phase 8 (YOLO Hardening): Paused until DetectionPipeline is updated.
+
+**Migration Progress:**
+- [x] Ollama API client (OkHttp dynamic URL)
+- [x] OllamaVisionClient (Bitmap→Base64→API→FoodIdentification)
+- [x] OllamaServerConfig (DataStore persistence)
+- [x] LlmInferenceRepositoryImpl rewritten for Ollama
+- [x] DI modules updated (InferenceModule, DataStoreModule)
+- [x] VisionScanFragment updated (removed model download, added server check)
+- [x] ChatViewModel/ChatFragment updated
+- [x] OllamaSettingsDialog (server URL, model name, API token, test connection)
+- [ ] DetectionPipeline updated to use OllamaVisionClient
+- [ ] Build verified
+- [ ] End-to-end tested with real Ollama server

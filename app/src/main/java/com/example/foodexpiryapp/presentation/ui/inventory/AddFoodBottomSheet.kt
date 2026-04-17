@@ -6,7 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.activityViewModels
+import com.bumptech.glide.Glide
 import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.databinding.DialogAddFoodBinding
 import com.example.foodexpiryapp.domain.model.FoodCategory
@@ -14,6 +16,7 @@ import com.example.foodexpiryapp.domain.model.FoodItem
 import com.example.foodexpiryapp.domain.model.ScanSource
 import com.example.foodexpiryapp.domain.model.StorageLocation
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryViewModel
+import com.example.foodexpiryapp.util.FoodImageResolver
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import java.time.LocalDate
@@ -56,6 +59,21 @@ class AddFoodBottomSheet : BottomSheetDialogFragment() {
         val locations = StorageLocation.values().map { it.displayName }
         val locationAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, locations)
         binding.dropdownLocation.setAdapter(locationAdapter)
+
+        binding.editFoodName.doAfterTextChanged {
+            updateFoodImage()
+        }
+    }
+
+    private fun updateFoodImage() {
+        val name = binding.editFoodName.text?.toString()?.trim() ?: ""
+        val catStr = binding.dropdownCategory.text?.toString()?.trim() ?: ""
+        val category = FoodCategory.values().find { it.displayName == catStr } ?: FoodCategory.OTHER
+        val imageRes = FoodImageResolver.getFoodImage(name.ifBlank { category.displayName }, category)
+        Glide.with(this)
+            .load(imageRes)
+            .centerCrop()
+            .into(binding.imgFoodCategory)
     }
 
     private fun prefillData() {
@@ -91,6 +109,8 @@ class AddFoodBottomSheet : BottomSheetDialogFragment() {
             if (!notes.isNullOrEmpty()) {
                 binding.editNotes.setText(notes)
             }
+
+            updateFoodImage()
         }
     }
 
