@@ -29,8 +29,10 @@ import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.data.remote.ollama.OllamaServerConfig
 import com.example.foodexpiryapp.data.repository.LlmInferenceRepositoryImpl
 import com.example.foodexpiryapp.databinding.FragmentVisionScanBinding
+import com.example.foodexpiryapp.domain.model.PipelineState
 import com.example.foodexpiryapp.domain.repository.LlmInferenceRepository
 import com.example.foodexpiryapp.domain.usecase.IdentifyFoodUseCase
+import com.example.foodexpiryapp.inference.pipeline.DetectionPipeline
 import com.example.foodexpiryapp.presentation.ui.scan.ScanPagerAdapter
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -65,6 +67,9 @@ class VisionScanFragment : Fragment() {
     @Inject lateinit var identifyFoodUseCase: IdentifyFoodUseCase
     @Inject lateinit var llmRepository: LlmInferenceRepository
     @Inject lateinit var serverConfig: OllamaServerConfig
+    @Inject lateinit var detectionPipeline: DetectionPipeline
+
+    private var isMultiMode = false
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -162,6 +167,13 @@ class VisionScanFragment : Fragment() {
         binding.btnAskAi.setOnClickListener {
             runOllamaAnalysis()
         }
+
+        binding.toggleScanMode.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isChecked) {
+                isMultiMode = (checkedId == R.id.btnMultiMode)
+            }
+        }
+        binding.toggleScanMode.check(R.id.btnSingleMode)
     }
 
     private fun setupViewPagerCallback() {
@@ -357,11 +369,79 @@ class VisionScanFragment : Fragment() {
             return
         }
 
+        val safeBitmap = bitmap.copy(bitmap.config ?: Bitmap.Config.ARGB_8888, false)
+        if (safeBitmap == null) {
+            Toast.makeText(context, "Image capture failed", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         stopCamera()
         showBlurredBackground(bitmap)
 
         showFlashAnimation {
-            runOllamaAnalysis(bitmap)
+            if (isMultiMode) {
+                runMultiObjectDetection(safeBitmap)
+            } else {
+                runOllamaAnalysis(safeBitmap)
+            }
+        }
+    }
+
+    private fun runMultiObjectDetection(bitmap: Bitmap) {
+        showProgressOverlay()
+        binding.tvProgressTitle.text = "Detecting food items..."
+        binding.tvProgressDetailOverlay.text = "Analyzing with YOLO + AI"
+        binding.btnCancelProgress.visibility = View.VISIBLE
+
+        detectionJob = scope.launch {
+            detectionPipeline.detectAndClassify(bitmap).collect { state ->
+                withContext(Dispatchers.Main) {
+                    when (state) {
+                        is PipelineState.Detecting -> {
+                            binding.tvProgressTitle.text = "Detecting food items..."
+                        }
+                        is PipelineState.Detected -> {
+                            binding.tvProgressTitle.text = "Items detected, classifying..."
+                        }
+                        is PipelineState.Classifying -> {
+                            binding.tvProgressTitle.text = "Identifying item (${state.current}/${state.total})..."
+                        }
+                        is PipelineState.Complete -> {
+                            hideProgressOverlay()
+                            isProcessing = false
+                            if (state.result.results.isNotEmpty()) {
+                                val bundle = android.os.Bundle().apply {
+                                    putString("sessionId", state.result.sessionId)
+                                }
+                                try {
+                                    findNavController().navigate(
+                                        R.id.action_scan_container_to_confirmation,
+                                        bundle
+                                    )
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Navigation to confirmation failed", e)
+                                    restartCamera()
+                                }
+                            } else {
+                                Toast.makeText(context, "No food items detected", Toast.LENGTH_SHORT).show()
+                                restartCamera()
+                            }
+                        }
+                        is PipelineState.Error -> {
+                            hideProgressOverlay()
+                            isProcessing = false
+                            Toast.makeText(context, "Detection failed: ${state.message}", Toast.LENGTH_LONG).show()
+                            restartCamera()
+                        }
+                        is PipelineState.Cancelled -> {
+                            hideProgressOverlay()
+                            isProcessing = false
+                            restartCamera()
+                        }
+                        is PipelineState.Idle -> {}
+                    }
+                }
+            }
         }
     }
 
