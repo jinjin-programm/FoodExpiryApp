@@ -204,7 +204,7 @@ class ProfileFragment : Fragment() {
         }
 
         binding.btnShelfLifeManagement.setOnClickListener {
-            findNavController().navigate(R.id.action_profile_to_shelfLifeManagement)
+            findNavController().navigate(R.id.shelfLifeManagement)
         }
     }
     
