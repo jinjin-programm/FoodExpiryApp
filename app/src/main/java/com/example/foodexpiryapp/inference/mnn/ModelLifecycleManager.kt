@@ -20,7 +20,7 @@ class ModelLifecycleManager @Inject constructor(
 ) {
     companion object {
         private const val TAG = "ModelLifecycleManager"
-        private const val MIN_AVAILABLE_MEMORY_MB = 2048L // 2GB minimum
+        private const val MIN_AVAILABLE_MEMORY_MB = 1024L
     }
 
     enum class ModelType { YOLO, LLM }

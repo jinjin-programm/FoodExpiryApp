@@ -18,7 +18,7 @@ import com.example.foodexpiryapp.data.local.dao.ShelfLifeDao
 
 @Database(
     entities = [FoodItemEntity::class, AnalyticsEventEntity::class, MealPlanEntity::class, ShoppingItemEntity::class, CookedRecipeEntity::class, LocalRecipeEntity::class, ShoppingTemplateEntity::class, DownloadStateEntity::class, DetectionResultEntity::class, ShelfLifeEntity::class],
-    version = 12,
+    version = 13,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -201,6 +201,12 @@ abstract class AppDatabase : RoomDatabase() {
                 database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_shelf_life_entries_foodName ON shelf_life_entries(foodName)")
                 database.execSQL("ALTER TABLE detection_results ADD COLUMN shelfLifeDays INTEGER")
                 database.execSQL("ALTER TABLE detection_results ADD COLUMN shelfLifeSource TEXT NOT NULL DEFAULT 'fallback'")
+            }
+        }
+
+        val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE detection_results ADD COLUMN cropImagePath TEXT")
             }
         }
     }

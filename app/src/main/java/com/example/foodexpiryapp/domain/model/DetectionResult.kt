@@ -31,5 +31,6 @@ data class DetectionResult(
     val category: FoodCategory,                    // Mapped from YOLO label
     val confidence: Float,                         // YOLO detection confidence
     val foodIdentification: FoodIdentification? = null,  // LLM result, null until classified
+    val cropImagePath: String? = null,              // Saved file path for cropped region
     val status: DetectionStatus = DetectionStatus.PENDING  // Processing status
 )

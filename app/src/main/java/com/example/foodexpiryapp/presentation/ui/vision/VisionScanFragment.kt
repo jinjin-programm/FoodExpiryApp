@@ -27,9 +27,12 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.widget.ViewPager2
 import com.example.foodexpiryapp.R
+import com.example.foodexpiryapp.data.local.database.DetectionResultEntity
 import com.example.foodexpiryapp.data.remote.ollama.OllamaServerConfig
+import com.example.foodexpiryapp.data.repository.DetectionResultRepository
 import com.example.foodexpiryapp.data.repository.LlmInferenceRepositoryImpl
 import com.example.foodexpiryapp.databinding.FragmentVisionScanBinding
+import com.example.foodexpiryapp.domain.model.DetectionStatus
 import com.example.foodexpiryapp.domain.model.PipelineState
 import com.example.foodexpiryapp.domain.repository.LlmInferenceRepository
 import com.example.foodexpiryapp.domain.usecase.IdentifyFoodUseCase
@@ -69,6 +72,7 @@ class VisionScanFragment : Fragment() {
     @Inject lateinit var llmRepository: LlmInferenceRepository
     @Inject lateinit var serverConfig: OllamaServerConfig
     @Inject lateinit var detectionPipeline: DetectionPipeline
+    @Inject lateinit var detectionResultRepository: DetectionResultRepository
 
     private var isMultiMode = false
 
@@ -468,8 +472,32 @@ class VisionScanFragment : Fragment() {
                             hideProgressOverlay()
                             isProcessing = false
                             if (state.result.results.isNotEmpty()) {
+                                val sessionId = state.result.sessionId
+                                val entities = state.result.results.mapIndexed { index, result ->
+                                    DetectionResultEntity(
+                                        sessionId = sessionId,
+                                        indexInSession = index,
+                                        foodName = result.foodIdentification?.name ?: result.label,
+                                        foodNameZh = result.foodIdentification?.nameZh ?: "",
+                                        category = result.category.name,
+                                        confidence = result.confidence,
+                                        llmConfidence = result.foodIdentification?.confidence ?: 0f,
+                                        status = when (result.status) {
+                                            DetectionStatus.CLASSIFIED -> DetectionResultEntity.STATUS_CLASSIFIED
+                                            DetectionStatus.FAILED -> DetectionResultEntity.STATUS_FAILED
+                                            DetectionStatus.PENDING -> DetectionResultEntity.STATUS_PENDING
+                                        },
+                                        boundingBoxLeft = result.boundingBox.left,
+                                        boundingBoxTop = result.boundingBox.top,
+                                        boundingBoxRight = result.boundingBox.right,
+                                        boundingBoxBottom = result.boundingBox.bottom,
+                                        shelfLifeDays = result.foodIdentification?.shelfLifeDays,
+                                        cropImagePath = result.cropImagePath
+                                    )
+                                }
+                                detectionResultRepository.insertResults(entities)
                                 val bundle = android.os.Bundle().apply {
-                                    putString("sessionId", state.result.sessionId)
+                                    putString("sessionId", sessionId)
                                 }
                                 try {
                                     findNavController().navigate(

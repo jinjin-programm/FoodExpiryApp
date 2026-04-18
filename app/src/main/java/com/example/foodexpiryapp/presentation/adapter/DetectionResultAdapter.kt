@@ -12,9 +12,11 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.data.local.database.DetectionResultEntity
 import com.example.foodexpiryapp.databinding.ItemDetectionResultBinding
+import java.io.File
 
 /**
  * RecyclerView adapter for detection results in the ConfirmationFragment.
@@ -59,6 +61,8 @@ class DetectionResultAdapter(
             } else {
                 bindClassifiedItem(entity)
             }
+
+            loadThumbnail(entity)
 
             // Edit button
             binding.btnEdit.setOnClickListener {
@@ -167,6 +171,20 @@ class DetectionResultAdapter(
                 }
                 .setNegativeButton("Cancel", null)
                 .show()
+        }
+
+        private fun loadThumbnail(entity: DetectionResultEntity) {
+            if (!entity.cropImagePath.isNullOrBlank()) {
+                val file = File(entity.cropImagePath)
+                if (file.exists()) {
+                    Glide.with(binding.root.context)
+                        .load(file)
+                        .centerCrop()
+                        .into(binding.imgFoodThumbnail)
+                    return
+                }
+            }
+            binding.imgFoodThumbnail.setImageDrawable(null)
         }
     }
 

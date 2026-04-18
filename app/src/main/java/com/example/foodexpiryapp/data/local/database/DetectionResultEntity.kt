@@ -48,8 +48,9 @@ data class DetectionResultEntity(
     /** Shelf life days from LLM classification */
     val shelfLifeDays: Int? = null,
 
-    /** Source of shelf life: "manual", "auto", or "fallback" */
     val shelfLifeSource: String = "fallback",
+
+    val cropImagePath: String? = null,
 
     /** Timestamp when this result was created */
     val createdAt: Long = System.currentTimeMillis()

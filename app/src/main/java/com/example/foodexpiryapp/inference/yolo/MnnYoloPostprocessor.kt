@@ -128,39 +128,78 @@ object MnnYoloPostprocessor {
         originalWidth: Int,
         originalHeight: Int,
         confidenceThreshold: Float = 0.5f,
-        maxDetections: Int = 8
+        maxDetections: Int = 8,
+        letterboxScale: Float = 0f,
+        letterboxPadW: Float = 0f,
+        letterboxPadH: Float = 0f,
+        numMasks: Int = 0
     ): List<DetectionResult> {
         val results = mutableListOf<DetectionResult>()
+        val numClasses = numValues - 4 - numMasks
+
+        val useLetterbox = letterboxScale > 0f
 
         for (i in 0 until numDetections) {
             val base = i * numValues
             if (base + numValues > outputArray.size) break
 
-            val x1 = outputArray[base].coerceIn(0f, INPUT_SIZE.toFloat())
-            val y1 = outputArray[base + 1].coerceIn(0f, INPUT_SIZE.toFloat())
-            val x2 = outputArray[base + 2].coerceIn(0f, INPUT_SIZE.toFloat())
-            val y2 = outputArray[base + 3].coerceIn(0f, INPUT_SIZE.toFloat())
+            var x1 = outputArray[base]
+            var y1 = outputArray[base + 1]
+            var x2 = outputArray[base + 2]
+            var y2 = outputArray[base + 3]
+
+            if (maxOf(x1, y1, x2, y2) <= 2.0f) {
+                x1 *= INPUT_SIZE; y1 *= INPUT_SIZE; x2 *= INPUT_SIZE; y2 *= INPUT_SIZE
+            }
+
+            x1 = x1.coerceIn(0f, INPUT_SIZE.toFloat())
+            y1 = y1.coerceIn(0f, INPUT_SIZE.toFloat())
+            x2 = x2.coerceIn(0f, INPUT_SIZE.toFloat())
+            y2 = y2.coerceIn(0f, INPUT_SIZE.toFloat())
 
             if (x2 <= x1 || y2 <= y1) continue
 
-            val scoreIndex = base + (numValues - 2)
-            val classIndex = base + (numValues - 1)
-            if (scoreIndex >= outputArray.size || classIndex >= outputArray.size) break
+            var maxClassScore = -1f
+            var maxClassIdx = 0
+            for (c in 0 until numClasses) {
+                val score = outputArray[base + 4 + c]
+                if (score > maxClassScore) {
+                    maxClassScore = score
+                    maxClassIdx = c
+                }
+            }
 
-            val confidence = outputArray[scoreIndex]
+            val confidence = maxClassScore
             if (confidence < confidenceThreshold) continue
 
-            val classId = outputArray[classIndex].toInt()
+            val classId = maxClassIdx
             val label = "class_$classId"
 
-            val scale = INPUT_SIZE.toFloat() / max(originalWidth, originalHeight)
-            val offsetX = (INPUT_SIZE.toFloat() - originalWidth * scale) / 2f
-            val offsetY = (INPUT_SIZE.toFloat() - originalHeight * scale) / 2f
+            val normX1: Float
+            val normY1: Float
+            val normX2: Float
+            val normY2: Float
 
-            val normX1 = ((x1 - offsetX) / scale / originalWidth).coerceIn(0f, 1f)
-            val normY1 = ((y1 - offsetY) / scale / originalHeight).coerceIn(0f, 1f)
-            val normX2 = ((x2 - offsetX) / scale / originalWidth).coerceIn(0f, 1f)
-            val normY2 = ((y2 - offsetY) / scale / originalHeight).coerceIn(0f, 1f)
+            if (useLetterbox) {
+                val realX1 = (x1 - letterboxPadW) / letterboxScale
+                val realY1 = (y1 - letterboxPadH) / letterboxScale
+                val realX2 = (x2 - letterboxPadW) / letterboxScale
+                val realY2 = (y2 - letterboxPadH) / letterboxScale
+                normX1 = (realX1 / originalWidth).coerceIn(0f, 1f)
+                normY1 = (realY1 / originalHeight).coerceIn(0f, 1f)
+                normX2 = (realX2 / originalWidth).coerceIn(0f, 1f)
+                normY2 = (realY2 / originalHeight).coerceIn(0f, 1f)
+            } else {
+                val scale = INPUT_SIZE.toFloat() / max(originalWidth, originalHeight)
+                val offsetX = (INPUT_SIZE.toFloat() - originalWidth * scale) / 2f
+                val offsetY = (INPUT_SIZE.toFloat() - originalHeight * scale) / 2f
+                normX1 = ((x1 - offsetX) / scale / originalWidth).coerceIn(0f, 1f)
+                normY1 = ((y1 - offsetY) / scale / originalHeight).coerceIn(0f, 1f)
+                normX2 = ((x2 - offsetX) / scale / originalWidth).coerceIn(0f, 1f)
+                normY2 = ((y2 - offsetY) / scale / originalHeight).coerceIn(0f, 1f)
+            }
+
+            if (normX2 - normX1 < 0.005f || normY2 - normY1 < 0.005f) continue
 
             val category = mapLabelToCategory(label)
 
