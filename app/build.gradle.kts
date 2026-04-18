@@ -48,6 +48,7 @@ android {
 
     aaptOptions {
         noCompress("tflite")
+        noCompress("onnx")
     }
 
     defaultConfig {
@@ -221,6 +222,9 @@ dependencies {
     implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
     implementation("org.tensorflow:tensorflow-lite-metadata:0.4.4")
     implementation("org.tensorflow:tensorflow-lite-gpu:2.14.0")
+
+    // ONNX Runtime for YOLOE Detection
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.20.0")
 
     // Networking
     implementation("com.squareup.retrofit2:retrofit:2.9.0")

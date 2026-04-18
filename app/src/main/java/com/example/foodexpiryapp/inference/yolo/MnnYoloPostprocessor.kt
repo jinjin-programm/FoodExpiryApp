@@ -21,6 +21,8 @@ import kotlin.math.min
  */
 object MnnYoloPostprocessor {
 
+    private const val INPUT_SIZE = 640
+
     /**
      * Parses raw YOLO output array into domain DetectionResult list.
      *
@@ -117,6 +119,64 @@ object MnnYoloPostprocessor {
         }
 
         return results
+    }
+
+    fun parseYoloEDetections(
+        outputArray: FloatArray,
+        numDetections: Int,
+        numValues: Int,
+        originalWidth: Int,
+        originalHeight: Int,
+        confidenceThreshold: Float = 0.5f,
+        maxDetections: Int = 8
+    ): List<DetectionResult> {
+        val results = mutableListOf<DetectionResult>()
+
+        for (i in 0 until numDetections) {
+            val base = i * numValues
+            if (base + numValues > outputArray.size) break
+
+            val x1 = outputArray[base].coerceIn(0f, INPUT_SIZE.toFloat())
+            val y1 = outputArray[base + 1].coerceIn(0f, INPUT_SIZE.toFloat())
+            val x2 = outputArray[base + 2].coerceIn(0f, INPUT_SIZE.toFloat())
+            val y2 = outputArray[base + 3].coerceIn(0f, INPUT_SIZE.toFloat())
+
+            if (x2 <= x1 || y2 <= y1) continue
+
+            val scoreIndex = base + (numValues - 2)
+            val classIndex = base + (numValues - 1)
+            if (scoreIndex >= outputArray.size || classIndex >= outputArray.size) break
+
+            val confidence = outputArray[scoreIndex]
+            if (confidence < confidenceThreshold) continue
+
+            val classId = outputArray[classIndex].toInt()
+            val label = "class_$classId"
+
+            val scale = INPUT_SIZE.toFloat() / max(originalWidth, originalHeight)
+            val offsetX = (INPUT_SIZE.toFloat() - originalWidth * scale) / 2f
+            val offsetY = (INPUT_SIZE.toFloat() - originalHeight * scale) / 2f
+
+            val normX1 = ((x1 - offsetX) / scale / originalWidth).coerceIn(0f, 1f)
+            val normY1 = ((y1 - offsetY) / scale / originalHeight).coerceIn(0f, 1f)
+            val normX2 = ((x2 - offsetX) / scale / originalWidth).coerceIn(0f, 1f)
+            val normY2 = ((y2 - offsetY) / scale / originalHeight).coerceIn(0f, 1f)
+
+            val category = mapLabelToCategory(label)
+
+            results.add(
+                DetectionResult(
+                    id = i,
+                    boundingBox = RectF(normX1, normY1, normX2, normY2),
+                    label = label,
+                    category = category,
+                    confidence = confidence,
+                    status = DetectionStatus.PENDING
+                )
+            )
+        }
+
+        return results.sortedByDescending { it.confidence }.take(maxDetections)
     }
 
     /**
