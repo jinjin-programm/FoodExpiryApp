@@ -168,12 +168,37 @@ class VisionScanFragment : Fragment() {
             runOllamaAnalysis()
         }
 
-        binding.toggleScanMode.addOnButtonCheckedListener { _, checkedId, isChecked ->
-            if (isChecked) {
-                isMultiMode = (checkedId == R.id.btnMultiMode)
-            }
+        binding.btnSingleMode.setOnClickListener { setScanMode(false) }
+        binding.btnMultiMode.setOnClickListener { setScanMode(true) }
+        updateScanModeUI()
+    }
+
+    private fun setScanMode(multi: Boolean) {
+        isMultiMode = multi
+        updateScanModeUI()
+    }
+
+    private fun updateScanModeUI() {
+        val activeBg = 0xE65100.toInt()
+        val inactiveBg = android.graphics.Color.TRANSPARENT
+        val activeColor = android.graphics.Color.WHITE
+        val inactiveColor = 0xB3FFFFFF.toInt()
+
+        if (isMultiMode) {
+            binding.btnMultiMode.setBackgroundColor(activeBg)
+            binding.btnMultiMode.setTextColor(activeColor)
+            binding.btnMultiMode.setTypeface(null, android.graphics.Typeface.BOLD)
+            binding.btnSingleMode.setBackgroundColor(inactiveBg)
+            binding.btnSingleMode.setTextColor(inactiveColor)
+            binding.btnSingleMode.setTypeface(null, android.graphics.Typeface.NORMAL)
+        } else {
+            binding.btnSingleMode.setBackgroundColor(activeBg)
+            binding.btnSingleMode.setTextColor(activeColor)
+            binding.btnSingleMode.setTypeface(null, android.graphics.Typeface.BOLD)
+            binding.btnMultiMode.setBackgroundColor(inactiveBg)
+            binding.btnMultiMode.setTextColor(inactiveColor)
+            binding.btnMultiMode.setTypeface(null, android.graphics.Typeface.NORMAL)
         }
-        binding.toggleScanMode.check(R.id.btnSingleMode)
     }
 
     private fun setupViewPagerCallback() {

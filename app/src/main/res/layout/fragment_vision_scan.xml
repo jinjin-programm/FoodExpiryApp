@@ -119,45 +119,53 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Scan Mode Toggle (Single vs Multi-object) -->
-    <com.google.android.material.button.MaterialButtonToggleGroup
+    <!-- Scan Mode Toggle -->
+    <LinearLayout
         android:id="@+id/toggleScanMode"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="36dp"
         android:layout_marginTop="28dp"
-        app:singleSelection="true"
-        app:selectionRequired="true"
-        android:background="@drawable/shape_fab_back"
+        android:orientation="horizontal"
+        android:background="#33000000"
         android:elevation="4dp"
         app:layout_constraintEnd_toStartOf="@id/btn_settings"
         app:layout_constraintStart_toEndOf="@id/btn_back"
         app:layout_constraintTop_toTopOf="parent">
 
-        <com.google.android.material.button.MaterialButton
+        <TextView
             android:id="@+id/btnSingleMode"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
-            android:text="Single"
-            android:textSize="12sp"
+            android:gravity="center"
+            android:paddingHorizontal="14dp"
+            android:text="📷 1 item"
             android:textColor="@color/white"
-            app:backgroundTint="@color/primary"
-            app:cornerRadius="18dp"
-            app:strokeColor="@color/white" />
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:background="#E65100"
+            android:clickable="true"
+            android:focusable="true" />
 
-        <com.google.android.material.button.MaterialButton
+        <View
+            android:layout_width="1dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center_vertical"
+            android:background="#80FFFFFF" />
+
+        <TextView
             android:id="@+id/btnMultiMode"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
-            android:text="Multi"
+            android:gravity="center"
+            android:paddingHorizontal="14dp"
+            android:text="🔍 Multi"
+            android:textColor="#B3FFFFFF"
             android:textSize="12sp"
-            android:textColor="@color/white"
-            app:backgroundTint="@color/primary"
-            app:cornerRadius="18dp"
-            app:strokeColor="@color/white" />
+            android:background="@android:color/transparent"
+            android:clickable="true"
+            android:focusable="true" />
 
-    </com.google.android.material.button.MaterialButtonToggleGroup>
+    </LinearLayout>
 
     <!-- Scanning Interface Controls -->
     <LinearLayout
