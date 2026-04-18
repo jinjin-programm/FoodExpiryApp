@@ -99,14 +99,21 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 **UI hint**: yes
 
 ### Phase 8: Remote Detection Hardening (重新規劃)
-**Goal**: 遠端 Ollama/LM Studio 推論流程穩定、偵測 pipeline 完善、程式碼品質達標
+**Goal**: ONNX Runtime YOLOE 本地偵測 + 遠端 Ollama/LM Studio LLM 分類 pipeline 端到端穩定運作
 **Depends on**: Phase 6, Phase 7
-**Architecture Change**: MNN 本地推論已擱置 (2026-04-18)，改用遠端 Ollama/LM Studio 大語言模型
+**Architecture Change**: MNN/TFLite 本地推論已擱置 (2026-04-18)，改用 ONNX Runtime YOLOE-26n-seg-pf + 遠端 LLM
 **Previous Plans (superseded)**:
 - ~~08-01-PLAN.md~~ — JNI Bridge (基於 MNN，已擱置)
 - ~~08-02-PLAN.md~~ — Overlay + 程式碼強化 (部分成果仍可用)
 - ~~08-03-PLAN.md~~ — MNN 單元測試 (基於 MNN，已擱置)
-**Plans**: 待重新規劃
+- ~~08-04-PLAN.md~~ — TFLite YOLOv8n engine (已擱置，改用 ONNX Runtime)
+- ~~08-05-PLAN.md~~ — TFLite pipeline hardening (已擱置)
+- ~~08-06-PLAN.md~~ — TFLite VisionScan toggle (已擱置)
+- ~~08-07-PLAN.md~~ — TFLite testing (已擱置)
+**Plans**: 3 plans
+- [ ] 08-08-PLAN.md — ONNX Runtime YOLOE engine + model asset + post-processor (Wave 1)
+- [ ] 08-9-PLAN.md — DI wiring + debug overlay for detection verification (Wave 2)
+- [ ] 08-10-PLAN.md — Unit tests + real device verification checkpoint (Wave 3)
 
 ### Phase 9: Verification & Artifact Cleanup
 **Goal**: All phases have formal verification artifacts, planning state reflects reality, untracked files committed
@@ -128,7 +135,7 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 | 5. Engine | 7/7 | Complete ✅ LLM WORKING | 2026-04-10 |
 | 6. Detection | 4/4 | Complete | 2026-04-09 |
 | 7. Scan UI Overhaul | 4/4 | Complete | 2026-04-09 |
-| 8. YOLO Detection Hardening | 0/3 | Not started | - |
+| 8. Remote Detection Hardening | 0/3 | Planned (ONNX Runtime) | - |
 | 9. Verification & Artifact Cleanup | 0/2 | Not started | - |
 
 ---
