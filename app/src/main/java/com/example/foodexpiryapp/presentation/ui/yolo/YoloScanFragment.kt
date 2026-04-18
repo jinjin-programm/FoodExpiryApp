@@ -12,6 +12,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
+import com.example.foodexpiryapp.BuildConfig
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -200,6 +201,11 @@ class YoloScanFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.detections.collect { detections ->
                     if (detections.isNotEmpty() && latestBitmap != null) {
+                        if (BuildConfig.DEBUG) {
+                            for ((idx, det) in detections.withIndex()) {
+                                Log.d("OnnxYoloEngine-Debug", "Overlay detection $idx: label=${det.label}, conf=${String.format("%.2f", det.confidence)}, bbox=${det.boundingBox}")
+                            }
+                        }
                         detectionOverlay.setDetections(
                             detections,
                             latestBitmap!!.width,

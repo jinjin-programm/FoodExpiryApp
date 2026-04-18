@@ -8,6 +8,7 @@ import com.example.foodexpiryapp.data.remote.ollama.OllamaServerConfig
 import com.example.foodexpiryapp.data.remote.ollama.OllamaVisionClient
 import com.example.foodexpiryapp.data.repository.LlmInferenceRepositoryImpl
 import com.example.foodexpiryapp.domain.repository.LlmInferenceRepository
+import com.example.foodexpiryapp.inference.tflite.OnnxYoloEngine
 import com.example.foodexpiryapp.inference.tflite.TFLiteYoloEngine
 import com.example.foodexpiryapp.inference.tflite.YoloDetector
 import com.google.gson.Gson
@@ -68,7 +69,7 @@ abstract class InferenceModule {
         @Provides
         @Singleton
         fun provideYoloDetector(
-            engine: TFLiteYoloEngine
+            engine: OnnxYoloEngine
         ): YoloDetector {
             return engine
         }

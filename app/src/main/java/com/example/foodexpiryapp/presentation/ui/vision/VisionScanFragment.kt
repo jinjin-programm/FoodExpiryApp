@@ -10,6 +10,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
+import com.example.foodexpiryapp.BuildConfig
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -426,6 +427,9 @@ class VisionScanFragment : Fragment() {
                             binding.tvProgressTitle.text = "Detecting food items..."
                         }
                         is PipelineState.Detected -> {
+                            if (BuildConfig.DEBUG) {
+                                Log.d("OnnxYoloEngine-Debug", "Detected ${state.detections.size} items, starting classification")
+                            }
                             binding.tvProgressTitle.text = "Items detected, classifying..."
                         }
                         is PipelineState.Classifying -> {
