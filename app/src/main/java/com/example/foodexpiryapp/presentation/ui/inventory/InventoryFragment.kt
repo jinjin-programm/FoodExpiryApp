@@ -4,6 +4,7 @@ import android.widget.PopupMenu
 import android.widget.Toast
 import android.app.DatePickerDialog
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -130,13 +131,17 @@ class InventoryFragment : Fragment() {
         binding.cardVisionScan.setOnClickListener {
             try {
                 findNavController().navigate(R.id.action_inventory_to_vision_scan)
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                Log.e("InventoryFragment", "Failed to navigate to vision scan", e)
+            }
         }
         binding.btnBarcodeScan.setOnClickListener {
             try {
                 val bundle = Bundle().apply { putString("scan_mode", "barcode") }
                 findNavController().navigate(R.id.action_inventory_to_scan, bundle)
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                Log.e("InventoryFragment", "Failed to navigate to barcode scan", e)
+            }
         }
         binding.btnManualEntry.setOnClickListener {
             showAddEditDialog(null)
@@ -144,13 +149,17 @@ class InventoryFragment : Fragment() {
         binding.btnPhotoScan.setOnClickListener {
             try {
                 findNavController().navigate(R.id.action_inventory_to_yolo_scan)
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                Log.e("InventoryFragment", "Failed to navigate to yolo scan", e)
+            }
         }
         binding.btnEmptyStateScan.setOnClickListener {
             try {
                 val bundle = Bundle().apply { putString("scan_mode", "barcode") }
                 findNavController().navigate(R.id.action_inventory_to_scan, bundle)
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                Log.e("InventoryFragment", "Failed to navigate to empty state scan", e)
+            }
         }
         
         binding.fabQuickActions.setOnClickListener { view ->

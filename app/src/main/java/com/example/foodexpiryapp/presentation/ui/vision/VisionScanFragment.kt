@@ -668,6 +668,7 @@ class VisionScanFragment : Fragment() {
         progressTickerJob?.cancel()
         scope.cancel()
         cameraProvider?.unbindAll()
+        cameraProvider = null
         cameraExecutor.shutdown()
         blurredBg?.let { (_binding?.root as? ViewGroup)?.removeView(it) }
         blurredBg = null
