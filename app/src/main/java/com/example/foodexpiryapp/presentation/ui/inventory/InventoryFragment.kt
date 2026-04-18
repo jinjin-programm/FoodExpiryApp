@@ -128,29 +128,29 @@ class InventoryFragment : Fragment() {
 
     private fun setupActionButtons() {
         binding.cardVisionScan.setOnClickListener {
-            findNavController().currentDestination?.getAction(R.id.action_inventory_to_vision_scan)?.let {
+            try {
                 findNavController().navigate(R.id.action_inventory_to_vision_scan)
-            }
+            } catch (_: Exception) {}
         }
         binding.btnBarcodeScan.setOnClickListener {
-            findNavController().currentDestination?.getAction(R.id.action_inventory_to_scan)?.let {
+            try {
                 val bundle = Bundle().apply { putString("scan_mode", "barcode") }
                 findNavController().navigate(R.id.action_inventory_to_scan, bundle)
-            }
+            } catch (_: Exception) {}
         }
         binding.btnManualEntry.setOnClickListener {
             showAddEditDialog(null)
         }
         binding.btnPhotoScan.setOnClickListener {
-            findNavController().currentDestination?.getAction(R.id.action_inventory_to_yolo_scan)?.let {
+            try {
                 findNavController().navigate(R.id.action_inventory_to_yolo_scan)
-            }
+            } catch (_: Exception) {}
         }
         binding.btnEmptyStateScan.setOnClickListener {
-            findNavController().currentDestination?.getAction(R.id.action_inventory_to_scan)?.let {
+            try {
                 val bundle = Bundle().apply { putString("scan_mode", "barcode") }
                 findNavController().navigate(R.id.action_inventory_to_scan, bundle)
-            }
+            } catch (_: Exception) {}
         }
         
         binding.fabQuickActions.setOnClickListener { view ->
@@ -159,9 +159,9 @@ class InventoryFragment : Fragment() {
             popup.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.action_photo_scan -> {
-                        findNavController().currentDestination?.getAction(R.id.action_inventory_to_yolo_scan)?.let {
+                        try {
                             findNavController().navigate(R.id.action_inventory_to_yolo_scan)
-                        }
+                        } catch (_: Exception) {}
                         true
                     }
                     R.id.action_manual_entry -> {
