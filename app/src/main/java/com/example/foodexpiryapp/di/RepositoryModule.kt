@@ -8,6 +8,7 @@ import com.example.foodexpiryapp.data.repository.NotificationSettingsRepositoryI
 import com.example.foodexpiryapp.data.repository.RecipeRepositoryImpl
 import com.example.foodexpiryapp.data.repository.ShelfLifeRepositoryImpl
 import com.example.foodexpiryapp.data.repository.ShoppingRepositoryImpl
+import com.example.foodexpiryapp.data.repository.UIStyleRepositoryImpl
 import com.example.foodexpiryapp.data.repository.UserRepositoryImpl
 import com.example.foodexpiryapp.domain.repository.CookedRecipeRepository
 import com.example.foodexpiryapp.domain.repository.FoodRepository
@@ -17,6 +18,7 @@ import com.example.foodexpiryapp.domain.repository.NotificationSettingsRepositor
 import com.example.foodexpiryapp.domain.repository.RecipeRepository
 import com.example.foodexpiryapp.domain.repository.ShelfLifeRepository
 import com.example.foodexpiryapp.domain.repository.ShoppingRepository
+import com.example.foodexpiryapp.domain.repository.UIStyleRepository
 import com.example.foodexpiryapp.domain.repository.UserRepository
 import dagger.Binds
 import dagger.Module
@@ -63,4 +65,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindShelfLifeRepository(impl: ShelfLifeRepositoryImpl): ShelfLifeRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindUIStyleRepository(impl: UIStyleRepositoryImpl): UIStyleRepository
 }

@@ -11,6 +11,7 @@ import com.example.foodexpiryapp.domain.model.EventType
 import com.example.foodexpiryapp.domain.repository.AnalyticsRepository
 import com.example.foodexpiryapp.domain.repository.CookedRecipeRepository
 import com.example.foodexpiryapp.domain.repository.FoodRepository
+import com.example.foodexpiryapp.domain.repository.UIStyleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -26,7 +27,8 @@ data class InventoryUiState(
     val isLoading: Boolean = true,
     val searchQuery: String = "",
     val selectedCategory: FoodCategory? = null,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val uiStyle: String = UIStyleRepository.STYLE_CUTE
 )
 
 /**
@@ -47,7 +49,8 @@ class InventoryViewModel @Inject constructor(
     private val searchFoodItems: SearchFoodItemsUseCase,
     private val foodRepository: FoodRepository,
     private val cookedRecipeRepository: CookedRecipeRepository,
-    private val analyticsRepository: AnalyticsRepository
+    private val analyticsRepository: AnalyticsRepository,
+    private val uiStyleRepository: UIStyleRepository
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
@@ -60,7 +63,12 @@ class InventoryViewModel @Inject constructor(
     val events: SharedFlow<InventoryEvent> = _events.asSharedFlow()
 
     init {
-        // React to search query and category changes
+        viewModelScope.launch {
+            uiStyleRepository.uiStyle.collect { style ->
+                _uiState.update { it.copy(uiStyle = style) }
+            }
+        }
+
         viewModelScope.launch {
             combine(_searchQuery.debounce(300), _selectedCategory) { query, category ->
                 Pair(query, category)

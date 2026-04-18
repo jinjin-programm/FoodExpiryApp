@@ -1,5 +1,6 @@
 package com.example.foodexpiryapp.presentation.ui.inventory
 
+import android.view.animation.AnimationUtils
 import android.widget.PopupMenu
 import android.widget.Toast
 import android.app.DatePickerDialog
@@ -23,7 +24,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.data.repository.BarcodeRepository
-import com.example.foodexpiryapp.databinding.DialogAddFoodBinding
 import com.example.foodexpiryapp.databinding.FragmentInventoryBinding
 import com.example.foodexpiryapp.domain.model.FoodCategory
 import com.example.foodexpiryapp.domain.model.FoodItem
@@ -31,6 +31,7 @@ import com.example.foodexpiryapp.domain.model.StorageLocation
 import com.example.foodexpiryapp.domain.model.AnalyticsEvent
 import com.example.foodexpiryapp.domain.model.EventType
 import com.example.foodexpiryapp.domain.repository.AnalyticsRepository
+import com.example.foodexpiryapp.domain.repository.UIStyleRepository
 import com.example.foodexpiryapp.presentation.adapter.FoodCardAdapter
 import com.example.foodexpiryapp.presentation.adapter.FoodListAdapter
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryEvent
@@ -71,6 +72,7 @@ class InventoryFragment : Fragment() {
 
     private var currentDialog: androidx.appcompat.app.AlertDialog? = null
     private var draftFoodItem: FoodItem? = null
+    private var currentStyle: String = UIStyleRepository.STYLE_CUTE
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -110,7 +112,6 @@ class InventoryFragment : Fragment() {
             layoutManager = LinearLayoutManager(requireContext())
         }
 
-        // Swipe to delete logic
         val swipeCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
             override fun onMove(
                 recyclerView: RecyclerView,
@@ -128,49 +129,70 @@ class InventoryFragment : Fragment() {
     }
 
     private fun setupActionButtons() {
-        binding.cardVisionScan.setOnClickListener {
+        binding.btnTryAIScan.setOnClickListener {
+            navWithDebug(R.id.action_inventory_to_yolo_scan, "btnTryAIScan")
+        }
+
+        binding.cardPhoto.setOnClickListener {
+            navWithDebug(R.id.action_inventory_to_yolo_scan, "cardPhoto")
+        }
+
+        binding.cardBarcode.setOnClickListener {
             try {
-                findNavController().navigate(R.id.action_inventory_to_yolo_scan)
+                val navController = findNavController()
+                if (navController.currentDestination?.id == R.id.navigation_inventory) {
+                    val bundle = Bundle().apply { putString("scan_mode", "barcode") }
+                    navController.navigate(R.id.action_inventory_to_scan, bundle)
+                }
             } catch (e: Exception) {
-                Log.e("InventoryFragment", "Failed to navigate to scan container", e)
+                Log.e("NAV_DEBUG", "Exception barcode scan", e)
             }
         }
+
+        binding.cardManual.setOnClickListener {
+            showAddEditDialog(null)
+        }
+
+        binding.cardAiChat.setOnClickListener {
+            navWithDebug(R.id.action_inventory_to_chat, "cardAiChat")
+        }
+
         binding.btnBarcodeScan.setOnClickListener {
             try {
-                val bundle = Bundle().apply { putString("scan_mode", "barcode") }
-                findNavController().navigate(R.id.action_inventory_to_scan, bundle)
+                val navController = findNavController()
+                if (navController.currentDestination?.id == R.id.navigation_inventory) {
+                    val bundle = Bundle().apply { putString("scan_mode", "barcode") }
+                    navController.navigate(R.id.action_inventory_to_scan, bundle)
+                }
             } catch (e: Exception) {
-                Log.e("InventoryFragment", "Failed to navigate to barcode scan", e)
+                Log.e("NAV_DEBUG", "Exception barcode scan", e)
             }
         }
         binding.btnManualEntry.setOnClickListener {
             showAddEditDialog(null)
         }
         binding.btnPhotoScan.setOnClickListener {
-            try {
-                findNavController().navigate(R.id.action_inventory_to_yolo_scan)
-            } catch (e: Exception) {
-                Log.e("InventoryFragment", "Failed to navigate to yolo scan", e)
-            }
+            navWithDebug(R.id.action_inventory_to_yolo_scan, "btnPhotoScan")
         }
         binding.btnEmptyStateScan.setOnClickListener {
             try {
-                val bundle = Bundle().apply { putString("scan_mode", "barcode") }
-                findNavController().navigate(R.id.action_inventory_to_scan, bundle)
+                val navController = findNavController()
+                if (navController.currentDestination?.id == R.id.navigation_inventory) {
+                    val bundle = Bundle().apply { putString("scan_mode", "barcode") }
+                    navController.navigate(R.id.action_inventory_to_scan, bundle)
+                }
             } catch (e: Exception) {
-                Log.e("InventoryFragment", "Failed to navigate to empty state scan", e)
+                Log.e("NAV_DEBUG", "Exception empty state scan", e)
             }
         }
-        
+
         binding.fabQuickActions.setOnClickListener { view ->
             val popup = PopupMenu(requireContext(), view)
             popup.menuInflater.inflate(R.menu.inventory_quick_actions, popup.menu)
             popup.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.action_photo_scan -> {
-                        try {
-                            findNavController().navigate(R.id.action_inventory_to_yolo_scan)
-                        } catch (_: Exception) {}
+                        navWithDebug(R.id.action_inventory_to_yolo_scan, "fab-photo_scan")
                         true
                     }
                     R.id.action_manual_entry -> {
@@ -198,6 +220,84 @@ class InventoryFragment : Fragment() {
             }
             popup.show()
         }
+    }
+
+    private fun applyStyle(style: String) {
+        val isCute = style == UIStyleRepository.STYLE_CUTE
+
+        if (isCute) {
+            binding.heroBanner.apply {
+                cardElevation = 8f
+                setCardBackgroundColor(android.graphics.Color.TRANSPARENT)
+                background = null
+                setBackgroundResource(R.drawable.bg_hero_gradient)
+            }
+            binding.newBadge.visibility = View.VISIBLE
+            binding.imgRobot.visibility = View.VISIBLE
+            binding.imgRobot.startAnimation(
+                AnimationUtils.loadAnimation(requireContext(), R.anim.float_animation)
+            )
+            binding.textHeroTitle.setTextColor(android.graphics.Color.WHITE)
+            binding.textHeroSubtitle.setTextColor(android.graphics.Color.parseColor("#CCFFFFFF"))
+            binding.btnTryAIScan.setBackgroundColor(android.graphics.Color.WHITE)
+            binding.btnTryAIScan.setTextColor(android.graphics.Color.parseColor("#4D644F"))
+
+            binding.iconPhotoCircle.setBackgroundResource(R.drawable.bg_quick_action_circle_green)
+            binding.iconBarcodeCircle.setBackgroundResource(R.drawable.bg_quick_action_circle_blue)
+            binding.iconManualCircle.setBackgroundResource(R.drawable.bg_quick_action_circle_orange)
+            binding.iconAiChatCircle.setBackgroundResource(R.drawable.bg_quick_action_circle_purple)
+
+            startPulseAnimation()
+
+            binding.imgEmptyIllustration.setImageResource(R.drawable.ic_cat_empty)
+            binding.imgEmptyIllustration.imageTintList = null
+            binding.textEmptyTitle.text = "Your kitchen is empty!"
+            binding.textEmptySubtitle.text = "Let's fill it up \uD83D\uDC31"
+        } else {
+            binding.heroBanner.apply {
+                cardElevation = 2f
+                background = null
+                setCardBackgroundColor(android.graphics.Color.WHITE)
+            }
+            binding.newBadge.visibility = View.GONE
+            binding.imgRobot.visibility = View.GONE
+            binding.imgRobot.clearAnimation()
+            binding.textHeroTitle.setTextColor(android.graphics.Color.parseColor("#171725"))
+            binding.textHeroSubtitle.setTextColor(android.graphics.Color.parseColor("#6B7280"))
+            binding.btnTryAIScan.setBackgroundColor(android.graphics.Color.parseColor("#4D644F"))
+            binding.btnTryAIScan.setTextColor(android.graphics.Color.WHITE)
+
+            binding.iconPhotoCircle.background = null
+            binding.iconBarcodeCircle.background = null
+            binding.iconManualCircle.background = null
+            binding.iconAiChatCircle.background = null
+
+            stopPulseAnimation()
+
+            binding.imgEmptyIllustration.setImageResource(android.R.drawable.ic_menu_camera)
+            binding.imgEmptyIllustration.imageTintList = android.content.res.ColorStateList.valueOf(
+                android.graphics.Color.parseColor("#D1D5DB")
+            )
+            binding.textEmptyTitle.text = "Get Started"
+            binding.textEmptySubtitle.text = "Add your first item using a quick photo scan to get started tracking."
+        }
+    }
+
+    private fun startPulseAnimation() {
+        val scaleAnim = android.view.animation.ScaleAnimation(
+            1f, 1.05f, 1f, 1.05f,
+            android.view.animation.Animation.RELATIVE_TO_SELF, 0.5f,
+            android.view.animation.Animation.RELATIVE_TO_SELF, 0.5f
+        )
+        scaleAnim.duration = 750
+        scaleAnim.repeatMode = android.view.animation.Animation.REVERSE
+        scaleAnim.repeatCount = android.view.animation.Animation.INFINITE
+        scaleAnim.interpolator = android.view.animation.AccelerateDecelerateInterpolator()
+        binding.cardPhoto.startAnimation(scaleAnim)
+    }
+
+    private fun stopPulseAnimation() {
+        binding.cardPhoto.clearAnimation()
     }
 
     private fun setupCategoryFilter() {
@@ -230,17 +330,23 @@ class InventoryFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
+                    if (currentStyle != state.uiStyle) {
+                        currentStyle = state.uiStyle
+                        applyStyle(state.uiStyle)
+                    }
+
                     val isEmpty = state.foodItems.isEmpty()
-                    
+
                     binding.layoutEmptyState.visibility = if (isEmpty) View.VISIBLE else View.GONE
                     binding.layoutExpiringSoonHeader.visibility = if (isEmpty) View.GONE else View.VISIBLE
                     binding.recyclerExpiringSoon.visibility = if (isEmpty) View.GONE else View.VISIBLE
                     binding.layoutFreshStockHeader.visibility = if (isEmpty) View.GONE else View.VISIBLE
                     binding.foodItemsRecyclerView.visibility = if (isEmpty) View.GONE else View.VISIBLE
+                    binding.searchBarLayout.visibility = if (isEmpty) View.GONE else View.VISIBLE
 
                     val expiringSoon = state.foodItems.filter { it.daysUntilExpiry <= 7 }.sortedBy { it.daysUntilExpiry }
                     expiringSoonAdapter.submitList(expiringSoon)
-                    
+
                     val otherItems = state.foodItems.sortedByDescending { it.dateAdded }
                     freshStockAdapter.submitList(otherItems)
                 }
@@ -348,7 +454,7 @@ class InventoryFragment : Fragment() {
         }
     }
 
-    private fun updateCategoryImage(dialogBinding: DialogAddFoodBinding, category: FoodCategory, foodName: String = "") {
+    private fun updateCategoryImage(dialogBinding: com.example.foodexpiryapp.databinding.DialogAddFoodBinding, category: FoodCategory, foodName: String = "") {
         val imageRes = FoodImageResolver.getFoodImage(
             foodName.ifBlank { category.displayName },
             category
@@ -360,9 +466,9 @@ class InventoryFragment : Fragment() {
     }
 
     private fun showAddEditDialog(existingItem: FoodItem?) {
-        val dialogBinding = DialogAddFoodBinding.inflate(layoutInflater)
+        val dialogBinding = com.example.foodexpiryapp.databinding.DialogAddFoodBinding.inflate(layoutInflater)
         var selectedDate: LocalDate = existingItem?.expiryDate ?: LocalDate.now().plusDays(7)
-        
+
         val initialCategory = existingItem?.category ?: FoodCategory.OTHER
         updateCategoryImage(dialogBinding, initialCategory, existingItem?.name ?: "")
 
@@ -370,10 +476,7 @@ class InventoryFragment : Fragment() {
         (dialogBinding.dropdownCategory as AutoCompleteTextView).apply {
             setAdapter(categoryAdapter)
             setText(initialCategory.displayName, false)
-            // Ensure dropdown shows when clicked
             setOnClickListener { showDropDown() }
-            
-            // Update image dynamically when category is changed
             setOnItemClickListener { parent, _, position, _ ->
                 val selectedName = parent.getItemAtPosition(position).toString()
                 val newCategory = FoodCategory.values().find { it.displayName == selectedName } ?: FoodCategory.OTHER
@@ -385,7 +488,6 @@ class InventoryFragment : Fragment() {
         (dialogBinding.dropdownLocation as AutoCompleteTextView).apply {
             setAdapter(locationAdapter)
             setText(existingItem?.location?.displayName ?: StorageLocation.FRIDGE.displayName, false)
-            // Ensure dropdown shows when clicked
             setOnClickListener { showDropDown() }
         }
 
@@ -426,7 +528,7 @@ class InventoryFragment : Fragment() {
             .setPositiveButton("Save") { _, _ ->
                 val categoryName = dialogBinding.dropdownCategory.text.toString()
                 val category = FoodCategory.values().find { it.displayName == categoryName } ?: FoodCategory.OTHER
-                
+
                 val locationName = dialogBinding.dropdownLocation.text.toString()
                 val location = StorageLocation.values().find { it.displayName == locationName } ?: StorageLocation.FRIDGE
 
@@ -443,6 +545,37 @@ class InventoryFragment : Fragment() {
             .setNegativeButton("Cancel", null)
             .create()
         currentDialog?.show()
+    }
+
+    private fun logNavState(tag: String) {
+        try {
+            val navController = findNavController()
+            val currentDest = navController.currentDestination
+            Log.d("NAV_DEBUG", "===== $tag =====")
+            Log.d("NAV_DEBUG", "  Current destination: id=${currentDest?.id}, label=${currentDest?.label}, nav_inventory=${R.id.navigation_inventory}")
+            Log.d("NAV_DEBUG", "  Guard match: ${currentDest?.id == R.id.navigation_inventory}")
+        } catch (e: Exception) {
+            Log.e("NAV_DEBUG", "  logNavState FAILED", e)
+        }
+    }
+
+    private fun navWithDebug(actionId: Int, buttonName: String) {
+        Log.d("NAV_DEBUG", ">>> $buttonName CLICKED <<<")
+        logNavState(buttonName)
+        try {
+            val navController = findNavController()
+            val currentDestId = navController.currentDestination?.id
+            if (currentDestId == R.id.navigation_inventory) {
+                Log.d("NAV_DEBUG", "  -> GUARD PASSED, calling navigate($actionId)")
+                navController.navigate(actionId)
+                Log.d("NAV_DEBUG", "  -> navigate() returned successfully")
+            } else {
+                Log.w("NAV_DEBUG", "  -> GUARD BLOCKED: currentDest=$currentDestId, expected=${R.id.navigation_inventory}")
+            }
+        } catch (e: Exception) {
+            Log.e("NAV_DEBUG", "  -> EXCEPTION during navigate", e)
+            logNavState("$buttonName-after-exception")
+        }
     }
 
     private fun parseDate(dateString: String?): LocalDate? {

@@ -7,6 +7,7 @@ import com.example.foodexpiryapp.domain.model.DietaryPreference
 import com.example.foodexpiryapp.domain.model.NotificationSettings
 import com.example.foodexpiryapp.domain.model.UserProfile
 import com.example.foodexpiryapp.domain.repository.NotificationSettingsRepository
+import com.example.foodexpiryapp.domain.repository.UIStyleRepository
 import com.example.foodexpiryapp.domain.repository.UserRepository
 import com.example.foodexpiryapp.util.NotificationScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,7 +28,8 @@ data class ProfileUiState(
     val googleUserEmail: String? = null,
     val googleUserPhotoUrl: String? = null,
     val validationErrors: Map<String, String?> = emptyMap(),
-    val hasUnsavedChanges: Boolean = false
+    val hasUnsavedChanges: Boolean = false,
+    val uiStyle: String = UIStyleRepository.STYLE_CUTE
 )
 
 sealed class ProfileEvent {
@@ -39,6 +41,7 @@ sealed class ProfileEvent {
 class ProfileViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val notificationSettingsRepository: NotificationSettingsRepository,
+    private val uiStyleRepository: UIStyleRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -54,6 +57,21 @@ class ProfileViewModel @Inject constructor(
     init {
         loadUserProfile()
         loadNotificationSettings()
+        loadUIStyle()
+    }
+
+    private fun loadUIStyle() {
+        viewModelScope.launch {
+            uiStyleRepository.uiStyle.collect { style ->
+                _uiState.update { it.copy(uiStyle = style) }
+            }
+        }
+    }
+
+    fun setUIStyle(style: String) {
+        viewModelScope.launch {
+            uiStyleRepository.setUIStyle(style)
+        }
     }
 
     private fun loadUserProfile() {

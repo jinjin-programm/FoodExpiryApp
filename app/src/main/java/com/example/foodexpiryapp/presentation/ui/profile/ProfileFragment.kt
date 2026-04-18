@@ -20,6 +20,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.databinding.FragmentProfileBinding
 import com.example.foodexpiryapp.domain.model.DietaryPreference
+import com.example.foodexpiryapp.domain.repository.UIStyleRepository
 import com.example.foodexpiryapp.presentation.viewmodel.ProfileEvent
 import com.example.foodexpiryapp.presentation.viewmodel.ProfileViewModel
 import androidx.work.OneTimeWorkRequestBuilder
@@ -81,8 +82,16 @@ class ProfileFragment : Fragment() {
         setupGoogleSignIn()
         setupChips()
         setupListeners()
+        setupStyleSwitch()
         observeState()
         observeEvents()
+    }
+
+    private fun setupStyleSwitch() {
+        binding.switchCuteStyle.setOnCheckedChangeListener { _, isChecked ->
+            val style = if (isChecked) UIStyleRepository.STYLE_CUTE else UIStyleRepository.STYLE_ORIGINAL
+            viewModel.setUIStyle(style)
+        }
     }
 
     private fun setupGoogleSignIn() {
@@ -302,6 +311,11 @@ class ProfileFragment : Fragment() {
 
                     // Progress
                     binding.btnSave.isEnabled = !state.isSaving
+
+                    // Style switch
+                    if (binding.switchCuteStyle.isChecked != (state.uiStyle == UIStyleRepository.STYLE_CUTE)) {
+                        binding.switchCuteStyle.isChecked = state.uiStyle == UIStyleRepository.STYLE_CUTE
+                    }
                 }
             }
         }

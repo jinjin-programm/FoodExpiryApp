@@ -65,4 +65,14 @@
     <color name="detection_failed_text">#9E9E9E</color>        <!-- Grey 500 -->
     <color name="detection_failed_badge">#E65100</color>       <!-- Orange 900 -->
     <color name="detection_failed_background">#FFF3E0</color>  <!-- Orange 50 -->
+
+    <!-- Hero Banner & Quick Action Colors -->
+    <color name="hero_gradient_start">#4D644F</color>
+    <color name="hero_gradient_end">#6B8F71</color>
+    <color name="badge_gold">#FFD700</color>
+    <color name="badge_gold_text">#4D644F</color>
+    <color name="quick_action_bg_green">#E8F5E9</color>
+    <color name="quick_action_bg_blue">#E3F2FD</color>
+    <color name="quick_action_bg_orange">#FFF3E0</color>
+    <color name="quick_action_bg_purple">#F3E5F5</color>
 </resources>
