@@ -130,9 +130,9 @@ class InventoryFragment : Fragment() {
     private fun setupActionButtons() {
         binding.cardVisionScan.setOnClickListener {
             try {
-                findNavController().navigate(R.id.action_inventory_to_vision_scan)
+                findNavController().navigate(R.id.action_inventory_to_yolo_scan)
             } catch (e: Exception) {
-                Log.e("InventoryFragment", "Failed to navigate to vision scan", e)
+                Log.e("InventoryFragment", "Failed to navigate to scan container", e)
             }
         }
         binding.btnBarcodeScan.setOnClickListener {
