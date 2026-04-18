@@ -3,6 +3,7 @@ package com.example.foodexpiryapp.presentation.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.util.Log
 import com.example.foodexpiryapp.data.local.database.DetectionResultEntity
 import com.example.foodexpiryapp.data.repository.DetectionResultRepository
 import com.example.foodexpiryapp.domain.usecase.SaveDetectedFoodsUseCase
@@ -102,6 +103,7 @@ class ConfirmationViewModel @Inject constructor(
                 val result = saveDetectedFoodsUseCase(sessionId)
                 _saveResult.value = result
             } catch (e: Exception) {
+                Log.e("ConfirmationVM", "Error saving detection results", e)
                 // Per D-12: Report errors via StateFlow instead of silent swallowing
                 _saveResult.value = SaveDetectedFoodsUseCase.SaveResult(
                     savedCount = 0,

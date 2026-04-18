@@ -10,7 +10,7 @@ import com.example.foodexpiryapp.domain.model.BatchDetectionResult
 import com.example.foodexpiryapp.domain.model.DetectionResult
 import com.example.foodexpiryapp.domain.model.DetectionStatus
 import com.example.foodexpiryapp.domain.model.PipelineState
-import com.example.foodexpiryapp.inference.yolo.MnnYoloEngine
+import com.example.foodexpiryapp.inference.tflite.YoloDetector
 import com.example.foodexpiryapp.inference.yolo.MnnYoloPostprocessor
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
@@ -37,7 +37,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class DetectionPipeline @Inject constructor(
-    private val yoloEngine: MnnYoloEngine,
+    private val yoloDetector: YoloDetector,
     private val ollamaClient: OllamaVisionClient,
     private val lmStudioClient: LmStudioVisionClient,
     private val providerConfig: ProviderConfig
@@ -71,18 +71,18 @@ class DetectionPipeline @Inject constructor(
             // Stage 1: YOLO Detection
             send(PipelineState.Detecting)
 
-            if (!yoloEngine.isModelLoaded()) {
-                val loaded = yoloEngine.loadModel()
+            if (!yoloDetector.isModelLoaded()) {
+                val loaded = yoloDetector.loadModel()
                 if (!loaded) {
                     send(PipelineState.Error("YOLO model load failed"))
                     return@channelFlow
                 }
             }
 
-            val detections = yoloEngine.detect(bitmap)
+            val detections = yoloDetector.detect(bitmap)
 
             // Release YOLO before loading LLM (mutual exclusion per PITFALL-1)
-            yoloEngine.unloadModel()
+            yoloDetector.unloadModel()
 
             if (detections.isEmpty()) {
                 send(PipelineState.Complete(
@@ -157,7 +157,7 @@ class DetectionPipeline @Inject constructor(
             send(PipelineState.Error(e.message ?: "Unknown error"))
         } finally {
             // Release YOLO model after pipeline completes
-            try { yoloEngine.unloadModel() } catch (_: Exception) {}
+            try { yoloDetector.unloadModel() } catch (_: Exception) {}
         }
     }
 }
