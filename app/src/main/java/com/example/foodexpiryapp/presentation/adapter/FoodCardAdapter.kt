@@ -29,8 +29,8 @@ class FoodCardAdapter(
 
         fun bind(item: FoodItem) {
             binding.textFoodName.text = item.name
-            binding.textFoodInfo.text = "${item.category.displayName} • ${item.location.displayName}"
-            
+            binding.textFoodInfo.text = "${item.category.displayName} \u2022 ${item.location.displayName}"
+
             val days = item.daysUntilExpiry
             binding.textDaysBadge.text = when {
                 days < 0 -> "EXPIRED"

@@ -27,6 +27,7 @@ data class InventoryUiState(
     val isLoading: Boolean = true,
     val searchQuery: String = "",
     val selectedCategory: FoodCategory? = null,
+    val selectedLocation: StorageLocation? = null,
     val errorMessage: String? = null,
     val uiStyle: String = UIStyleRepository.STYLE_CUTE
 )
@@ -55,6 +56,7 @@ class InventoryViewModel @Inject constructor(
 
     private val _searchQuery = MutableStateFlow("")
     private val _selectedCategory = MutableStateFlow<FoodCategory?>(null)
+    private val _selectedLocation = MutableStateFlow<StorageLocation?>(null)
 
     private val _uiState = MutableStateFlow(InventoryUiState())
     val uiState: StateFlow<InventoryUiState> = _uiState.asStateFlow()
@@ -70,21 +72,24 @@ class InventoryViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            combine(_searchQuery.debounce(300), _selectedCategory) { query, category ->
-                Pair(query, category)
+            combine(_searchQuery.debounce(300), _selectedCategory, _selectedLocation) { query, category, location ->
+                Triple(query, category, location)
             }
-            .flatMapLatest { (query, category) ->
+            .flatMapLatest { (query, category, location) ->
                 if (query.isBlank()) {
                     getAllFoodItems()
                 } else {
                     searchFoodItems(query)
                 }
                 .map { items ->
+                    var filtered = items
                     if (category != null) {
-                        items.filter { it.category == category }
-                    } else {
-                        items
+                        filtered = filtered.filter { it.category == category }
                     }
+                    if (location != null) {
+                        filtered = filtered.filter { it.location == location }
+                    }
+                    filtered
                 }
             }
             .collect { items ->
@@ -117,6 +122,12 @@ class InventoryViewModel @Inject constructor(
     fun onCategorySelected(category: FoodCategory?) {
         _selectedCategory.value = category
         _uiState.update { it.copy(selectedCategory = category) }
+    }
+
+    fun onLocationSelected(location: StorageLocation?) {
+        _selectedLocation.value = location
+        _selectedCategory.value = null
+        _uiState.update { it.copy(selectedLocation = location, selectedCategory = null) }
     }
 
     fun onAddFoodItem(foodItem: FoodItem) {

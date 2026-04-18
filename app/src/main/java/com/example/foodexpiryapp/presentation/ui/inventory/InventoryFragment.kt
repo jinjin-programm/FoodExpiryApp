@@ -32,7 +32,9 @@ import com.example.foodexpiryapp.domain.model.AnalyticsEvent
 import com.example.foodexpiryapp.domain.model.EventType
 import com.example.foodexpiryapp.domain.repository.AnalyticsRepository
 import com.example.foodexpiryapp.domain.repository.UIStyleRepository
+import com.example.foodexpiryapp.presentation.adapter.ExpiringCuteAdapter
 import com.example.foodexpiryapp.presentation.adapter.FoodCardAdapter
+import com.example.foodexpiryapp.presentation.adapter.FoodItemCuteAdapter
 import com.example.foodexpiryapp.presentation.adapter.FoodListAdapter
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryEvent
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryViewModel
@@ -64,8 +66,10 @@ class InventoryFragment : Fragment() {
     @Inject
     lateinit var analyticsRepository: AnalyticsRepository
 
-    private lateinit var expiringSoonAdapter: FoodCardAdapter
-    private lateinit var freshStockAdapter: FoodListAdapter
+    private lateinit var expiringOriginalAdapter: FoodCardAdapter
+    private lateinit var expiringCuteAdapter: ExpiringCuteAdapter
+    private lateinit var foodListOriginalAdapter: FoodListAdapter
+    private lateinit var foodListCuteAdapter: FoodItemCuteAdapter
 
     private val displayFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
     private val headerDateFormatter = DateTimeFormatter.ofPattern("EEEE, MMM d", Locale.getDefault())
@@ -88,7 +92,7 @@ class InventoryFragment : Fragment() {
         setupHeader()
         setupRecyclerViews()
         setupSearch()
-        setupCategoryFilter()
+        setupLocationFilter()
         setupActionButtons()
         observeState()
         observeEvents()
@@ -100,15 +104,19 @@ class InventoryFragment : Fragment() {
     }
 
     private fun setupRecyclerViews() {
-        expiringSoonAdapter = FoodCardAdapter { item -> showAddEditDialog(item) }
+        val onFoodClick: (FoodItem) -> Unit = { item -> showAddEditDialog(item) }
+
+        expiringOriginalAdapter = FoodCardAdapter(onFoodClick)
+        expiringCuteAdapter = ExpiringCuteAdapter(onFoodClick)
+
+        foodListOriginalAdapter = FoodListAdapter(onFoodClick)
+        foodListCuteAdapter = FoodItemCuteAdapter(onFoodClick)
+
         binding.recyclerExpiringSoon.apply {
-            adapter = expiringSoonAdapter
             layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         }
 
-        freshStockAdapter = FoodListAdapter { item -> showAddEditDialog(item) }
         binding.foodItemsRecyclerView.apply {
-            adapter = freshStockAdapter
             layoutManager = LinearLayoutManager(requireContext())
         }
 
@@ -120,9 +128,16 @@ class InventoryFragment : Fragment() {
             ): Boolean = false
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                val position = viewHolder.bindingAdapterPosition
-                val item = freshStockAdapter.currentList[position]
-                viewModel.onDeleteFoodItem(item)
+                val adapter = binding.foodItemsRecyclerView.adapter
+                if (adapter is FoodListAdapter) {
+                    val position = viewHolder.bindingAdapterPosition
+                    val item = adapter.currentList[position]
+                    viewModel.onDeleteFoodItem(item)
+                } else if (adapter is FoodItemCuteAdapter) {
+                    val position = viewHolder.bindingAdapterPosition
+                    val item = adapter.currentList[position]
+                    viewModel.onDeleteFoodItem(item)
+                }
             }
         }
         ItemTouchHelper(swipeCallback).attachToRecyclerView(binding.foodItemsRecyclerView)
@@ -239,8 +254,13 @@ class InventoryFragment : Fragment() {
             )
             binding.textHeroTitle.setTextColor(android.graphics.Color.WHITE)
             binding.textHeroSubtitle.setTextColor(android.graphics.Color.parseColor("#CCFFFFFF"))
-            binding.btnTryAIScan.setBackgroundColor(android.graphics.Color.WHITE)
+            binding.btnTryAIScan.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                android.graphics.Color.WHITE
+            )
             binding.btnTryAIScan.setTextColor(android.graphics.Color.parseColor("#4D644F"))
+            binding.btnTryAIScan.iconTint = android.content.res.ColorStateList.valueOf(
+                android.graphics.Color.parseColor("#4D644F")
+            )
 
             binding.iconPhotoCircle.setBackgroundResource(R.drawable.bg_quick_action_circle_green)
             binding.iconBarcodeCircle.setBackgroundResource(R.drawable.bg_quick_action_circle_blue)
@@ -253,6 +273,9 @@ class InventoryFragment : Fragment() {
             binding.imgEmptyIllustration.imageTintList = null
             binding.textEmptyTitle.text = "Your kitchen is empty!"
             binding.textEmptySubtitle.text = "Let's fill it up \uD83D\uDC31"
+
+            binding.recyclerExpiringSoon.adapter = expiringCuteAdapter
+            binding.foodItemsRecyclerView.adapter = foodListCuteAdapter
         } else {
             binding.heroBanner.apply {
                 cardElevation = 2f
@@ -264,8 +287,13 @@ class InventoryFragment : Fragment() {
             binding.imgRobot.clearAnimation()
             binding.textHeroTitle.setTextColor(android.graphics.Color.parseColor("#171725"))
             binding.textHeroSubtitle.setTextColor(android.graphics.Color.parseColor("#6B7280"))
-            binding.btnTryAIScan.setBackgroundColor(android.graphics.Color.parseColor("#4D644F"))
+            binding.btnTryAIScan.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                android.graphics.Color.parseColor("#4D644F")
+            )
             binding.btnTryAIScan.setTextColor(android.graphics.Color.WHITE)
+            binding.btnTryAIScan.iconTint = android.content.res.ColorStateList.valueOf(
+                android.graphics.Color.WHITE
+            )
 
             binding.iconPhotoCircle.background = null
             binding.iconBarcodeCircle.background = null
@@ -280,6 +308,9 @@ class InventoryFragment : Fragment() {
             )
             binding.textEmptyTitle.text = "Get Started"
             binding.textEmptySubtitle.text = "Add your first item using a quick photo scan to get started tracking."
+
+            binding.recyclerExpiringSoon.adapter = expiringOriginalAdapter
+            binding.foodItemsRecyclerView.adapter = foodListOriginalAdapter
         }
     }
 
@@ -300,22 +331,29 @@ class InventoryFragment : Fragment() {
         binding.cardPhoto.clearAnimation()
     }
 
-    private fun setupCategoryFilter() {
+    private fun setupLocationFilter() {
         val chipGroup = binding.categoryChipGroup
-        FoodCategory.values().forEach { category ->
+
+        val allChip = layoutInflater.inflate(R.layout.layout_filter_chip, chipGroup, false) as Chip
+        allChip.text = "All"
+        allChip.id = R.id.chip_all
+        allChip.isChecked = true
+        chipGroup.addView(allChip)
+
+        StorageLocation.values().forEach { location ->
             val chip = layoutInflater.inflate(R.layout.layout_filter_chip, chipGroup, false) as Chip
-            chip.text = category.displayName
-            chip.tag = category
+            chip.text = location.displayName
+            chip.tag = location
             chipGroup.addView(chip)
         }
 
         chipGroup.setOnCheckedStateChangeListener { group, checkedIds ->
             val checkedId = checkedIds.firstOrNull()
             if (checkedId == null || checkedId == R.id.chip_all) {
-                viewModel.onCategorySelected(null)
+                viewModel.onLocationSelected(null)
             } else {
                 val chip = group.findViewById<Chip>(checkedId)
-                viewModel.onCategorySelected(chip.tag as? FoodCategory)
+                viewModel.onLocationSelected(chip.tag as? StorageLocation)
             }
         }
     }
@@ -345,10 +383,16 @@ class InventoryFragment : Fragment() {
                     binding.searchBarLayout.visibility = if (isEmpty) View.GONE else View.VISIBLE
 
                     val expiringSoon = state.foodItems.filter { it.daysUntilExpiry <= 7 }.sortedBy { it.daysUntilExpiry }
-                    expiringSoonAdapter.submitList(expiringSoon)
-
                     val otherItems = state.foodItems.sortedByDescending { it.dateAdded }
-                    freshStockAdapter.submitList(otherItems)
+
+                    val isCute = state.uiStyle == UIStyleRepository.STYLE_CUTE
+                    if (isCute) {
+                        expiringCuteAdapter.submitList(expiringSoon)
+                        foodListCuteAdapter.submitList(otherItems)
+                    } else {
+                        expiringOriginalAdapter.submitList(expiringSoon)
+                        foodListOriginalAdapter.submitList(otherItems)
+                    }
                 }
             }
         }
