@@ -1,114 +1,80 @@
-# Phase 8: YOLO Detection Hardening - Discussion Log
+# Phase 8: Remote Detection Hardening - Discussion Log
 
 > **Audit trail only.** Do not use as input to planning, research, or execution agents.
 > Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.
 
-**Date:** 2026-04-11
+**Date:** 2026-04-18
 **Phase:** 08-yolo-hardening
-**Areas discussed:** YOLO Model + Native Bridge, Bounding Box Rendering, Code Hardening & Safety, End-to-End Testing Approach
+**Areas discussed:** YOLO 偵測方案, UI 切換, Pipeline 重構, 程式碼品質, 測試策略
 
 ---
 
-## YOLO Model + Native Bridge
+## YOLO 偵測方案
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Food YOLO from reference repo | Use food-specific YOLO from YOLO_CLIP_targetDetection, convert to MNN | ✓ |
-| Standard YOLOv5/v8-nano + MNN | Broader COCO detection, not food-specific | |
-| Agent researches best option | Researcher investigates models and compatibility | |
+| TFLite YOLOv8-nano | 用 TFLite 跑 YOLO，Android 成熟、不需要自定義 JNI、~6MB 模型 | ✓ |
+| 繼續 MNN JNI bridge | 沿用 MNN 格式完成 JNI bridge | |
+| ONNX Runtime YOLO | 跨平台但 Android 支援不如 TFLite | |
+| 遠端 Ollama YOLO | 在 Ollama 伺服器跑 YOLO，需額外部署 | |
+| 遠端 LLM 直接做偵測 | 讓 LLM 回傳 bounding boxes + 名稱 | |
+| 先擱置 YOLO | 只做程式碼品質清理 | |
 
-**User's choice:** Food YOLO from reference repo. Also interested in YOLOv11 (YOLO26) if feasible.
-**Notes:** Model should be converted to MNN format, bundled as `yolo_food.mnn` in assets (~5-20MB).
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Custom JNI bridge | New MnnYoloNative following MnnLlmNative pattern | ✓ |
-| MNN Java API (MNNNetInstance) | Use existing AAR Java API directly | |
-| Agent researches | Researcher determines best approach | |
-
-**User's choice:** Custom JNI bridge — full control, consistent with existing LLM pattern.
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Keep existing postprocessor format | 6+ values per row (x1,y1,x2,y2,conf,class_id) | ✓ |
-| Adapt postprocessor to model | Flexible but requires understanding output tensors | |
-
-**User's choice:** Keep existing format — MnnYoloPostprocessor already handles it, researcher just needs matching MNN conversion.
+**User's choice:** TFLite YOLOv8-nano
+**Notes:** 本地跑 YOLO（只做偵測），遠端跑 LLM（做分類）。用戶確認本地 YOLO 資源佔用不多，可以在手機上跑。參考專案 tishuo-wang/YOLO_CLIP_targetDetection 只用 YOLO detection 部分，不需要 CLIP。
 
 ---
 
-## Bounding Box Rendering
+## UI 切換按鈕
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Show detections during YOLO stage | Wire overlay immediately after detection, before LLM | ✓ |
-| Show only after LLM complete | Less visual noise, slower feedback | |
-| Two-phase: YOLO boxes → LLM labels | Show raw detections, then update with labels | |
+| 掃描畫面上的切換按鈕 | ToggleButton/Chip，拍照前選擇單圖 or 多物件模式 | ✓ |
+| 保持 ViewPager 分頁 | YOLO Scan 和 Photo Scan 分開 | |
+| 設定中選擇 | Settings 中預設模式 | |
 
-**User's choice:** Show detections during YOLO stage with two-phase visual states (enhanced from option 1).
-**Notes:** User provided detailed visual design:
-- DETECTED: white/light gray border (indicating "awaiting identification")
-- CLASSIFIED: green solid border + food name label
-- Use DetectionResult.status field (PENDING/CLASSIFIED/FAILED) to drive visual state
-- Simplified to color changes only (no dashed animation)
+**User's choice:** 掃描畫面上的切換按鈕
+**Notes:** 加在 VisionScanFragment 上。預設「單圖分析」。YOLO Scan tab（YoloScanFragment）保持不變。DataStore 記住選擇。
 
 ---
 
-## Code Hardening & Safety
+## Pipeline 重構範圍
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Fix all issues | All 5 identified issues (bitmap, error, colors, cancel) | ✓ |
-| Critical fixes only | Bitmap safety + error reporting, defer colors | |
+| 替換 YOLO engine | 移除 MnnYoloEngine 依賴，改用 TFLiteYoloEngine | ✓ |
 
-**User's choice:** Fix all issues.
-**Notes:** Five specific issues identified:
-1. DetectionPipeline:132 — bitmap double-recycle risk
-2. YoloScanFragment:289 — missing defensive bitmap copy
-3. ConfirmationViewModel:104 — silent error swallowing
-4. DetectionResultAdapter — 6 hardcoded Color.parseColor() calls
-5. cancelDetection — verify propagation to pipeline coroutine
+**User's choice:** 替換 YOLO engine
+**Notes:** MnnYoloEngine/MnnYoloNative/mnn_yolo_bridge.cpp 保留不刪除。DI 改為注入 TFLite engine。MnnYoloPostprocessor 純函數繼續使用或根據 TFLite 輸出調整。
 
 ---
 
-## End-to-End Testing Approach
+## 程式碼品質
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Manual on-device testing | Real device, real camera, real Logcat | ✓ (Phase 1) |
-| Unit tests + mocks | Automated tests with mocked MNN engine | ✓ (Phase 3) |
-| Agent researches test strategy | Researcher designs testing approach | ✓ (Phase 2 for fixes) |
+| 全部納入 | 5 項修復全部做（bitmap 安全、顏色、錯誤回報、取消、bitmap 複製） | ✓ |
+| 只做必要的 | 只做與重構相關的 | |
+| 全部擱置 | 只做功能 | |
 
-**User's choice:** Three-phase strategy:
-1. Manual device testing first (plug in phone, run YOLO, capture Logcat)
-2. Agent fixes for compilation/linking errors
-3. Unit tests for MnnYoloPostprocessor (pure functions only)
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Single device testing | Test on SD855 only | |
-| Multi-device testing | Test on both available devices | ✓ |
-
-**User's choice:** Test on two Android devices.
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Postprocessor tests only | parseDetections, applyNms, cropDetection, mapLabelToCategory | ✓ |
-| Broader test coverage | Also mock engines and test pipeline/viewmodel | |
-
-**User's choice:** MnnYoloPostprocessor tests only — pure functions, no native dependencies.
+**User's choice:** 全部納入
+**Notes:** 舊 CONTEXT 的 D-10~D-14 全部沿用。
 
 ---
 
 ## Agent's Discretion
 
-- YOLO model variant selection (reference vs YOLOv11 based on MNN conversion feasibility)
-- JNI bridge implementation details
-- Exact color shades for bounding box states
-- DetectionOverlayView redraw strategy
-- Bitmap lifecycle management approach
-- Test file structure and naming
+- TFLite engine 具體實作（Interpreter、tensor 格式）
+- YOLOv8-nano 導出參數
+- 切換按鈕 UI 樣式
+- 邊界框色值
+- DetectionOverlayView 重繪策略
+- 測試檔案結構
+
+---
 
 ## Deferred Ideas
 
-None — discussion stayed within phase scope
+- YOLO Gallery batch scan (gallery picker UI shell 需接上 pipeline) —— 可能納入本 phase
+- MNN 本地 LLM 推論 —— 已擱置
+- Shelf Life unit tests —— 非 Phase 8 範圍

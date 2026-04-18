@@ -14,7 +14,7 @@ progress:
 
 # Project State: FoodExpiryApp
 
-**Status:** Executing Phase 8 (YOLO Hardening) — 2/3 plans complete
+**Status:** Phase 8 (YOLO Hardening) — 需重新規劃，原 MNN 方案已擱置
 
 ## Project Reference
 
@@ -25,16 +25,16 @@ See: .planning/PROJECT.md (updated 2026-04-08)
 
 ## Current Position
 
-Phase: 08 (yolo-hardening) — 2/3 plans done
-Migration: Ollama + LM Studio dual provider — COMPLETE
+Phase: 08 (remote-detection-hardening) — 原計畫已擱置，需重新規劃
+Architecture: 遠端 Ollama/LM Studio 雙供應商 — COMPLETE
 UI Enhancement: Food image system — COMPLETE
 Feature: Shelf Life Database + Auto-Learn — COMPLETE
 Feature: Gallery Photo Picker for AI Vision Scan — COMPLETE
 Bugfix: AI Vision Scan navigation button — COMPLETE
 
 - **Milestone:** v2.0 AI Vision Engine Overhaul
-- **Active Task:** Phase 8 Plan 03 (tests + ViewModel detections)
-- **Status:** All features building and passing, multiple post-phase features added
+- **Active Task:** Phase 8 重新規劃（基於 Ollama/LM Studio 遠端方案）
+- **Status:** 原 MNN 計畫已標記 superseded，等待重新規劃
 
 ### v2.0 Progress
 
@@ -43,7 +43,7 @@ Phase 4: Foundation       [██████████] 100% ✅
 Phase 5: Engine           [██████████] 100% ✅
 Phase 6: Detection        [██████████] 100% ✅
 Phase 7: Scan UI Overhaul [██████████] 100% ✅
-Phase 8: YOLO Hardening   [██████░░░░] 67%  ← 2/3 plans done
+Phase 8: Remote Detection Hardening [░░░░░░░░░░] 0%  ← 需重新規劃
 Phase 9: Verification     [          ] 0%
 ```
 

@@ -25,7 +25,7 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 - [x] **Phase 5: Engine** — LLM inference wrapper, dynamic model download from HuggingFace
 - [x] **Phase 6: Detection** — YOLO+LLM batch pipeline, new scan tab, multi-item detection
 - [x] **Phase 7: Scan UI Overhaul** — Title bar removal, horizontal frame, capture animation, barcode redesign
-- [ ] **Phase 8: YOLO Detection Hardening** — Model asset, overlay wiring, code review fixes
+- [ ] **Phase 8: Remote Detection Hardening** — ⚠️ 重新規劃中（原 MNN 方案已擱置，改用 Ollama/LM Studio 遠端方案）
 - [ ] **Phase 9: Verification & Artifact Cleanup** — Missing verification docs, planning state sync
 
 </details>
@@ -98,23 +98,15 @@ Full details: [.planning/milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
 - [x] 07-04-PLAN.md — Redesign barcode scan to manual capture with result card + human checkpoint (Wave 2)
 **UI hint**: yes
 
-### Phase 8: YOLO Detection Hardening
-**Goal**: YOLO scan works end-to-end with real detections, bounding boxes rendered, and all code review warnings addressed
+### Phase 8: Remote Detection Hardening (重新規劃)
+**Goal**: 遠端 Ollama/LM Studio 推論流程穩定、偵測 pipeline 完善、程式碼品質達標
 **Depends on**: Phase 6, Phase 7
-**Requirements**: YOLO-01, YOLO-03
-**Gap Closure**: Closes audit gaps YOLO-01, YOLO-03, INT-01, INT-02, INT-03, FLOW-01, WR-01–WR-06, IN-01, IN-04
-**Success Criteria** (what must be TRUE):
-  1. `yolo_food.mnn` model asset exists in `app/src/main/assets/` and loads successfully
-  2. `DetectionOverlayView.setDetections()` is called from `YoloScanFragment` to render bounding boxes
-  3. `cancelDetection()` propagates cancellation to running pipeline coroutine
-  4. No bitmap double-recycle or memory leak risks in `DetectionPipeline`
-  5. Defensive bitmap copy in `YoloScanFragment.captureAndDetect()`
-  6. `ConfirmationViewModel.saveAll()` reports errors instead of silent swallowing
-  7. Hardcoded colors in `DetectionResultAdapter` extracted to `colors.xml`
-**Plans**: 3 plans
-- [x] 08-01-PLAN.md — YOLO native JNI bridge (MnnYoloNative, mnn_yolo_bridge.cpp, MnnYoloEngine wiring)
-- [x] 08-02-PLAN.md — Overlay wiring + code hardening (DetectionOverlayView, bitmap safety, color extraction, error reporting)
-- [ ] 08-03-PLAN.md — Unit tests + device verification (MnnYoloPostprocessorTest, YoloScanViewModel detections, human checkpoint)
+**Architecture Change**: MNN 本地推論已擱置 (2026-04-18)，改用遠端 Ollama/LM Studio 大語言模型
+**Previous Plans (superseded)**:
+- ~~08-01-PLAN.md~~ — JNI Bridge (基於 MNN，已擱置)
+- ~~08-02-PLAN.md~~ — Overlay + 程式碼強化 (部分成果仍可用)
+- ~~08-03-PLAN.md~~ — MNN 單元測試 (基於 MNN，已擱置)
+**Plans**: 待重新規劃
 
 ### Phase 9: Verification & Artifact Cleanup
 **Goal**: All phases have formal verification artifacts, planning state reflects reality, untracked files committed
