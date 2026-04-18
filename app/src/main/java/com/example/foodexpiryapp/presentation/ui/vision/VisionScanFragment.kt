@@ -1,15 +1,21 @@
 package com.example.foodexpiryapp.presentation.ui.vision
 
 import android.Manifest
+import android.content.ContentResolver
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -29,6 +35,7 @@ import com.example.foodexpiryapp.presentation.ui.scan.ScanPagerAdapter
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.*
+import java.io.InputStream
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.max
@@ -69,6 +76,12 @@ class VisionScanFragment : Fragment() {
             }
         }
 
+    private val pickMedia = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) {
+            handleGalleryImage(uri)
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -94,6 +107,7 @@ class VisionScanFragment : Fragment() {
 
         setupUI()
         setupViewPagerCallback()
+        loadLatestGalleryThumbnail()
     }
 
     private fun checkServerConnection() {
@@ -122,6 +136,11 @@ class VisionScanFragment : Fragment() {
         binding.btnCapture.setOnClickListener {
             if (isProcessing) return@setOnClickListener
             captureAndAnalyze()
+        }
+
+        binding.galleryThumbnail.setOnClickListener {
+            if (isProcessing) return@setOnClickListener
+            pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
 
         binding.btnRetake.setOnClickListener {
@@ -154,6 +173,84 @@ class VisionScanFragment : Fragment() {
                 }
             }
         })
+    }
+
+    private fun loadLatestGalleryThumbnail() {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val resolver = requireContext().contentResolver
+                val projection = arrayOf(MediaStore.Images.Media._ID)
+                val sortOrder = "${MediaStore.Images.Media.DATE_ADDED} DESC"
+                resolver.query(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    projection,
+                    null,
+                    null,
+                    sortOrder
+                )?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
+                        val id = cursor.getLong(idColumn)
+                        val uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id.toString())
+                        withContext(Dispatchers.Main) {
+                            _binding?.imgRecentPhoto?.setImageURI(uri)
+                        }
+                    }
+                }
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    private fun handleGalleryImage(uri: Uri) {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val resolver = requireContext().contentResolver
+                val inputStream: InputStream? = resolver.openInputStream(uri)
+                if (inputStream == null) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Failed to load image", Toast.LENGTH_SHORT).show()
+                    }
+                    return@launch
+                }
+
+                val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeStream(inputStream, null, options)
+                inputStream.close()
+
+                val targetSize = 1024
+                val sampleSize = max(
+                    options.outWidth / targetSize,
+                    options.outHeight / targetSize
+                ).coerceAtLeast(1)
+
+                val decodeOptions = BitmapFactory.Options().apply {
+                    inSampleSize = sampleSize
+                }
+                val secondStream = resolver.openInputStream(uri)
+                val bitmap = BitmapFactory.decodeStream(secondStream, null, decodeOptions)
+                secondStream?.close()
+
+                if (bitmap == null) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Failed to decode image", Toast.LENGTH_SHORT).show()
+                    }
+                    return@launch
+                }
+
+                withContext(Dispatchers.Main) {
+                    if (_binding == null) return@withContext
+                    stopCamera()
+                    showBlurredBackground(bitmap)
+                    runOllamaAnalysis(bitmap)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Gallery image load failed", e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Failed to load image: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
 
     private fun allPermissionsGranted() = ContextCompat.checkSelfPermission(
@@ -364,7 +461,7 @@ class VisionScanFragment : Fragment() {
 
                     if (result.name == "Error" || result.name == "Unknown") {
                         displayAiResult(result.nameZh, result.expiryHint, result.rawResponse ?: "Error")
-                        updateStatus("Analysis: ${result.nameZh}", Status.ERROR)
+                        updateStatus("Analysis: ${result.name}", Status.ERROR)
                     } else {
                         val bundle = android.os.Bundle().apply {
                             putString("food_name", result.name)
@@ -374,7 +471,7 @@ class VisionScanFragment : Fragment() {
                         }
                         requireActivity().supportFragmentManager.setFragmentResult("llm_scan_result", bundle)
 
-                        displayAiResult(result.nameZh, result.expiryHint, result.rawResponse ?: "")
+                        displayAiResult(result.name, result.expiryHint, result.rawResponse ?: "")
                         updateStatus("Analysis complete", Status.READY)
                     }
                 }

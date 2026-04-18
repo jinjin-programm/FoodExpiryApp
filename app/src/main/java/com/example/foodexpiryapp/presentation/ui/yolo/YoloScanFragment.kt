@@ -8,12 +8,15 @@ import android.graphics.BitmapFactory
 import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
+import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -32,8 +35,11 @@ import com.example.foodexpiryapp.presentation.ui.scan.ScanPagerAdapter
 import com.example.foodexpiryapp.presentation.viewmodel.YoloScanViewModel
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -78,6 +84,12 @@ class YoloScanFragment : Fragment() {
             }
         }
 
+    private val pickMedia = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) {
+            handleGalleryImage(uri)
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -106,6 +118,7 @@ class YoloScanFragment : Fragment() {
         observeDetections()
         setupViewPagerCallback()
         setupSaveResultListener()
+        loadLatestGalleryThumbnail()
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -117,12 +130,16 @@ class YoloScanFragment : Fragment() {
             findNavController().popBackStack()
         }
 
-        // Shutter button triggers capture → pipeline start
         binding.btnCapture.setOnClickListener {
             captureAndDetect()
         }
 
-        // Initially hide progress overlay
+        binding.galleryContainer.setOnClickListener {
+            if (!isCapturing) {
+                pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
+        }
+
         showProgressOverlay(false)
     }
 
@@ -272,6 +289,84 @@ class YoloScanFragment : Fragment() {
         binding.btnCancel.setOnClickListener {
             viewModel.resetToReady()
             showProgressOverlay(false)
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Gallery picker
+    // ────────────────────────────────────────────────────────────────────────
+
+    private fun loadLatestGalleryThumbnail() {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val resolver = requireContext().contentResolver
+                val projection = arrayOf(MediaStore.Images.Media._ID)
+                val sortOrder = "${MediaStore.Images.Media.DATE_ADDED} DESC"
+                resolver.query(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    projection, null, null, sortOrder
+                )?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
+                        val id = cursor.getLong(idColumn)
+                        val uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id.toString())
+                        withContext(Dispatchers.Main) {
+                            _binding?.imgRecentScan?.setImageURI(uri)
+                        }
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+    }
+
+    private fun handleGalleryImage(uri: Uri) {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val resolver = requireContext().contentResolver
+                val inputStream: InputStream? = resolver.openInputStream(uri)
+                if (inputStream == null) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Failed to load image", Toast.LENGTH_SHORT).show()
+                    }
+                    return@launch
+                }
+
+                val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeStream(inputStream, null, options)
+                inputStream.close()
+
+                val targetSize = 1024
+                val sampleSize = maxOf(
+                    options.outWidth / targetSize,
+                    options.outHeight / targetSize
+                ).coerceAtLeast(1)
+
+                val decodeOptions = BitmapFactory.Options().apply { inSampleSize = sampleSize }
+                val secondStream = resolver.openInputStream(uri)
+                val bitmap = BitmapFactory.decodeStream(secondStream, null, decodeOptions)
+                secondStream?.close()
+
+                if (bitmap == null) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Failed to decode image", Toast.LENGTH_SHORT).show()
+                    }
+                    return@launch
+                }
+
+                val safeBitmap = bitmap.copy(bitmap.config ?: Bitmap.Config.ARGB_8888, false) ?: bitmap
+
+                withContext(Dispatchers.Main) {
+                    if (_binding == null) return@withContext
+                    isCapturing = true
+                    showProgressOverlayWithFadeIn()
+                    viewModel.startDetection(safeBitmap)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Gallery image load failed", e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Failed to load image: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 

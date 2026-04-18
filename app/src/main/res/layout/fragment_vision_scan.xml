@@ -266,26 +266,61 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Capture Button -->
-        <FrameLayout
+        <!-- Capture Button + Gallery Thumbnail -->
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/captureButtonContainer"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/shape_circle_outline"
-            android:padding="6dp">
+            android:gravity="center_vertical"
+            android:paddingHorizontal="32dp">
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/btn_capture"
+            <!-- Gallery Thumbnail (like native Android camera) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/galleryThumbnail"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="4dp"
+                app:strokeColor="#80FFFFFF"
+                app:strokeWidth="2dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/img_recent_photo"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@android:drawable/ic_menu_gallery" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Shutter Button -->
+            <FrameLayout
+                android:id="@+id/shutterRing"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:contentDescription="Capture"
-                android:src="@android:drawable/ic_menu_camera"
-                app:backgroundTint="@color/primary"
-                app:elevation="4dp"
-                app:fabCustomSize="72dp"
-                app:maxImageSize="32dp"
-                app:tint="@color/white" />
-        </FrameLayout>
+                android:background="@drawable/shape_circle_outline"
+                android:padding="6dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btn_capture"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="Capture"
+                    android:src="@android:drawable/ic_menu_camera"
+                    app:backgroundTint="@color/primary"
+                    app:elevation="4dp"
+                    app:fabCustomSize="72dp"
+                    app:maxImageSize="32dp"
+                    app:tint="@color/white" />
+            </FrameLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <!-- Bottom Cancel Button (shown during inference, replaces capture) -->
         <com.google.android.material.button.MaterialButton
