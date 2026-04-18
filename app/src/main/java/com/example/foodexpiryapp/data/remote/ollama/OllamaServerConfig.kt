@@ -17,7 +17,7 @@ class OllamaServerConfig @Inject constructor(
 ) {
     companion object {
         private const val TAG = "OllamaServerConfig"
-        private const val DEFAULT_BASE_URL = "https://cons-justice-reproductive-eggs.trycloudflare.com"
+        private const val DEFAULT_BASE_URL = "https://roy-struggle-menus-records.trycloudflare.com"
         private const val DEFAULT_MODEL_NAME = "qwen3.5:9b"
         
         private val KEY_BASE_URL = stringPreferencesKey("ollama_base_url")

@@ -136,7 +136,11 @@ class VisionScanFragment : Fragment() {
         }
 
         binding.btnSettings.setOnClickListener {
-            OllamaSettingsDialog().show(parentFragmentManager, "ollama_settings")
+            val dialog = OllamaSettingsDialog()
+            dialog.show(parentFragmentManager, "ollama_settings")
+            parentFragmentManager.setFragmentResultListener("settings_saved", viewLifecycleOwner) { _, _ ->
+                checkServerConnection()
+            }
         }
 
         binding.btnCapture.setOnClickListener {
@@ -192,6 +196,7 @@ class VisionScanFragment : Fragment() {
             binding.btnSingleMode.setBackgroundColor(inactiveBg)
             binding.btnSingleMode.setTextColor(inactiveColor)
             binding.btnSingleMode.setTypeface(null, android.graphics.Typeface.NORMAL)
+            binding.focusRectangle.visibility = View.GONE
         } else {
             binding.btnSingleMode.setBackgroundColor(activeBg)
             binding.btnSingleMode.setTextColor(activeColor)
@@ -199,18 +204,28 @@ class VisionScanFragment : Fragment() {
             binding.btnMultiMode.setBackgroundColor(inactiveBg)
             binding.btnMultiMode.setTextColor(inactiveColor)
             binding.btnMultiMode.setTypeface(null, android.graphics.Typeface.NORMAL)
+            binding.focusRectangle.visibility = View.VISIBLE
         }
     }
 
+    private var viewPagerCallback: ViewPager2.OnPageChangeCallback? = null
+
     private fun setupViewPagerCallback() {
-        val viewPager = requireParentFragment().view?.findViewById<ViewPager2>(R.id.viewPager) ?: return
-        viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+        val viewPager = try {
+            requireParentFragment().view?.findViewById<ViewPager2>(R.id.viewPager)
+        } catch (_: Exception) {
+            null
+        } ?: return
+        viewPagerCallback = object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
-                if (position == ScanPagerAdapter.TAB_PHOTO) {
-                    startCamera()
+                if (position == ScanPagerAdapter.TAB_PHOTO && !isProcessing && _binding != null) {
+                    if (!isCameraActive) {
+                        startCamera()
+                    }
                 }
             }
-        })
+        }
+        viewPager.registerOnPageChangeCallback(viewPagerCallback!!)
     }
 
     private fun loadLatestGalleryThumbnail() {
@@ -276,11 +291,17 @@ class VisionScanFragment : Fragment() {
                     return@launch
                 }
 
+                val safeBitmap = bitmap.copy(bitmap.config ?: Bitmap.Config.ARGB_8888, false) ?: bitmap
+
                 withContext(Dispatchers.Main) {
                     if (_binding == null) return@withContext
                     stopCamera()
-                    showBlurredBackground(bitmap)
-                    runOllamaAnalysis(bitmap)
+                    showBlurredBackground(safeBitmap)
+                    if (isMultiMode) {
+                        runMultiObjectDetection(safeBitmap)
+                    } else {
+                        runOllamaAnalysis(safeBitmap)
+                    }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Gallery image load failed", e)
@@ -296,39 +317,43 @@ class VisionScanFragment : Fragment() {
         Manifest.permission.CAMERA
     ) == PackageManager.PERMISSION_GRANTED
 
+    private var isStartingCamera = false
+
     private fun startCamera() {
+        if (isStartingCamera) return
+        isStartingCamera = true
         val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
 
         cameraProviderFuture.addListener({
-            cameraProvider = cameraProviderFuture.get()
-
-            val preview = Preview.Builder()
-                .build()
-                .also {
-                    it.setSurfaceProvider(binding.previewView.surfaceProvider)
-                }
-
-            val imageAnalyzer = ImageAnalysis.Builder()
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build()
-                .also {
-                    it.setAnalyzer(cameraExecutor) { imageProxy ->
-                        val bm = imageProxy.toBitmap()
-                        val rotation = imageProxy.imageInfo.rotationDegrees
-                        if (rotation != 0) {
-                            val matrix = android.graphics.Matrix()
-                            matrix.postRotate(rotation.toFloat())
-                            latestBitmap = Bitmap.createBitmap(bm, 0, 0, bm.width, bm.height, matrix, true)
-                        } else {
-                            latestBitmap = bm
-                        }
-                        imageProxy.close()
-                    }
-                }
-
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
             try {
+                cameraProvider = cameraProviderFuture.get()
+
+                val preview = Preview.Builder()
+                    .build()
+                    .also {
+                        it.setSurfaceProvider(binding.previewView.surfaceProvider)
+                    }
+
+                val imageAnalyzer = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+                    .also {
+                        it.setAnalyzer(cameraExecutor) { imageProxy ->
+                            val bm = imageProxy.toBitmap()
+                            val rotation = imageProxy.imageInfo.rotationDegrees
+                            if (rotation != 0) {
+                                val matrix = android.graphics.Matrix()
+                                matrix.postRotate(rotation.toFloat())
+                                latestBitmap = Bitmap.createBitmap(bm, 0, 0, bm.width, bm.height, matrix, true)
+                            } else {
+                                latestBitmap = bm
+                            }
+                            imageProxy.close()
+                        }
+                    }
+
+                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
                 cameraProvider?.unbindAll()
                 cameraProvider?.bindToLifecycle(
                     viewLifecycleOwner,
@@ -336,8 +361,11 @@ class VisionScanFragment : Fragment() {
                     preview,
                     imageAnalyzer
                 )
+                isCameraActive = true
             } catch (e: Exception) {
                 Log.e(TAG, "Camera binding failed", e)
+            } finally {
+                isStartingCamera = false
             }
         }, ContextCompat.getMainExecutor(requireContext()))
     }
@@ -414,6 +442,7 @@ class VisionScanFragment : Fragment() {
     }
 
     private fun runMultiObjectDetection(bitmap: Bitmap) {
+        isProcessing = true
         showProgressOverlay()
         binding.tvProgressTitle.text = "Detecting food items..."
         binding.tvProgressDetailOverlay.text = "Analyzing with YOLO + AI"
@@ -667,9 +696,16 @@ class VisionScanFragment : Fragment() {
         detectionJob?.cancel()
         progressTickerJob?.cancel()
         scope.cancel()
+        try {
+            val viewPager = try {
+                parentFragment?.view?.findViewById<ViewPager2>(R.id.viewPager)
+            } catch (_: Exception) { null }
+            viewPagerCallback?.let { viewPager?.unregisterOnPageChangeCallback(it) }
+        } catch (_: Exception) {}
+        viewPagerCallback = null
         cameraProvider?.unbindAll()
         cameraProvider = null
-        cameraExecutor.shutdown()
+        cameraExecutor.shutdownNow()
         blurredBg?.let { (_binding?.root as? ViewGroup)?.removeView(it) }
         blurredBg = null
         _binding = null

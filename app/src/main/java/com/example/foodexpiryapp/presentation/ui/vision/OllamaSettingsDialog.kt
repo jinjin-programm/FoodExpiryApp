@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import com.example.foodexpiryapp.R
@@ -78,14 +79,21 @@ class OllamaSettingsDialog : DialogFragment() {
         return MaterialAlertDialogBuilder(requireContext())
             .setTitle("推理服務器設置")
             .setView(view)
-            .setPositiveButton("保存") { _, _ ->
-                saveSettings()
-            }
+            .setPositiveButton("保存", null)
             .setNegativeButton("取消", null)
-            .setNeutralButton("測試連接") { _, _ ->
-                testConnection()
-            }
+            .setNeutralButton("測試連接", null)
             .create()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val dialog = dialog as? AlertDialog ?: return
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            saveSettingsAndDismiss(dialog)
+        }
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
+            testConnection()
+        }
     }
 
     private fun loadProviderSettings() {
@@ -108,7 +116,7 @@ class OllamaSettingsDialog : DialogFragment() {
         }
     }
 
-    private fun saveSettings() {
+    private fun saveSettingsAndDismiss(dialog: AlertDialog) {
         val url = editTextUrl.text?.toString()?.trim()
         val model = editTextModel.text?.toString()?.trim()
         val token = editTextToken.text?.toString()?.trim()
@@ -134,6 +142,8 @@ class OllamaSettingsDialog : DialogFragment() {
                     ollamaServerConfig.setApiToken(token?.takeIf { it.isNotBlank() })
                 }
                 Toast.makeText(context, "設置已保存 (${if (currentProvider == ProviderConfig.PROVIDER_LMSTUDIO) "LM Studio" else "Ollama"})", Toast.LENGTH_SHORT).show()
+                parentFragmentManager.setFragmentResult("settings_saved", Bundle.EMPTY)
+                dialog.dismiss()
             } catch (e: Exception) {
                 Toast.makeText(context, "保存失敗: ${e.message}", Toast.LENGTH_SHORT).show()
             }
