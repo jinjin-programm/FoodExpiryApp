@@ -114,10 +114,11 @@ class InventoryFragment : Fragment() {
     }
 
     private fun setupRecyclerViews() {
+        val onExpiringClick: (FoodItem) -> Unit = { item -> showFoodDetail(item) }
         val onFoodClick: (FoodItem) -> Unit = { item -> showAddEditDialog(item) }
 
-        expiringOriginalAdapter = FoodCardAdapter(onFoodClick)
-        expiringCuteAdapter = ExpiringCuteAdapter(onFoodClick)
+        expiringOriginalAdapter = FoodCardAdapter(onExpiringClick)
+        expiringCuteAdapter = ExpiringCuteAdapter(onExpiringClick)
 
         foodListOriginalAdapter = FoodListAdapter(onFoodClick)
         foodListCuteAdapter = FoodItemCuteAdapter(onFoodClick)
@@ -554,7 +555,26 @@ class InventoryFragment : Fragment() {
         glideRequest.centerCrop().into(dialogBinding.imgFoodCategory)
     }
 
-    private fun showAddEditDialog(existingItem: FoodItem?) {
+    fun showFoodDetail(item: FoodItem) {
+        val bottomSheet = FoodDetailBottomSheet.newInstance(item)
+        bottomSheet.show(childFragmentManager, FoodDetailBottomSheet.TAG)
+    }
+
+    fun navigateToRecipes(ingredientName: String) {
+        try {
+            val navController = findNavController()
+            if (navController.currentDestination?.id == R.id.navigation_inventory) {
+                val action = R.id.action_inventory_to_chat
+                navController.navigate(action, Bundle().apply {
+                    putString("query", "What can I cook with $ingredientName?")
+                })
+            }
+        } catch (e: Exception) {
+            Log.w("InventoryFragment", "Cannot navigate to recipes: ${e.message}")
+        }
+    }
+
+    fun showAddEditDialog(existingItem: FoodItem?) {
         val dialogBinding = com.example.foodexpiryapp.databinding.DialogAddFoodBinding.inflate(layoutInflater)
         var selectedDate: LocalDate = existingItem?.expiryDate ?: LocalDate.now().plusDays(7)
 
@@ -721,6 +741,8 @@ class InventoryFragment : Fragment() {
         super.onPause()
         binding.recyclerExpiringSoon.stopAutoScroll()
         binding.recyclerExpiringSoon.cancelResumeTimer()
+        stopPulseAnimation()
+        binding.imgRobot.clearAnimation()
     }
 
     override fun onDestroyView() {

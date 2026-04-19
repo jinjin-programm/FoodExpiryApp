@@ -44,6 +44,10 @@
     <color name="on_error">#FFFFFF</color>
     <color name="error_container">#FFDAD6</color>
 
+    <color name="orange">#E65100</color>
+    <color name="orange_light">#FFF3E0</color>
+    <color name="green_status">#2E7D32</color>
+
     <color name="outline">#737972</color>
 
     <!-- Legacy / Other -->
