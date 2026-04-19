@@ -20,4 +20,11 @@
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
     </style>
+
+    <style name="ThemeOverlay.App.SearchBar" parent="">
+        <item name="colorOnSurface">@color/search_bar_text_original</item>
+        <item name="colorOnSurfaceVariant">@color/search_bar_icon_original</item>
+        <item name="colorPrimary">@color/primary</item>
+        <item name="android:textColorHint">@color/search_bar_hint_original</item>
+    </style>
 </resources>

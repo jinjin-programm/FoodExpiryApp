@@ -1,5 +1,6 @@
 package com.example.foodexpiryapp.presentation.ui.inventory
 
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.view.animation.AnimationUtils
 import android.widget.PopupMenu
@@ -13,6 +14,7 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import androidx.core.widget.doAfterTextChanged
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
@@ -41,6 +43,7 @@ import com.example.foodexpiryapp.presentation.viewmodel.InventoryEvent
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryViewModel
 import com.example.foodexpiryapp.util.ShelfLifeEstimator
 import com.example.foodexpiryapp.util.FoodImageResolver
+import com.example.foodexpiryapp.util.FoodImageStorage
 import com.example.foodexpiryapp.presentation.ui.vision.ScanResultHolder
 import com.bumptech.glide.Glide
 import com.google.android.material.chip.Chip
@@ -67,6 +70,11 @@ class InventoryFragment : Fragment() {
 
     @Inject
     lateinit var analyticsRepository: AnalyticsRepository
+
+    @Inject
+    lateinit var foodImageStorage: FoodImageStorage
+
+    private var pendingScanImageBytes: ByteArray? = null
 
     private lateinit var expiringOriginalAdapter: FoodCardAdapter
     private lateinit var expiringCuteAdapter: ExpiringCuteAdapter
@@ -279,12 +287,14 @@ class InventoryFragment : Fragment() {
             binding.recyclerExpiringSoon.adapter = expiringCuteAdapter
             binding.foodItemsRecyclerView.adapter = foodListCuteAdapter
 
-            binding.searchBarLayout.setBoxBackgroundColor(Color.parseColor("#33FFFFFF"))
+            binding.searchBarLayout.setBoxBackgroundColorResource(R.color.search_bar_bg_cute)
             binding.searchBarLayout.setBackgroundColor(Color.TRANSPARENT)
-            binding.searchEditText.setTextColor(Color.WHITE)
-            binding.searchEditText.setHintTextColor(Color.parseColor("#AAFFFFFF"))
-            binding.searchBarLayout.setStartIconTintList(android.content.res.ColorStateList.valueOf(Color.WHITE))
-            binding.searchBarLayout.setEndIconTintList(android.content.res.ColorStateList.valueOf(Color.WHITE))
+            binding.searchEditText.setTextColor(ContextCompat.getColor(requireContext(), R.color.search_bar_text_cute))
+            binding.searchEditText.setHintTextColor(ContextCompat.getColor(requireContext(), R.color.search_bar_hint_cute))
+            binding.searchBarLayout.setStartIconTintList(android.content.res.ColorStateList.valueOf(
+                ContextCompat.getColor(requireContext(), R.color.search_bar_icon_cute)))
+            binding.searchBarLayout.setEndIconTintList(android.content.res.ColorStateList.valueOf(
+                ContextCompat.getColor(requireContext(), R.color.search_bar_icon_cute)))
         } else {
             binding.heroBanner.apply {
                 cardElevation = 2f
@@ -321,12 +331,14 @@ class InventoryFragment : Fragment() {
             binding.recyclerExpiringSoon.adapter = expiringOriginalAdapter
             binding.foodItemsRecyclerView.adapter = foodListOriginalAdapter
 
-            binding.searchBarLayout.setBoxBackgroundColor(Color.parseColor("#F5F5F5"))
+            binding.searchBarLayout.setBoxBackgroundColorResource(R.color.search_bar_bg_original)
             binding.searchBarLayout.setBackgroundColor(Color.TRANSPARENT)
-            binding.searchEditText.setTextColor(Color.parseColor("#1C1C1E"))
-            binding.searchEditText.setHintTextColor(Color.parseColor("#9E9E9E"))
-            binding.searchBarLayout.setStartIconTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#757575")))
-            binding.searchBarLayout.setEndIconTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#757575")))
+            binding.searchEditText.setTextColor(ContextCompat.getColor(requireContext(), R.color.search_bar_text_original))
+            binding.searchEditText.setHintTextColor(ContextCompat.getColor(requireContext(), R.color.search_bar_hint_original))
+            binding.searchBarLayout.setStartIconTintList(android.content.res.ColorStateList.valueOf(
+                ContextCompat.getColor(requireContext(), R.color.search_bar_icon_original)))
+            binding.searchBarLayout.setEndIconTintList(android.content.res.ColorStateList.valueOf(
+                ContextCompat.getColor(requireContext(), R.color.search_bar_icon_original)))
         }
     }
 
@@ -528,15 +540,18 @@ class InventoryFragment : Fragment() {
         }
     }
 
-    private fun updateCategoryImage(dialogBinding: com.example.foodexpiryapp.databinding.DialogAddFoodBinding, category: FoodCategory, foodName: String = "") {
-        val imageRes = FoodImageResolver.getFoodImage(
-            foodName.ifBlank { category.displayName },
-            category
-        )
-        Glide.with(requireContext())
-            .load(imageRes)
-            .centerCrop()
-            .into(dialogBinding.imgFoodCategory)
+    private fun updateCategoryImage(dialogBinding: com.example.foodexpiryapp.databinding.DialogAddFoodBinding, category: FoodCategory, foodName: String = "", imagePath: String? = null) {
+        val glideRequest = if (!imagePath.isNullOrBlank()) {
+            val file = java.io.File(imagePath)
+            if (file.exists()) {
+                Glide.with(requireContext()).load(file)
+            } else {
+                Glide.with(requireContext()).load(FoodImageResolver.getFoodImage(foodName.ifBlank { category.displayName }, category))
+            }
+        } else {
+            Glide.with(requireContext()).load(FoodImageResolver.getFoodImage(foodName.ifBlank { category.displayName }, category))
+        }
+        glideRequest.centerCrop().into(dialogBinding.imgFoodCategory)
     }
 
     private fun showAddEditDialog(existingItem: FoodItem?) {
@@ -544,7 +559,7 @@ class InventoryFragment : Fragment() {
         var selectedDate: LocalDate = existingItem?.expiryDate ?: LocalDate.now().plusDays(7)
 
         val initialCategory = existingItem?.category ?: FoodCategory.OTHER
-        updateCategoryImage(dialogBinding, initialCategory, existingItem?.name ?: "")
+        updateCategoryImage(dialogBinding, initialCategory, existingItem?.name ?: "", existingItem?.imagePath)
 
         val categoryAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, FoodCategory.values().map { it.displayName })
         (dialogBinding.dropdownCategory as AutoCompleteTextView).apply {
@@ -575,7 +590,7 @@ class InventoryFragment : Fragment() {
         dialogBinding.editFoodName.doAfterTextChanged {
             val name = it?.toString()?.trim() ?: ""
             val cat = FoodCategory.values().find { c -> c.displayName == dialogBinding.dropdownCategory.text.toString() } ?: FoodCategory.OTHER
-            updateCategoryImage(dialogBinding, cat, name)
+            updateCategoryImage(dialogBinding, cat, name, existingItem?.imagePath)
         }
 
         dialogBinding.editExpiryDate.setText(selectedDate.format(displayFormatter))
@@ -614,7 +629,17 @@ class InventoryFragment : Fragment() {
                     expiryDate = selectedDate,
                     notes = dialogBinding.editNotes.text.toString()
                 )
-                if (item.id != 0L) viewModel.onUpdateFoodItem(item) else viewModel.onAddFoodItem(item)
+                if (item.id != 0L) {
+                    viewModel.onUpdateFoodItem(item)
+                } else {
+                    val imageBytes = pendingScanImageBytes
+                    pendingScanImageBytes = null
+                    if (imageBytes != null) {
+                        viewModel.onAddFoodItemWithImage(item, imageBytes)
+                    } else {
+                        viewModel.onAddFoodItem(item)
+                    }
+                }
             }
             .setNegativeButton("Cancel", null)
             .create()
@@ -675,6 +700,7 @@ class InventoryFragment : Fragment() {
         }
         ScanResultHolder.result?.let { scanResult ->
             ScanResultHolder.result = null
+            pendingScanImageBytes = scanResult.imageBytes
             val expiryDate = parseDate(scanResult.expiryHint)
                 ?: ShelfLifeEstimator.calculateExpiryDate(
                     ShelfLifeEstimator.estimateShelfLife(listOf(scanResult.foodName.lowercase())).days

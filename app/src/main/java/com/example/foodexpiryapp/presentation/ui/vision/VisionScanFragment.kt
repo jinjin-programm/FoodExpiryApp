@@ -641,11 +641,21 @@ class VisionScanFragment : Fragment() {
                         displayAiResult(result.nameZh, result.expiryHint, result.rawResponse ?: "Error")
                         updateStatus("Analysis: ${result.name}", Status.ERROR)
                     } else {
+                        val imageBytes = withContext(Dispatchers.IO) {
+                            try {
+                                val baos = java.io.ByteArrayOutputStream()
+                                bitmap.compress(Bitmap.CompressFormat.JPEG, 85, baos)
+                                baos.toByteArray()
+                            } catch (e: Exception) {
+                                null
+                            }
+                        }
                         ScanResultHolder.result = ScanResultHolder.ScanResult(
                             foodName = result.name,
                             foodNameZh = result.nameZh,
                             expiryHint = result.expiryHint,
-                            confidence = result.confidence
+                            confidence = result.confidence,
+                            imageBytes = imageBytes
                         )
                         try {
                             findNavController().popBackStack()
@@ -760,8 +770,12 @@ object ScanResultHolder {
         val foodName: String,
         val foodNameZh: String,
         val expiryHint: String?,
-        val confidence: Float
-    )
+        val confidence: Float,
+        val imageBytes: ByteArray? = null
+    ) {
+        override fun equals(other: Any?): Boolean = this === other
+        override fun hashCode(): Int = System.identityHashCode(this)
+    }
     var result: ScanResult? = null
 }
 

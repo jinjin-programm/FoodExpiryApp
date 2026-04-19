@@ -74,16 +74,14 @@ class DetectionResultAdapter(
             }
 
             // Delete button — hidden for failed items, show Fix instead
+            binding.btnDelete.visibility = View.VISIBLE
+            binding.btnDelete.setOnClickListener {
+                onDeleteClick(entity)
+            }
+
             if (isFailed) {
-                binding.btnDelete.visibility = View.GONE
                 binding.btnEdit.setIconResource(android.R.drawable.ic_menu_edit)
-                // Fix button appearance for failed items
                 binding.btnEdit.text = "Fix"
-            } else {
-                binding.btnDelete.visibility = View.VISIBLE
-                binding.btnDelete.setOnClickListener {
-                    onDeleteClick(entity)
-                }
             }
         }
 

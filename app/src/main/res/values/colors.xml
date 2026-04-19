@@ -75,4 +75,15 @@
     <color name="quick_action_bg_blue">#E3F2FD</color>
     <color name="quick_action_bg_orange">#FFF3E0</color>
     <color name="quick_action_bg_purple">#F3E5F5</color>
+
+    <!-- Search Bar Colors -->
+    <color name="search_bar_bg_cute">#33FFFFFF</color>
+    <color name="search_bar_text_cute">#FFFFFF</color>
+    <color name="search_bar_hint_cute">#AAFFFFFF</color>
+    <color name="search_bar_icon_cute">#FFFFFF</color>
+
+    <color name="search_bar_bg_original">#F5F5F5</color>
+    <color name="search_bar_text_original">#1C1C1E</color>
+    <color name="search_bar_hint_original">#9E9E9E</color>
+    <color name="search_bar_icon_original">#757575</color>
 </resources>
