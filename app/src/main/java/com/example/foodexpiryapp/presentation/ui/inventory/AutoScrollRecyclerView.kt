@@ -20,12 +20,22 @@ class AutoScrollRecyclerView @JvmOverloads constructor(
     private var isAutoScrolling = false
     private var isUserTouching = false
 
-    private val scrollSpeed = 0.8f
+    private var scrollAccumulator = 0f
 
     private val autoScrollRunnable = object : Runnable {
         override fun run() {
             if (isAutoScrolling && !isUserTouching) {
-                scrollBy(scrollSpeed.toInt(), 0)
+                val adapter = adapter
+                if (adapter == null || adapter.itemCount == 0) {
+                    stopAutoScroll()
+                    return
+                }
+                scrollAccumulator += 1f
+                val pixels = scrollAccumulator.toInt()
+                if (pixels > 0) {
+                    scrollBy(pixels, 0)
+                    scrollAccumulator -= pixels
+                }
             }
             scrollHandler.postDelayed(this, 16)
         }
@@ -55,7 +65,7 @@ class AutoScrollRecyclerView @JvmOverloads constructor(
 
     private fun resetResumeTimer() {
         resumeHandler.removeCallbacks(resumeRunnable)
-        resumeHandler.postDelayed(resumeRunnable, 5000)
+        resumeHandler.postDelayed(resumeRunnable, 3000)
     }
 
     fun scrollToMiddlePosition() {
