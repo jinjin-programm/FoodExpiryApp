@@ -117,6 +117,7 @@ class VisionScanFragment : Fragment() {
 
         setupUI()
         setupViewPagerCallback()
+        setupSaveResultListener()
         loadLatestGalleryThumbnail()
     }
 
@@ -230,6 +231,17 @@ class VisionScanFragment : Fragment() {
             }
         }
         viewPager.registerOnPageChangeCallback(viewPagerCallback!!)
+    }
+
+    private fun setupSaveResultListener() {
+        requireActivity().supportFragmentManager.setFragmentResultListener(
+            "yolo_save_complete", viewLifecycleOwner
+        ) { _, bundle ->
+            val savedCount = bundle.getInt("saved_count", 0)
+            Toast.makeText(context, "$savedCount item(s) added to fridge", Toast.LENGTH_LONG).show()
+            hideBlurredBackground()
+            restartCamera()
+        }
     }
 
     private fun loadLatestGalleryThumbnail() {
@@ -622,23 +634,26 @@ class VisionScanFragment : Fragment() {
                     hideProgressOverlay()
                     hideCancelButton()
                     binding.flashOverlay.animate().alpha(0f).setDuration(200L).withEndAction {
-                        binding.flashOverlay.visibility = View.GONE
+                        _binding?.flashOverlay?.visibility = View.GONE
                     }.start()
 
                     if (result.name == "Error" || result.name == "Unknown") {
                         displayAiResult(result.nameZh, result.expiryHint, result.rawResponse ?: "Error")
                         updateStatus("Analysis: ${result.name}", Status.ERROR)
                     } else {
-                        val bundle = android.os.Bundle().apply {
-                            putString("food_name", result.name)
-                            putString("food_name_zh", result.nameZh)
-                            putString("expiry_date", result.expiryHint)
-                            putFloat("confidence", result.confidence)
+                        ScanResultHolder.result = ScanResultHolder.ScanResult(
+                            foodName = result.name,
+                            foodNameZh = result.nameZh,
+                            expiryHint = result.expiryHint,
+                            confidence = result.confidence
+                        )
+                        try {
+                            findNavController().popBackStack()
+                        } catch (e: Exception) {
+                            Log.e(TAG, "popBackStack failed after scan", e)
+                            displayAiResult(result.name, result.expiryHint, result.rawResponse ?: "")
+                            updateStatus("Analysis complete", Status.READY)
                         }
-                        requireActivity().supportFragmentManager.setFragmentResult("llm_scan_result", bundle)
-
-                        displayAiResult(result.name, result.expiryHint, result.rawResponse ?: "")
-                        updateStatus("Analysis complete", Status.READY)
                     }
                 }
             } catch (e: Exception) {
@@ -738,6 +753,16 @@ class VisionScanFragment : Fragment() {
         blurredBg = null
         _binding = null
     }
+}
+
+object ScanResultHolder {
+    data class ScanResult(
+        val foodName: String,
+        val foodNameZh: String,
+        val expiryHint: String?,
+        val confidence: Float
+    )
+    var result: ScanResult? = null
 }
 
 object Tasks {

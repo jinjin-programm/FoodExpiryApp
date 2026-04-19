@@ -1,5 +1,6 @@
 package com.example.foodexpiryapp.presentation.ui.inventory
 
+import android.graphics.Color
 import android.view.animation.AnimationUtils
 import android.widget.PopupMenu
 import android.widget.Toast
@@ -40,6 +41,7 @@ import com.example.foodexpiryapp.presentation.viewmodel.InventoryEvent
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryViewModel
 import com.example.foodexpiryapp.util.ShelfLifeEstimator
 import com.example.foodexpiryapp.util.FoodImageResolver
+import com.example.foodexpiryapp.presentation.ui.vision.ScanResultHolder
 import com.bumptech.glide.Glide
 import com.google.android.material.chip.Chip
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -76,7 +78,7 @@ class InventoryFragment : Fragment() {
 
     private var currentDialog: androidx.appcompat.app.AlertDialog? = null
     private var draftFoodItem: FoodItem? = null
-    private var currentStyle: String = UIStyleRepository.STYLE_CUTE
+    private var currentStyle: String = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -276,6 +278,13 @@ class InventoryFragment : Fragment() {
 
             binding.recyclerExpiringSoon.adapter = expiringCuteAdapter
             binding.foodItemsRecyclerView.adapter = foodListCuteAdapter
+
+            binding.searchBarLayout.setBoxBackgroundColor(Color.parseColor("#33FFFFFF"))
+            binding.searchBarLayout.setBackgroundColor(Color.TRANSPARENT)
+            binding.searchEditText.setTextColor(Color.WHITE)
+            binding.searchEditText.setHintTextColor(Color.parseColor("#AAFFFFFF"))
+            binding.searchBarLayout.setStartIconTintList(android.content.res.ColorStateList.valueOf(Color.WHITE))
+            binding.searchBarLayout.setEndIconTintList(android.content.res.ColorStateList.valueOf(Color.WHITE))
         } else {
             binding.heroBanner.apply {
                 cardElevation = 2f
@@ -311,6 +320,13 @@ class InventoryFragment : Fragment() {
 
             binding.recyclerExpiringSoon.adapter = expiringOriginalAdapter
             binding.foodItemsRecyclerView.adapter = foodListOriginalAdapter
+
+            binding.searchBarLayout.setBoxBackgroundColor(Color.parseColor("#F5F5F5"))
+            binding.searchBarLayout.setBackgroundColor(Color.TRANSPARENT)
+            binding.searchEditText.setTextColor(Color.parseColor("#1C1C1E"))
+            binding.searchEditText.setHintTextColor(Color.parseColor("#9E9E9E"))
+            binding.searchBarLayout.setStartIconTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#757575")))
+            binding.searchBarLayout.setEndIconTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#757575")))
         }
     }
 
@@ -387,6 +403,12 @@ class InventoryFragment : Fragment() {
 
                     val isCute = state.uiStyle == UIStyleRepository.STYLE_CUTE
                     if (isCute) {
+                        if (expiringSoon.isEmpty()) {
+                            binding.recyclerExpiringSoon.stopAutoScroll()
+                            binding.recyclerExpiringSoon.cancelResumeTimer()
+                            expiringCuteAdapter.infiniteMode = false
+                            binding.recyclerExpiringSoon.scrollToPosition(0)
+                        }
                         expiringCuteAdapter.infiniteMode = expiringSoon.size >= 2
                         expiringCuteAdapter.submitList(expiringSoon) {
                             if (expiringCuteAdapter.infiniteMode && expiringSoon.isNotEmpty()) {
@@ -650,6 +672,22 @@ class InventoryFragment : Fragment() {
         super.onResume()
         if (expiringCuteAdapter.infiniteMode && expiringCuteAdapter.currentList.isNotEmpty()) {
             binding.recyclerExpiringSoon.startAutoScroll()
+        }
+        ScanResultHolder.result?.let { scanResult ->
+            ScanResultHolder.result = null
+            val expiryDate = parseDate(scanResult.expiryHint)
+                ?: ShelfLifeEstimator.calculateExpiryDate(
+                    ShelfLifeEstimator.estimateShelfLife(listOf(scanResult.foodName.lowercase())).days
+                )
+            showAddEditDialog(FoodItem(
+                name = scanResult.foodName,
+                expiryDate = expiryDate,
+                category = FoodCategory.OTHER,
+                location = StorageLocation.FRIDGE,
+                quantity = 1,
+                dateAdded = LocalDate.now(),
+                notes = "AI Scan (Confidence: ${String.format("%.0f%%", scanResult.confidence * 100)})"
+            ))
         }
     }
 
