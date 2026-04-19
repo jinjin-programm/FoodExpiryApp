@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -78,6 +79,7 @@ class MainActivity : AppCompatActivity() {
                     4 -> R.id.navigation_profile
                     else -> R.id.navigation_inventory
                 }
+                Log.d("NAV_DEBUG", "ViewPager2 onPageSelected: position=$position, itemId=$itemId")
                 if (binding.bottomNavigation.selectedItemId != itemId) {
                     binding.bottomNavigation.selectedItemId = itemId
                 }
@@ -93,9 +95,11 @@ class MainActivity : AppCompatActivity() {
                 R.id.navigation_profile -> 4
                 else -> -1
             }
+            Log.d("NAV_DEBUG", "BottomNav selected: itemId=${item.itemId}, page=$page")
             if (page != -1) {
                 binding.viewPager.isVisible = true
                 binding.navHostFragment.isVisible = false
+                Log.d("NAV_DEBUG", "  -> ViewPager VISIBLE, NavHost GONE")
                 binding.viewPager.currentItem = page
                 true
             } else {
@@ -112,6 +116,9 @@ class MainActivity : AppCompatActivity() {
                 R.id.navigation_planner,
                 R.id.navigation_profile
             )
+            Log.d("NAV_DEBUG", "DestinationChanged: id=${destination.id} label=${destination.label} isMainTab=$isMainTab")
+            Log.d("NAV_DEBUG", "  -> ViewPager visible=$isMainTab, NavHost visible=${!isMainTab}")
+            Log.d("NAV_DEBUG", "  -> NavController currentDest: id=${navController.currentDestination?.id} label=${navController.currentDestination?.label}")
             binding.viewPager.isVisible = isMainTab
             binding.navHostFragment.isVisible = !isMainTab
         }

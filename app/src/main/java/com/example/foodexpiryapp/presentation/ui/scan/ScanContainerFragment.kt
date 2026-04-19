@@ -32,7 +32,7 @@ class ScanContainerFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         binding.viewPager.adapter = ScanPagerAdapter(childFragmentManager, viewLifecycleOwner.lifecycle)
         binding.viewPager.isUserInputEnabled = true   // Enable swipe between scan modes
-        binding.viewPager.setCurrentItem(ScanPagerAdapter.TAB_YOLO, false) // Default to YOLO scan tab
+        binding.viewPager.setCurrentItem(ScanPagerAdapter.TAB_PHOTO, false) // Default to Photo/Vision scan tab (has single/multi mode buttons + server status)
     }
 
     override fun onDestroyView() {

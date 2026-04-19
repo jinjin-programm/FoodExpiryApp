@@ -26,11 +26,11 @@ class ChatFragment : Fragment() {
     private val viewModel: ChatViewModel by viewModels()
     private lateinit var adapter: ChatAdapter
 
-    override fun onCreateView(
+override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
+    ): View? {
         _binding = FragmentChatBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -42,7 +42,7 @@ class ChatFragment : Fragment() {
         setupListeners()
         observeState()
 
-        viewModel.checkModelStatus()
+        viewModel.checkServerConnection()
     }
 
     private fun setupRecyclerView() {
@@ -121,13 +121,13 @@ class ChatFragment : Fragment() {
                 }
 
                 launch {
-                    viewModel.isModelLoaded.collect { isLoaded ->
-                        updateStatusIndicator(isLoaded)
-                        binding.btnSend.isEnabled = isLoaded && !binding.etMessage.text.isNullOrBlank()
-                        if (!isLoaded) {
+                    viewModel.isServerConnected.collect { isConnected ->
+                        updateStatusIndicator(isConnected)
+                        binding.btnSend.isEnabled = isConnected && !binding.etMessage.text.isNullOrBlank()
+                        if (!isConnected) {
                             Toast.makeText(
                                 requireContext(),
-                                "LLM model not loaded. Please check model file.",
+                                "AI server not connected. Please check server settings.",
                                 Toast.LENGTH_LONG
                             ).show()
                         }
@@ -143,8 +143,8 @@ class ChatFragment : Fragment() {
         }
     }
 
-    private fun updateStatusIndicator(isLoaded: Boolean) {
-        val color = if (isLoaded) Color.GREEN else Color.RED
+    private fun updateStatusIndicator(isConnected: Boolean) {
+        val color = if (isConnected) Color.GREEN else Color.RED
         binding.viewStatusIndicator.backgroundTintList = 
             android.content.res.ColorStateList.valueOf(color)
     }

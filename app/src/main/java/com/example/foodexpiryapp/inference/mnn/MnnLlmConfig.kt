@@ -8,7 +8,7 @@ data class MnnLlmConfig(
     val threadNum: Int = 4,
     val useMmap: Boolean = true,
     val chunkSize: Int = 128,
-    val maxNewTokens: Int = 128,
+    val maxNewTokens: Int = 256,
     val temperature: Float = 0.15f,
     val topP: Float = 0.85f,
     val topK: Int = 5,

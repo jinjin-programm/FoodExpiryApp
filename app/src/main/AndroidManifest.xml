@@ -22,6 +22,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.FoodExpiryAPP"
         android:enableOnBackInvokedCallback="true"
+        android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="31">
 
         <!-- Disable default WorkManager initializer (we use HiltWorkerFactory) -->

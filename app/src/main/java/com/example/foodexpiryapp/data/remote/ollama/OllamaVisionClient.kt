@@ -86,6 +86,15 @@ class OllamaVisionClient @Inject constructor(
                 Log.e(TAG, "Empty response message")
                 null
             }
+        } catch (e: java.net.ConnectException) {
+            Log.e(TAG, "analyzeFood: Connection refused - server not running at configured URL")
+            null
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "analyzeFood: Request timed out - server unreachable")
+            null
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "analyzeFood: Unknown host - DNS/tunnel issue: ${e.message}")
+            null
         } catch (e: Exception) {
             Log.e(TAG, "Error analyzing food", e)
             null
@@ -94,8 +103,23 @@ class OllamaVisionClient @Inject constructor(
 
     override suspend fun testConnection(): Boolean = withContext(Dispatchers.IO) {
         try {
+            val config = serverConfig.getConfig()
+            Log.d(TAG, "Testing connection to ${config.baseUrl} with model ${config.modelName}")
             apiClient.getVersion()
+            Log.d(TAG, "Connection test succeeded")
             true
+        } catch (e: java.net.ConnectException) {
+            Log.e(TAG, "Connection refused - is the server running at the configured URL? ${e.message}")
+            false
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "Connection timed out - server unreachable: ${e.message}")
+            false
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "Unknown host - DNS resolution failed: ${e.message}")
+            false
+        } catch (e: javax.net.ssl.SSLException) {
+            Log.e(TAG, "SSL/TLS error - check tunnel/certificate: ${e.message}")
+            false
         } catch (e: Exception) {
             Log.e(TAG, "Connection test failed", e)
             false

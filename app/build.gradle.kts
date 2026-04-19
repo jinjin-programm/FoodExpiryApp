@@ -55,8 +55,8 @@ android {
         applicationId = "com.example.foodexpiryapp"  // ← YOUR package name
         minSdk = 26
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.1.1"
+        versionCode = 4
+        versionName = "1.1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -67,7 +67,10 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags += "-std=c++17"
-                arguments += "-DCMAKE_MNN_SOURCE_ROOT=C:/Users/jinjin/AndroidStudioProjects/MNN"
+                val mnnRoot = localProperty("MNN_SOURCE_ROOT")
+                if (!mnnRoot.isNullOrBlank()) {
+                    arguments += "-DMNN_SOURCE_ROOT=${mnnRoot}"
+                }
             }
         }
 

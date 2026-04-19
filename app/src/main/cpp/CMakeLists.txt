@@ -6,13 +6,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
-# 1. 設定 MNN 標頭檔路徑 (指向你 git clone 的位置)
-set(MNN_SOURCE_ROOT "D:/MNN-master/MNN-master")
-include_directories(${MNN_SOURCE_ROOT}/include)
-include_directories(${MNN_SOURCE_ROOT}/include/MNN)
-include_directories(${MNN_SOURCE_ROOT}/transformers/llm/engine/include)
-include_directories(${MNN_SOURCE_ROOT}/transformers/llm/engine/src)
-include_directories(${MNN_SOURCE_ROOT}/tools/cv/include)
+if(NOT DEFINED MNN_SOURCE_ROOT)
+    set(MNN_SOURCE_ROOT "$ENV{MNN_SOURCE_ROOT}")
+endif()
+if(MNN_SOURCE_ROOT)
+    include_directories(${MNN_SOURCE_ROOT}/include)
+    include_directories(${MNN_SOURCE_ROOT}/include/MNN)
+    include_directories(${MNN_SOURCE_ROOT}/transformers/llm/engine/include)
+    include_directories(${MNN_SOURCE_ROOT}/transformers/llm/engine/src)
+    include_directories(${MNN_SOURCE_ROOT}/tools/cv/include)
+endif()
 
 # 2. 導入你手動編譯並複製到 jniLibs 的 .so 檔案
 set(MNN_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/arm64-v8a")

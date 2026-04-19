@@ -70,16 +70,7 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeCreateLlm(
         LOGI("nativeCreateLlm: config=%s", config_json.c_str());
         instance->llm->set_config(config_json);
 
-        instance->llm->set_config(R"({
-            "jinja": {
-                "context": {
-                    "enable_thinking": false
-                }
-            }
-        })");
-        LOGI("nativeCreateLlm: disabled Qwen3 thinking mode (enable_thinking=false)");
-
-        LOGI("nativeCreateLlm: loading model...");
+        LOGI("nativeCreateLlm: loading model (thinking enabled by default)...");
         instance->is_loaded = instance->llm->load();
         if (!instance->is_loaded) {
             LOGE("nativeCreateLlm: load() failed");
@@ -125,7 +116,7 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeRunInference(
 
     try {
         MultimodalPrompt mm_prompt;
-        mm_prompt.prompt_template = "<img>image_0</img>Reply with only the single best food name in English, or Unknown if it is not food. Do not use JSON, markdown, or extra words.";
+        mm_prompt.prompt_template = "<|im_start|>user\n<img>image_0</img>\nWhat is in this image? Provide a brief description and then state the food name as 'The food is [name]'.<|im_end|>\n<|im_start|>assistant\n";
         LOGI("nativeRunInference: raw multimodal prompt (len=%zu): %.200s", mm_prompt.prompt_template.length(), mm_prompt.prompt_template.c_str());
 
         auto image_var = MNN::CV::imdecode(img_data, MNN::CV::IMREAD_COLOR);
@@ -212,7 +203,7 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeRunInferenceWith
 
     try {
         MultimodalPrompt mm_prompt;
-        std::string user_msg = "<img>image_0</img>Identify the food in this image. It might be a " + std::string(hint_str) + ". Reply with only the single best food name in English, or Unknown if it is not food. Do not use JSON, markdown, or extra words.";
+        std::string user_msg = "<|im_start|>user\n<img>image_0</img>\nWhat is in this image? It might be a " + std::string(hint_str) + ". Provide a brief description and then state the food name as 'The food is [name]'.<|im_end|>\n<|im_start|>assistant\n";
         mm_prompt.prompt_template = user_msg;
         LOGI("nativeRunInferenceWithHint: raw multimodal prompt (len=%zu): %.200s", mm_prompt.prompt_template.length(), mm_prompt.prompt_template.c_str());
 
@@ -299,18 +290,23 @@ Java_com_example_foodexpiryapp_inference_mnn_MnnLlmNative_nativeDestroyLlm(
 static std::string stripThinkingProcess(const std::string& text) {
     std::string result = text;
 
-    auto deleteThinkPart = [](std::string s, const std::string& openTag, const std::string& closeTag) -> std::string {
-        std::size_t think_start = s.find(openTag);
-        if (think_start == std::string::npos) return s;
-        std::size_t think_end = s.find(closeTag, think_start);
-        if (think_end == std::string::npos) return s;
-        think_end += closeTag.length();
-        s.erase(think_start, think_end - think_start);
+    auto removeTagsOnly = [](std::string s, const std::string& openTag,
+                              const std::string& closeTag) -> std::string {
+        size_t pos = 0;
+        while ((pos = s.find(openTag, pos)) != std::string::npos) {
+            s.erase(pos, openTag.length());
+            size_t closePos = s.find(closeTag, pos);
+            if (closePos != std::string::npos) {
+                s.erase(closePos, closeTag.length());
+            }
+        }
         return s;
     };
 
-    result = deleteThinkPart(result, "<thinkApproach>", "</thinkApproach>");
-    result = deleteThinkPart(result, "<think", "</think");
+    result = removeTagsOnly(result, "<thinkApproach>", "</thinkApproach>");
+    result = removeTagsOnly(result, "<think>", "</think>");
+    result = removeTagsOnly(result, "<think|>", "</think|>");
+    result = removeTagsOnly(result, "<thought>", "</thought>");
 
     size_t first_non_ws = result.find_first_not_of(" \t\n\r");
     if (first_non_ws != std::string::npos) {

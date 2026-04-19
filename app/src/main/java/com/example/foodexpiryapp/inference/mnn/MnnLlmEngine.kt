@@ -92,12 +92,11 @@ class MnnLlmEngine @Inject constructor(
 
         try {
             // Resize the image to prevent out-of-memory and reduce processing time
-            val maxSide = 1024
+            val targetSize = 420
             val width = bitmap.width
             val height = bitmap.height
-            val scale = maxSide.toFloat() / kotlin.math.max(width, height)
-            val resizedBitmap = if (scale < 1.0) {
-                Bitmap.createScaledBitmap(bitmap, (width * scale).toInt(), (height * scale).toInt(), true)
+            val resizedBitmap = if (width != targetSize || height != targetSize) {
+                Bitmap.createScaledBitmap(bitmap, targetSize, targetSize, true)
             } else {
                 bitmap
             }

@@ -413,7 +413,7 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <androidx.recyclerview.widget.RecyclerView
+            <com.example.foodexpiryapp.presentation.ui.inventory.AutoScrollRecyclerView
                 android:id="@+id/recyclerExpiringSoon"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

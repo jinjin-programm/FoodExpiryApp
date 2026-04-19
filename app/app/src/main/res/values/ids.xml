@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <item type="id" name="btn_vision_scan" />
-    <item type="id" name="btn_photo" />
-    <item type="id" name="btn_barcode" />
-    <item type="id" name="btn_write" />
-</resources>

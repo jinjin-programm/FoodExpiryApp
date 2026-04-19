@@ -387,9 +387,17 @@ class InventoryFragment : Fragment() {
 
                     val isCute = state.uiStyle == UIStyleRepository.STYLE_CUTE
                     if (isCute) {
-                        expiringCuteAdapter.submitList(expiringSoon)
+                        expiringCuteAdapter.infiniteMode = expiringSoon.size >= 2
+                        expiringCuteAdapter.submitList(expiringSoon) {
+                            if (expiringCuteAdapter.infiniteMode && expiringSoon.isNotEmpty()) {
+                                binding.recyclerExpiringSoon.scrollToMiddlePosition()
+                                binding.recyclerExpiringSoon.startAutoScroll()
+                            }
+                        }
                         foodListCuteAdapter.submitList(otherItems)
                     } else {
+                        binding.recyclerExpiringSoon.stopAutoScroll()
+                        binding.recyclerExpiringSoon.cancelResumeTimer()
                         expiringOriginalAdapter.submitList(expiringSoon)
                         foodListOriginalAdapter.submitList(otherItems)
                     }
@@ -638,8 +646,23 @@ class InventoryFragment : Fragment() {
 
     private fun String.capitalize() = replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
 
+    override fun onResume() {
+        super.onResume()
+        if (expiringCuteAdapter.infiniteMode && expiringCuteAdapter.currentList.isNotEmpty()) {
+            binding.recyclerExpiringSoon.startAutoScroll()
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        binding.recyclerExpiringSoon.stopAutoScroll()
+        binding.recyclerExpiringSoon.cancelResumeTimer()
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
+        binding.recyclerExpiringSoon.stopAutoScroll()
+        binding.recyclerExpiringSoon.cancelResumeTimer()
         _binding = null
         currentDialog = null
     }

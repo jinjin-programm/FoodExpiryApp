@@ -13,6 +13,8 @@ class ExpiringCuteAdapter(
     private val onItemClick: (FoodItem) -> Unit
 ) : ListAdapter<FoodItem, ExpiringCuteAdapter.ViewHolder>(DiffCallback()) {
 
+    var infiniteMode: Boolean = false
+
     private data class CardColors(val bgColor: Int, val textColor: Int)
 
     private val palette = listOf(
@@ -30,8 +32,18 @@ class ExpiringCuteAdapter(
         return ViewHolder(binding)
     }
 
+    override fun getItemCount(): Int {
+        return if (infiniteMode && currentList.isNotEmpty()) Int.MAX_VALUE else currentList.size
+    }
+
+    private fun getRealPosition(position: Int): Int {
+        if (!infiniteMode || currentList.isEmpty()) return position
+        return position % currentList.size
+    }
+
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(getItem(position), position)
+        val realPos = getRealPosition(position)
+        holder.bind(getItem(realPos), realPos)
     }
 
     inner class ViewHolder(
