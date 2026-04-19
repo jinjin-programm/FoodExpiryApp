@@ -12,6 +12,7 @@ import com.example.foodexpiryapp.domain.repository.AnalyticsRepository
 import com.example.foodexpiryapp.domain.repository.CookedRecipeRepository
 import com.example.foodexpiryapp.domain.repository.FoodRepository
 import com.example.foodexpiryapp.domain.repository.UIStyleRepository
+import com.example.foodexpiryapp.util.FoodImageStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -51,7 +52,8 @@ class InventoryViewModel @Inject constructor(
     private val foodRepository: FoodRepository,
     private val cookedRecipeRepository: CookedRecipeRepository,
     private val analyticsRepository: AnalyticsRepository,
-    private val uiStyleRepository: UIStyleRepository
+    private val uiStyleRepository: UIStyleRepository,
+    private val foodImageStorage: FoodImageStorage
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
@@ -136,6 +138,39 @@ class InventoryViewModel @Inject constructor(
                 addFoodItem(foodItem)
                 
                 // Track analytics
+                analyticsRepository.trackEvent(
+                    AnalyticsEvent(
+                        eventName = "item_added",
+                        eventType = EventType.ITEM_ADDED,
+                        itemName = foodItem.name,
+                        itemCategory = foodItem.category.name,
+                        itemLocation = foodItem.location.name
+                    )
+                )
+                
+                _events.emit(InventoryEvent.ShowMessage("${foodItem.name} added"))
+            } catch (e: Exception) {
+                _events.emit(InventoryEvent.ShowMessage("Error: ${e.message}"))
+            }
+        }
+    }
+
+    fun onAddFoodItemWithImage(foodItem: FoodItem, imageBytes: ByteArray?) {
+        viewModelScope.launch {
+            try {
+                val insertedId = addFoodItem(foodItem)
+                
+                if (imageBytes != null && imageBytes.isNotEmpty()) {
+                    val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                    if (bitmap != null) {
+                        val savedPath = foodImageStorage.saveFromBitmap(bitmap, insertedId)
+                        if (savedPath != null) {
+                            foodRepository.updateFoodItem(foodItem.copy(id = insertedId, imagePath = savedPath))
+                        }
+                        if (bitmap.width > 512 || bitmap.height > 512) bitmap.recycle()
+                    }
+                }
+
                 analyticsRepository.trackEvent(
                     AnalyticsEvent(
                         eventName = "item_added",
@@ -257,6 +292,7 @@ class InventoryViewModel @Inject constructor(
     fun onDeleteAllFoodItems() {
         viewModelScope.launch {
             try {
+                foodImageStorage.deleteAllImages()
                 foodRepository.deleteAllFoodItems()
                 cookedRecipeRepository.deleteAll()
                 _events.emit(InventoryEvent.ShowMessage("All data cleared"))

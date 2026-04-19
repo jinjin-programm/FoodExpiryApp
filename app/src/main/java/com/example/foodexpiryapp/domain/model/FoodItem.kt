@@ -22,7 +22,8 @@ data class FoodItem(
     val scanSource: ScanSource = ScanSource.MANUAL,
     val confidence: Float = 1.0f,
     val riskLevel: RiskLevel = RiskLevel.LOW,
-    val recipeRelevance: Float = 0.0f
+    val recipeRelevance: Float = 0.0f,
+    val imagePath: String? = null
 ) {
     /** True if this item has already expired. */
     val isExpired: Boolean

@@ -46,7 +46,8 @@ object FoodItemMapper {
             } catch (e: IllegalArgumentException) {
                 RiskLevel.LOW
             },
-            recipeRelevance = entity.recipeRelevance
+            recipeRelevance = entity.recipeRelevance,
+            imagePath = entity.imagePath
         )
     }
 
@@ -67,7 +68,8 @@ object FoodItemMapper {
             scanSource = domain.scanSource.name,
             confidence = domain.confidence,
             riskLevel = domain.riskLevel.name,
-            recipeRelevance = domain.recipeRelevance
+            recipeRelevance = domain.recipeRelevance,
+            imagePath = domain.imagePath
         )
     }
 }

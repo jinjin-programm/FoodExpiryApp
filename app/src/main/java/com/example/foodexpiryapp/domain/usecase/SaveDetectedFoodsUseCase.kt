@@ -5,13 +5,15 @@ import com.example.foodexpiryapp.data.repository.DetectionResultRepository
 import com.example.foodexpiryapp.domain.model.FoodItem
 import com.example.foodexpiryapp.domain.model.ScanSource
 import com.example.foodexpiryapp.domain.repository.FoodRepository
+import com.example.foodexpiryapp.util.FoodImageStorage
 import java.time.LocalDate
 import javax.inject.Inject
 
 class SaveDetectedFoodsUseCase @Inject constructor(
     private val foodRepository: FoodRepository,
     private val detectionResultRepository: DetectionResultRepository,
-    private val lookupShelfLifeUseCase: LookupShelfLifeUseCase
+    private val lookupShelfLifeUseCase: LookupShelfLifeUseCase,
+    private val foodImageStorage: FoodImageStorage
 ) {
 
     data class SaveResult(
@@ -60,7 +62,15 @@ class SaveDetectedFoodsUseCase @Inject constructor(
                 }
             )
 
-            foodRepository.insertFoodItem(foodItem)
+            val insertedId = foodRepository.insertFoodItem(foodItem)
+
+            if (!entity.cropImagePath.isNullOrBlank()) {
+                val savedPath = foodImageStorage.saveFromPath(entity.cropImagePath, insertedId)
+                if (savedPath != null) {
+                    foodRepository.updateFoodItem(foodItem.copy(id = insertedId, imagePath = savedPath))
+                }
+            }
+
             savedCount++
         }
 

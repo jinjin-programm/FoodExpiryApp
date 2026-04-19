@@ -26,5 +26,6 @@ data class FoodItemEntity(
     val scanSource: String = "MANUAL",
     val confidence: Float = 1.0f,
     val riskLevel: String = "LOW",
-    val recipeRelevance: Float = 0.0f
+    val recipeRelevance: Float = 0.0f,
+    val imagePath: String? = null
 )

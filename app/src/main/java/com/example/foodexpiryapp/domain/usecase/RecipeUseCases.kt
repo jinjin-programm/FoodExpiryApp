@@ -82,13 +82,15 @@ class ScoreRecipesForInventoryUseCase @Inject constructor(
 }
 
 class ConsumeIngredientsUseCase @Inject constructor(
-    private val foodRepository: FoodRepository
+    private val foodRepository: FoodRepository,
+    private val foodImageStorage: com.example.foodexpiryapp.util.FoodImageStorage
 ) {
     suspend operator fun invoke(matchedItems: List<FoodItem>) {
         for (item in matchedItems) {
             if (item.quantity > 1) {
                 foodRepository.updateFoodItem(item.copy(quantity = item.quantity - 1))
             } else {
+                foodImageStorage.deleteImage(item.imagePath)
                 foodRepository.deleteFoodItem(item)
             }
         }

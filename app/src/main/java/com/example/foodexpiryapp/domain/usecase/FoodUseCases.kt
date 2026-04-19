@@ -2,6 +2,7 @@ package com.example.foodexpiryapp.domain.usecase
 
 import com.example.foodexpiryapp.domain.model.FoodItem
 import com.example.foodexpiryapp.domain.repository.FoodRepository
+import com.example.foodexpiryapp.util.FoodImageStorage
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 import javax.inject.Inject
@@ -45,15 +46,21 @@ class UpdateFoodItemUseCase @Inject constructor(
     }
 }
 
-/** Deletes a food item. */
+/** Deletes a food item and its associated image file. */
 class DeleteFoodItemUseCase @Inject constructor(
-    private val repository: FoodRepository
+    private val repository: FoodRepository,
+    private val foodImageStorage: FoodImageStorage
 ) {
     suspend operator fun invoke(foodItem: FoodItem) {
+        foodImageStorage.deleteImage(foodItem.imagePath)
         repository.deleteFoodItem(foodItem)
     }
 
     suspend fun byId(id: Long) {
+        val item = repository.getFoodItemById(id)
+        if (item != null) {
+            foodImageStorage.deleteImage(item.imagePath)
+        }
         repository.deleteFoodItemById(id)
     }
 }

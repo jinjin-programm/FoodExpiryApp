@@ -1,6 +1,7 @@
 package com.example.foodexpiryapp.presentation.adapter
 
 import android.graphics.Color
+import java.io.File
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
@@ -53,11 +54,20 @@ class FoodItemCuteAdapter(
                 }
             }
 
-            val imageRes = FoodImageResolver.getFoodImage(item.name, item.category)
-            Glide.with(binding.root.context)
-                .load(imageRes)
-                .centerCrop()
-                .into(binding.imgFood)
+            val glideRequest = if (!item.imagePath.isNullOrBlank()) {
+                val file = File(item.imagePath)
+                if (file.exists()) {
+                    Glide.with(binding.root.context)
+                        .load(file)
+                } else {
+                    Glide.with(binding.root.context)
+                        .load(FoodImageResolver.getFoodImage(item.name, item.category))
+                }
+            } else {
+                Glide.with(binding.root.context)
+                    .load(FoodImageResolver.getFoodImage(item.name, item.category))
+            }
+            glideRequest.centerCrop().into(binding.imgFood)
 
             binding.root.setOnClickListener { onItemClick(item) }
         }
