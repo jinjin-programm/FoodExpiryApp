@@ -75,7 +75,7 @@ class OllamaVisionClient @Inject constructor(
                 stream = false,
                 format = jsonSchema,
                 options = options,
-                keepAlive = "5m"
+                keepAlive = "2m"
             )
 
             val response = apiClient.chat(request)

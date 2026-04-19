@@ -8,6 +8,7 @@ data class OllamaChatRequest(
     val stream: Boolean = false,
     val format: OllamaJsonSchema? = null,
     val options: OllamaOptions? = null,
+    @SerializedName("keep_alive")
     val keepAlive: String? = null,
     val think: Boolean = false
 )
