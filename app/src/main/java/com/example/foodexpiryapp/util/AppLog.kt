@@ -6,8 +6,14 @@ object AppLog {
 
     private const val MAX_TAG_LENGTH = 23
 
+    var debugEnabled: Boolean = try {
+        com.example.foodexpiryapp.BuildConfig.DEBUG
+    } catch (_: NoClassDefFoundError) {
+        true
+    }
+
     fun d(tag: String, message: String) {
-        if (BuildConfig.DEBUG) {
+        if (debugEnabled) {
             Log.d(safeTag(tag), message)
         }
     }
@@ -34,9 +40,5 @@ object AppLog {
 
     private fun safeTag(tag: String): String {
         return if (tag.length > MAX_TAG_LENGTH) tag.substring(0, MAX_TAG_LENGTH) else tag
-    }
-
-    private object BuildConfig {
-        val DEBUG = com.example.foodexpiryapp.BuildConfig.DEBUG
     }
 }

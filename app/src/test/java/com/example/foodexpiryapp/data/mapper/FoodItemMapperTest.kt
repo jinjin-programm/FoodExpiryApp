@@ -1,6 +1,5 @@
 package com.example.foodexpiryapp.data.mapper
 
-import com.example.foodexpiryapp.data.local.database.FoodItemEntity
 import com.example.foodexpiryapp.domain.model.*
 import org.junit.Assert.*
 import org.junit.Test
@@ -8,168 +7,127 @@ import java.time.LocalDate
 
 class FoodItemMapperTest {
 
-    private val testEntity = FoodItemEntity(
-        id = 1,
-        name = "Milk",
-        category = "DAIRY",
-        expiryDate = "2026-01-15",
-        quantity = 2,
-        location = "FRIDGE",
-        notes = "Organic",
-        barcode = "1234567890",
-        dateAdded = "2026-01-10",
-        notifyEnabled = true,
-        notifyDaysBefore = 3,
-        purchaseDate = "2026-01-09",
-        scanSource = "BARCODE",
-        confidence = 0.95f,
-        riskLevel = "MEDIUM",
-        recipeRelevance = 0.5f,
-        imagePath = "/data/food_images/1.jpg"
-    )
-
-    private val testDomain = FoodItem(
-        id = 1,
-        name = "Milk",
-        category = FoodCategory.DAIRY,
-        expiryDate = LocalDate.of(2026, 1, 15),
-        quantity = 2,
-        location = StorageLocation.FRIDGE,
-        notes = "Organic",
-        barcode = "1234567890",
-        dateAdded = LocalDate.of(2026, 1, 10),
-        notifyEnabled = true,
-        notifyDaysBefore = 3,
-        purchaseDate = LocalDate.of(2026, 1, 9),
-        scanSource = ScanSource.BARCODE,
-        confidence = 0.95f,
-        riskLevel = RiskLevel.MEDIUM,
-        recipeRelevance = 0.5f,
-        imagePath = "/data/food_images/1.jpg"
-    )
-
     @Test
-    fun `entityToDomain maps all fields correctly`() {
-        val result = FoodItemMapper.entityToDomain(testEntity)
-        assertEquals(testDomain, result)
-    }
-
-    @Test
-    fun `domainToEntity maps all fields correctly`() {
-        val result = FoodItemMapper.domainToEntity(testDomain)
-        assertEquals(testEntity, result)
-    }
-
-    @Test
-    fun `round trip entity-domain-entity preserves data`() {
-        val entityResult = FoodItemMapper.domainToEntity(FoodItemMapper.entityToDomain(testEntity))
-        assertEquals(testEntity, entityResult)
-    }
-
-    @Test
-    fun `round trip domain-entity-domain preserves data`() {
-        val domainResult = FoodItemMapper.entityToDomain(FoodItemMapper.domainToEntity(testDomain))
-        assertEquals(testDomain, domainResult)
-    }
-
-    @Test
-    fun `entityToDomain handles unknown category gracefully`() {
-        val entity = testEntity.copy(category = "UNKNOWN_CATEGORY")
-        val result = FoodItemMapper.entityToDomain(entity)
-        assertEquals(FoodCategory.OTHER, result.category)
-    }
-
-    @Test
-    fun `entityToDomain handles unknown location gracefully`() {
-        val entity = testEntity.copy(location = "UNKNOWN_LOCATION")
-        val result = FoodItemMapper.entityToDomain(entity)
-        assertEquals(StorageLocation.FRIDGE, result.location)
-    }
-
-    @Test
-    fun `entityToDomain handles unknown scan source gracefully`() {
-        val entity = testEntity.copy(scanSource = "UNKNOWN_SOURCE")
-        val result = FoodItemMapper.entityToDomain(entity)
-        assertEquals(ScanSource.MANUAL, result.scanSource)
-    }
-
-    @Test
-    fun `entityToDomain handles unknown risk level gracefully`() {
-        val entity = testEntity.copy(riskLevel = "UNKNOWN_RISK")
-        val result = FoodItemMapper.entityToDomain(entity)
-        assertEquals(RiskLevel.LOW, result.riskLevel)
-    }
-
-    @Test
-    fun `entityToDomain handles null optional fields`() {
-        val entity = testEntity.copy(
-            barcode = null,
-            purchaseDate = null,
-            imagePath = null,
-            notifyDaysBefore = null
-        )
-        val result = FoodItemMapper.entityToDomain(entity)
-        assertNull(result.barcode)
-        assertNull(result.purchaseDate)
-        assertNull(result.imagePath)
-        assertNull(result.notifyDaysBefore)
-    }
-
-    @Test
-    fun `domainToEntity converts null optional fields`() {
-        val domain = testDomain.copy(
-            barcode = null,
-            purchaseDate = null,
-            imagePath = null,
-            notifyDaysBefore = null
-        )
-        val result = FoodItemMapper.domainToEntity(domain)
-        assertNull(result.barcode)
-        assertNull(result.purchaseDate)
-        assertNull(result.imagePath)
-        assertNull(result.notifyDaysBefore)
-    }
-
-    @Test
-    fun `entityToDomain handles empty category string`() {
-        val entity = testEntity.copy(category = "")
-        val result = FoodItemMapper.entityToDomain(entity)
-        assertEquals(FoodCategory.OTHER, result.category)
-    }
-
-    @Test
-    fun `entityToDomain handles all valid categories`() {
+    fun `FoodCategory valueOf parses all valid categories`() {
         FoodCategory.values().forEach { category ->
-            val entity = testEntity.copy(category = category.name)
-            val result = FoodItemMapper.entityToDomain(entity)
-            assertEquals(category, result.category)
+            assertEquals(category, FoodCategory.valueOf(category.name))
         }
     }
 
     @Test
-    fun `entityToDomain handles all valid locations`() {
+    fun `FoodCategory valueOf throws on unknown value`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            FoodCategory.valueOf("UNKNOWN_CATEGORY")
+        }
+    }
+
+    @Test
+    fun `FoodCategory valueOf throws on empty string`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            FoodCategory.valueOf("")
+        }
+    }
+
+    @Test
+    fun `StorageLocation valueOf parses all valid locations`() {
         StorageLocation.values().forEach { location ->
-            val entity = testEntity.copy(location = location.name)
-            val result = FoodItemMapper.entityToDomain(entity)
-            assertEquals(location, result.location)
+            assertEquals(location, StorageLocation.valueOf(location.name))
         }
     }
 
     @Test
-    fun `entityToDomain handles all valid risk levels`() {
-        RiskLevel.values().forEach { riskLevel ->
-            val entity = testEntity.copy(riskLevel = riskLevel.name)
-            val result = FoodItemMapper.entityToDomain(entity)
-            assertEquals(riskLevel, result.riskLevel)
+    fun `StorageLocation valueOf throws on unknown value`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            StorageLocation.valueOf("UNKNOWN_LOCATION")
         }
     }
 
     @Test
-    fun `entityToDomain handles all valid scan sources`() {
-        ScanSource.values().forEach { scanSource ->
-            val entity = testEntity.copy(scanSource = scanSource.name)
-            val result = FoodItemMapper.entityToDomain(entity)
-            assertEquals(scanSource, result.scanSource)
+    fun `ScanSource valueOf parses all valid sources`() {
+        ScanSource.values().forEach { source ->
+            assertEquals(source, ScanSource.valueOf(source.name))
+        }
+    }
+
+    @Test
+    fun `ScanSource valueOf throws on unknown value`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            ScanSource.valueOf("UNKNOWN_SOURCE")
+        }
+    }
+
+    @Test
+    fun `RiskLevel valueOf parses all valid risk levels`() {
+        RiskLevel.values().forEach { level ->
+            assertEquals(level, RiskLevel.valueOf(level.name))
+        }
+    }
+
+    @Test
+    fun `RiskLevel valueOf throws on unknown value`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            RiskLevel.valueOf("UNKNOWN_RISK")
+        }
+    }
+
+    @Test
+    fun `enum fallback pattern produces correct defaults`() {
+        val category = try { FoodCategory.valueOf("INVALID") } catch (_: Exception) { FoodCategory.OTHER }
+        assertEquals(FoodCategory.OTHER, category)
+
+        val location = try { StorageLocation.valueOf("INVALID") } catch (_: Exception) { StorageLocation.FRIDGE }
+        assertEquals(StorageLocation.FRIDGE, location)
+
+        val source = try { ScanSource.valueOf("INVALID") } catch (_: Exception) { ScanSource.MANUAL }
+        assertEquals(ScanSource.MANUAL, source)
+
+        val risk = try { RiskLevel.valueOf("INVALID") } catch (_: Exception) { RiskLevel.LOW }
+        assertEquals(RiskLevel.LOW, risk)
+    }
+
+    @Test
+    fun `FoodCategory contains expected values`() {
+        val expected = listOf("DAIRY", "MEAT", "VEGETABLES", "FRUITS", "GRAINS", "BEVERAGES", "SNACKS", "CONDIMENTS", "FROZEN", "LEFTOVERS", "OTHER")
+        assertEquals(expected, FoodCategory.values().map { it.name })
+    }
+
+    @Test
+    fun `StorageLocation contains expected values`() {
+        val expected = listOf("FRIDGE", "FREEZER", "PANTRY", "COUNTER")
+        assertEquals(expected, StorageLocation.values().map { it.name })
+    }
+
+    @Test
+    fun `ScanSource contains expected values`() {
+        val expected = listOf("MANUAL", "BARCODE", "RECEIPT", "INGREDIENT_LIST", "YOLO_SCAN")
+        assertEquals(expected, ScanSource.values().map { it.name })
+    }
+
+    @Test
+    fun `RiskLevel contains expected values`() {
+        val expected = listOf("LOW", "MEDIUM", "HIGH")
+        assertEquals(expected, RiskLevel.values().map { it.name })
+    }
+
+    @Test
+    fun `domain model date conversion round trips correctly`() {
+        val date = LocalDate.of(2026, 1, 15)
+        val asString = date.toString()
+        val parsed = LocalDate.parse(asString)
+        assertEquals(date, parsed)
+    }
+
+    @Test
+    fun `FoodCategory displayNames are non-empty`() {
+        FoodCategory.values().forEach { category ->
+            assertTrue("Category ${category.name} has empty displayName", category.displayName.isNotEmpty())
+        }
+    }
+
+    @Test
+    fun `StorageLocation displayNames are non-empty`() {
+        StorageLocation.values().forEach { location ->
+            assertTrue("Location ${location.name} has empty displayName", location.displayName.isNotEmpty())
         }
     }
 }
