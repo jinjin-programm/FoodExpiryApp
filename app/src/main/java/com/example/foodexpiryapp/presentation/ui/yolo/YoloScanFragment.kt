@@ -227,12 +227,13 @@ class YoloScanFragment : Fragment() {
         viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 if (position == ScanPagerAdapter.TAB_YOLO) {
-                    // Re-bind camera use cases — another fragment's unbindAll() may
-                    // have removed our preview / analyzer from the shared ProcessCameraProvider.
-                    bindCameraUseCases()
-                } else {
-                    // Cancel any ongoing pipeline when leaving YOLO tab
+                    cameraProvider?.unbindAll()
+                    view?.postDelayed({
+                        bindCameraUseCases()
+                    }, 300)
+                } else if (position != ScanPagerAdapter.TAB_YOLO) {
                     viewModel.cancelDetection()
+                    cameraProvider?.unbindAll()
                     showProgressOverlay(false)
                     isCapturing = false
                 }

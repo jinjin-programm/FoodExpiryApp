@@ -15,9 +15,11 @@ class ShoppingItemAdapter(
 ) : ListAdapter<ShoppingItem, ShoppingItemAdapter.ViewHolder>(ShoppingDiffCallback()) {
 
     private var inventoryItemNames: Set<String> = emptySet()
+    private var inventoryItemNamesLower: Set<String> = emptySet()
 
     fun updateInventoryStatus(names: Set<String>) {
         inventoryItemNames = names
+        inventoryItemNamesLower = names.map { it.lowercase().trim() }.toSet()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -34,7 +36,7 @@ class ShoppingItemAdapter(
             binding.checkboxShopping.isChecked = item.isChecked
             binding.textItemName.text = item.name
 
-            val isInInventory = item.name.lowercase().trim() in inventoryItemNames.map { it.lowercase().trim() }
+            val isInInventory = item.name.lowercase().trim() in inventoryItemNamesLower
             binding.textInventoryStatus.visibility = if (isInInventory && !item.isChecked) {
                 android.view.View.VISIBLE
             } else {

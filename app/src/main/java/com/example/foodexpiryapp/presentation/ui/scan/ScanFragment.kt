@@ -126,8 +126,12 @@ class ScanFragment : Fragment() {
         viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 if (position == ScanPagerAdapter.TAB_BARCODE) {
-                    // Re-bind camera use cases — another fragment may have unbound them.
-                    bindCameraUseCases()
+                    cameraProvider?.unbindAll()
+                    view?.postDelayed({
+                        bindCameraUseCases()
+                    }, 300)
+                } else if (position != ScanPagerAdapter.TAB_BARCODE) {
+                    cameraProvider?.unbindAll()
                 }
             }
         })

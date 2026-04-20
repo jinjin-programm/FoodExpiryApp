@@ -224,9 +224,14 @@ class VisionScanFragment : Fragment() {
         viewPagerCallback = object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 if (position == ScanPagerAdapter.TAB_PHOTO && !isProcessing && _binding != null) {
-                    if (!isCameraActive) {
-                        startCamera()
-                    }
+                    stopCamera()
+                    view?.postDelayed({
+                        if (_binding != null && !isProcessing) {
+                            startCamera()
+                        }
+                    }, 300)
+                } else if (position != ScanPagerAdapter.TAB_PHOTO) {
+                    stopCamera()
                 }
             }
         }

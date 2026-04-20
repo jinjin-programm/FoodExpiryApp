@@ -33,7 +33,8 @@ class ExpiringCuteAdapter(
     }
 
     override fun getItemCount(): Int {
-        return if (infiniteMode && currentList.isNotEmpty()) Int.MAX_VALUE else currentList.size
+        if (currentList.isEmpty()) return 0
+        return if (infiniteMode) Int.MAX_VALUE else currentList.size
     }
 
     private fun getRealPosition(position: Int): Int {

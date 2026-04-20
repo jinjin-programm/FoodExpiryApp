@@ -65,7 +65,7 @@ class MainActivity : AppCompatActivity() {
         // Setup ViewPager2
         val pagerAdapter = MainPagerAdapter(this)
         binding.viewPager.adapter = pagerAdapter
-        binding.viewPager.offscreenPageLimit = 2
+        binding.viewPager.offscreenPageLimit = 1
 
         // Sync ViewPager with BottomNavigationView
         binding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
@@ -95,16 +95,16 @@ class MainActivity : AppCompatActivity() {
                 R.id.navigation_profile -> 4
                 else -> -1
             }
-            Log.d("NAV_DEBUG", "BottomNav selected: itemId=${item.itemId}, page=$page")
-            if (page != -1) {
+            if (page != -1 && binding.viewPager.currentItem != page) {
                 binding.viewPager.isVisible = true
                 binding.navHostFragment.isVisible = false
-                Log.d("NAV_DEBUG", "  -> ViewPager VISIBLE, NavHost GONE")
-                binding.viewPager.currentItem = page
-                true
-            } else {
-                false
+                binding.viewPager.post {
+                    if (binding.viewPager.currentItem != page) {
+                        binding.viewPager.currentItem = page
+                    }
+                }
             }
+            page != -1
         }
 
         // Listen for navigation changes to hide ViewPager when on detail screens

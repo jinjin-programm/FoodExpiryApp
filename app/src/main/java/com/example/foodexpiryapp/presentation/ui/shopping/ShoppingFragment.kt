@@ -172,7 +172,13 @@ class ShoppingFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.inventoryItemNames.collect { names ->
                     shoppingAdapter.updateInventoryStatus(names)
-                    shoppingAdapter.notifyDataSetChanged()
+                    (binding.shoppingListRecyclerView.layoutManager as? LinearLayoutManager)
+                        ?.findFirstVisibleItemPosition()
+                        ?.let { first ->
+                            val last = (binding.shoppingListRecyclerView.layoutManager as? LinearLayoutManager)
+                                ?.findLastVisibleItemPosition() ?: first
+                            shoppingAdapter.notifyItemRangeChanged(first, last - first + 1)
+                        }
                 }
             }
         }
