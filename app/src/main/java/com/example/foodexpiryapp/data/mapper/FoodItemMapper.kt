@@ -6,12 +6,15 @@ import com.example.foodexpiryapp.domain.model.FoodItem
 import com.example.foodexpiryapp.domain.model.RiskLevel
 import com.example.foodexpiryapp.domain.model.ScanSource
 import com.example.foodexpiryapp.domain.model.StorageLocation
+import com.example.foodexpiryapp.util.AppLog
 import java.time.LocalDate
 
 /**
  * Maps between FoodItemEntity (data layer) and FoodItem (domain layer).
  */
 object FoodItemMapper {
+
+    private const val TAG = "FoodItemMapper"
 
     fun entityToDomain(entity: FoodItemEntity): FoodItem {
         return FoodItem(
@@ -20,6 +23,7 @@ object FoodItemMapper {
             category = try {
                 FoodCategory.valueOf(entity.category)
             } catch (e: IllegalArgumentException) {
+                AppLog.w(TAG, "Unknown FoodCategory '${entity.category}' for item '${entity.name}', defaulting to OTHER")
                 FoodCategory.OTHER
             },
             expiryDate = LocalDate.parse(entity.expiryDate),
@@ -27,6 +31,7 @@ object FoodItemMapper {
             location = try {
                 StorageLocation.valueOf(entity.location)
             } catch (e: IllegalArgumentException) {
+                AppLog.w(TAG, "Unknown StorageLocation '${entity.location}' for item '${entity.name}', defaulting to FRIDGE")
                 StorageLocation.FRIDGE
             },
             notes = entity.notes,
@@ -38,12 +43,14 @@ object FoodItemMapper {
             scanSource = try {
                 ScanSource.valueOf(entity.scanSource)
             } catch (e: IllegalArgumentException) {
+                AppLog.w(TAG, "Unknown ScanSource '${entity.scanSource}' for item '${entity.name}', defaulting to MANUAL")
                 ScanSource.MANUAL
             },
             confidence = entity.confidence,
             riskLevel = try {
                 RiskLevel.valueOf(entity.riskLevel)
             } catch (e: IllegalArgumentException) {
+                AppLog.w(TAG, "Unknown RiskLevel '${entity.riskLevel}' for item '${entity.name}', defaulting to LOW")
                 RiskLevel.LOW
             },
             recipeRelevance = entity.recipeRelevance,
