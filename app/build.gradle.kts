@@ -74,13 +74,6 @@ android {
             }
         }
 
-        // API Keys - placeholders for now
-        buildConfigField("String", "RAPIDAPI_KEY", "\"test_key\"")
-        buildConfigField("String", "GOOGLE_VISION_API_KEY", "\"test_key\"")
-        buildConfigField("String", "OPENAI_API_KEY", "\"test_key\"")
-        buildConfigField("String", "API_NINJAS_KEY", "\"test_key\"")
-        buildConfigField("String", "FOODDATA_CENTRAL_KEY", "\"test_key\"")
-        buildConfigField("String", "THEMEALDB_API_KEY", "\"1\"")
         buildConfigField("String", "HF_TOKEN", "\"${localProperty("HF_TOKEN") ?: ""}\"")
     }
 
