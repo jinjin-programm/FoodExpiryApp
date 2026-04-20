@@ -7,7 +7,6 @@ import android.widget.PopupMenu
 import android.widget.Toast
 import android.app.DatePickerDialog
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -44,6 +43,7 @@ import com.example.foodexpiryapp.presentation.viewmodel.InventoryViewModel
 import com.example.foodexpiryapp.util.ShelfLifeEstimator
 import com.example.foodexpiryapp.util.FoodImageResolver
 import com.example.foodexpiryapp.util.FoodImageStorage
+import com.example.foodexpiryapp.util.AppLog
 import com.example.foodexpiryapp.presentation.ui.vision.ScanResultHolder
 import com.bumptech.glide.Glide
 import com.google.android.material.chip.Chip
@@ -171,7 +171,7 @@ class InventoryFragment : Fragment() {
                     navController.navigate(R.id.action_inventory_to_scan, bundle)
                 }
             } catch (e: Exception) {
-                Log.e("NAV_DEBUG", "Exception barcode scan", e)
+                AppLog.e("NAV_DEBUG", "Exception barcode scan", e)
             }
         }
 
@@ -191,7 +191,7 @@ class InventoryFragment : Fragment() {
                     navController.navigate(R.id.action_inventory_to_scan, bundle)
                 }
             } catch (e: Exception) {
-                Log.e("NAV_DEBUG", "Exception barcode scan", e)
+                AppLog.e("NAV_DEBUG", "Exception barcode scan", e)
             }
         }
         binding.btnManualEntry.setOnClickListener {
@@ -208,7 +208,7 @@ class InventoryFragment : Fragment() {
                     navController.navigate(R.id.action_inventory_to_scan, bundle)
                 }
             } catch (e: Exception) {
-                Log.e("NAV_DEBUG", "Exception empty state scan", e)
+                AppLog.e("NAV_DEBUG", "Exception empty state scan", e)
             }
         }
 
@@ -570,7 +570,7 @@ class InventoryFragment : Fragment() {
                 })
             }
         } catch (e: Exception) {
-            Log.w("InventoryFragment", "Cannot navigate to recipes: ${e.message}")
+            AppLog.w("InventoryFragment", "Cannot navigate to recipes: ${e.message}")
         }
     }
 
@@ -670,30 +670,24 @@ class InventoryFragment : Fragment() {
         try {
             val navController = findNavController()
             val currentDest = navController.currentDestination
-            Log.d("NAV_DEBUG", "===== $tag =====")
-            Log.d("NAV_DEBUG", "  Current destination: id=${currentDest?.id}, label=${currentDest?.label}, nav_inventory=${R.id.navigation_inventory}")
-            Log.d("NAV_DEBUG", "  Guard match: ${currentDest?.id == R.id.navigation_inventory}")
+            AppLog.d("NAV_DEBUG", "$tag: dest=${currentDest?.label} match=${currentDest?.id == R.id.navigation_inventory}")
         } catch (e: Exception) {
-            Log.e("NAV_DEBUG", "  logNavState FAILED", e)
+            AppLog.e("NAV_DEBUG", "logNavState FAILED", e)
         }
     }
 
     private fun navWithDebug(actionId: Int, buttonName: String) {
-        Log.d("NAV_DEBUG", ">>> $buttonName CLICKED <<<")
-        logNavState(buttonName)
+        AppLog.d("Inventory", "$buttonName clicked")
         try {
             val navController = findNavController()
             val currentDestId = navController.currentDestination?.id
             if (currentDestId == R.id.navigation_inventory) {
-                Log.d("NAV_DEBUG", "  -> GUARD PASSED, calling navigate($actionId)")
                 navController.navigate(actionId)
-                Log.d("NAV_DEBUG", "  -> navigate() returned successfully")
             } else {
-                Log.w("NAV_DEBUG", "  -> GUARD BLOCKED: currentDest=$currentDestId, expected=${R.id.navigation_inventory}")
+                AppLog.w("Inventory", "Navigation blocked: currentDest=$currentDestId")
             }
         } catch (e: Exception) {
-            Log.e("NAV_DEBUG", "  -> EXCEPTION during navigate", e)
-            logNavState("$buttonName-after-exception")
+            AppLog.e("Inventory", "Navigation failed for $buttonName", e)
         }
     }
 

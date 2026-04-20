@@ -3,7 +3,7 @@ package com.example.foodexpiryapp.data.remote
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import com.example.foodexpiryapp.data.local.ModelStorageManager
 import com.example.foodexpiryapp.data.local.dao.DownloadStateDao
 import com.example.foodexpiryapp.data.local.database.DownloadStateEntity
@@ -95,7 +95,7 @@ class ModelDownloadManager @Inject constructor(
 
             val responseCode = connection.responseCode
             if (responseCode != HttpURLConnection.HTTP_OK) {
-                Log.w(TAG, "Failed to fetch SHA-256 hashes: HTTP $responseCode")
+                AppLog.w(TAG, "Failed to fetch SHA-256 hashes: HTTP $responseCode")
                 return@withContext emptyMap()
             }
 
@@ -114,15 +114,15 @@ class ModelDownloadManager @Inject constructor(
                     val sha256 = lfs.optString("sha256", "")
                     if (sha256.isNotEmpty()) {
                         hashes[filename] = sha256
-                        Log.d(TAG, "SHA-256 for $filename: ${sha256.take(16)}...")
+                        AppLog.d(TAG, "SHA-256 for $filename: ${sha256.take(16)}...")
                     }
                 }
             }
 
-            Log.d(TAG, "Fetched ${hashes.size} SHA-256 hashes from HuggingFace API")
+            AppLog.d(TAG, "Fetched ${hashes.size} SHA-256 hashes from HuggingFace API")
             hashes
         } catch (e: Exception) {
-            Log.w(TAG, "Error fetching SHA-256 hashes", e)
+            AppLog.w(TAG, "Error fetching SHA-256 hashes", e)
             emptyMap()
         }
     }
@@ -139,9 +139,9 @@ class ModelDownloadManager @Inject constructor(
                     file.copy(expectedSha256 = hashes[file.relativePath] ?: file.expectedSha256)
                 }
             )
-            Log.d(TAG, "Manifest resolved with SHA-256 hashes for ${hashes.size} files")
+            AppLog.d(TAG, "Manifest resolved with SHA-256 hashes for ${hashes.size} files")
         } else {
-            Log.w(TAG, "Could not fetch SHA-256 hashes — verification will be skipped")
+            AppLog.w(TAG, "Could not fetch SHA-256 hashes — verification will be skipped")
         }
     }
 
@@ -314,7 +314,7 @@ class ModelDownloadManager @Inject constructor(
                 emit(DownloadUiState.Complete)
             } catch (e: Exception) {
                 val message = e.message ?: "Download failed"
-                Log.e(TAG, "Download failed", e)
+                AppLog.e(TAG, "Download failed", e)
                 emit(DownloadUiState.Error(message, canRetry = true))
             } finally {
                 isDownloading.set(false)

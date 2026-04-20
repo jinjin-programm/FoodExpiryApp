@@ -6,6 +6,8 @@ import androidx.work.Configuration
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import coil.ImageLoader
+import coil.ImageLoaderFactory
 import com.example.foodexpiryapp.domain.repository.NotificationSettingsRepository
 import com.example.foodexpiryapp.util.NotificationScheduler
 import dagger.hilt.android.HiltAndroidApp
@@ -14,11 +16,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltAndroidApp
-class FoodExpiryApp : Application(), Configuration.Provider {
+class FoodExpiryApp : Application(), Configuration.Provider, ImageLoaderFactory {
 
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
@@ -59,5 +62,23 @@ class FoodExpiryApp : Application(), Configuration.Provider {
         }
 
         android.util.Log.d("FoodExpiryApp", "Application onCreate finished")
+    }
+
+    override fun newImageLoader(): ImageLoader {
+        return ImageLoader.Builder(this)
+            .crossfade(true)
+            .okHttpClient {
+                OkHttpClient.Builder()
+                    .addInterceptor { chain ->
+                        val request = chain.request().newBuilder()
+                            .header("User-Agent", "FoodExpiryApp/1.0 (Android)")
+                            .build()
+                        chain.proceed(request)
+                    }
+                    .connectTimeout(30, TimeUnit.SECONDS)
+                    .readTimeout(30, TimeUnit.SECONDS)
+                    .build()
+            }
+            .build()
     }
 }

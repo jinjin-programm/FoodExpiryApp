@@ -11,7 +11,7 @@ import android.graphics.YuvImage
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import com.example.foodexpiryapp.BuildConfig
 import android.view.LayoutInflater
 import android.view.View
@@ -203,7 +203,7 @@ class YoloScanFragment : Fragment() {
                     if (detections.isNotEmpty() && latestBitmap != null) {
                         if (BuildConfig.DEBUG) {
                             for ((idx, det) in detections.withIndex()) {
-                                Log.d("OnnxYoloEngine-Debug", "Overlay detection $idx: label=${det.label}, conf=${String.format("%.2f", det.confidence)}, bbox=${det.boundingBox}")
+                                AppLog.d("OnnxYoloEngine-Debug", "Overlay detection $idx: label=${det.label}, conf=${String.format("%.2f", det.confidence)}, bbox=${det.boundingBox}")
                             }
                         }
                         detectionOverlay.setDetections(
@@ -369,7 +369,7 @@ class YoloScanFragment : Fragment() {
                     viewModel.startDetection(safeBitmap)
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Gallery image load failed", e)
+                AppLog.e(TAG, "Gallery image load failed", e)
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, "Failed to load image: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
@@ -410,7 +410,7 @@ class YoloScanFragment : Fragment() {
                 imageAnalyzer
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Camera binding failed", e)
+            AppLog.e(TAG, "Camera binding failed", e)
         }
     }
 
@@ -469,7 +469,7 @@ class YoloScanFragment : Fragment() {
             val bundle = Bundle().apply { putString("sessionId", sessionId) }
             findNavController().navigate(R.id.action_scan_container_to_confirmation, bundle)
         } catch (e: Exception) {
-            Log.e(TAG, "Navigation to confirmation failed", e)
+            AppLog.e(TAG, "Navigation to confirmation failed", e)
             // Fallback: set FragmentResult for compatibility
             isCapturing = false
         }
@@ -514,7 +514,7 @@ class YoloScanFragment : Fragment() {
                 yuvImage.compressToJpeg(Rect(0, 0, width, height), 90, out)
                 BitmapFactory.decodeByteArray(out.toByteArray(), 0, out.size())
             } catch (e: Exception) {
-                Log.e(TAG, "YUV→Bitmap conversion failed", e)
+                AppLog.e(TAG, "YUV→Bitmap conversion failed", e)
                 null
             }
         }

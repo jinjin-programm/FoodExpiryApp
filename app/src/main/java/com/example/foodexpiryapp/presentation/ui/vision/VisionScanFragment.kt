@@ -9,7 +9,7 @@ import android.graphics.Matrix
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import com.example.foodexpiryapp.BuildConfig
 import android.view.LayoutInflater
 import android.view.View
@@ -325,7 +325,7 @@ class VisionScanFragment : Fragment() {
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Gallery image load failed", e)
+                AppLog.e(TAG, "Gallery image load failed", e)
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, "Failed to load image: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
@@ -384,7 +384,7 @@ class VisionScanFragment : Fragment() {
                 )
                 isCameraActive = true
             } catch (e: Exception) {
-                Log.e(TAG, "Camera binding failed", e)
+                AppLog.e(TAG, "Camera binding failed", e)
             } finally {
                 isStartingCamera = false
             }
@@ -478,7 +478,7 @@ class VisionScanFragment : Fragment() {
                         }
                         is PipelineState.Detected -> {
                             if (BuildConfig.DEBUG) {
-                                Log.d("OnnxYoloEngine-Debug", "Detected ${state.detections.size} items, starting classification")
+                                AppLog.d("OnnxYoloEngine-Debug", "Detected ${state.detections.size} items, starting classification")
                             }
                             binding.tvProgressTitle.text = "Items detected, classifying..."
                         }
@@ -522,7 +522,7 @@ class VisionScanFragment : Fragment() {
                                         bundle
                                     )
                                 } catch (e: Exception) {
-                                    Log.e(TAG, "Navigation to confirmation failed", e)
+                                    AppLog.e(TAG, "Navigation to confirmation failed", e)
                                     restartCamera()
                                 }
                             } else {
@@ -665,7 +665,7 @@ class VisionScanFragment : Fragment() {
                         try {
                             findNavController().popBackStack()
                         } catch (e: Exception) {
-                            Log.e(TAG, "popBackStack failed after scan", e)
+                            AppLog.e(TAG, "popBackStack failed after scan", e)
                             displayAiResult(result.name, result.expiryHint, result.rawResponse ?: "")
                             updateStatus("Analysis complete", Status.READY)
                         }
@@ -677,7 +677,7 @@ class VisionScanFragment : Fragment() {
                 hideProgressOverlay()
                 hideCancelButton()
                 binding.flashOverlay.visibility = View.GONE
-                Log.e(TAG, "Analysis error", e)
+                AppLog.e(TAG, "Analysis error", e)
                 Toast.makeText(context, "AI 分析失敗: ${e.message}", Toast.LENGTH_LONG).show()
                 updateStatus("Analysis failed", Status.ERROR)
             }

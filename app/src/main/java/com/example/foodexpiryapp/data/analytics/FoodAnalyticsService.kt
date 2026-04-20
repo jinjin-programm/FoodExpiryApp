@@ -3,6 +3,7 @@ package com.example.foodexpiryapp.data.analytics
 import android.os.Bundle
 import com.example.foodexpiryapp.domain.model.AnalyticsEvent
 import com.example.foodexpiryapp.domain.model.EventType
+import com.example.foodexpiryapp.util.AppLog
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.ktx.Firebase
@@ -37,7 +38,7 @@ class FoodAnalyticsService @Inject constructor() {
             firebaseAnalytics?.logEvent(event.eventName, bundle)
         } catch (e: Exception) {
             // Firebase not available, log locally only
-            android.util.Log.d("Analytics", "Firebase unavailable: ${e.message}")
+            AppLog.d("Analytics", "Firebase unavailable: ${e.message}")
         }
     }
     

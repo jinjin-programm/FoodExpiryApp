@@ -2,7 +2,7 @@ package com.example.foodexpiryapp.inference.yolo
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import com.example.foodexpiryapp.domain.model.DetectionResult
 import com.example.foodexpiryapp.inference.mnn.ModelLifecycleManager
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -54,7 +54,7 @@ class MnnYoloEngine @Inject constructor(
 
         // Acquire lifecycle per MNN-05 / PITFALL-1
         if (!lifecycleManager.acquire(ModelLifecycleManager.ModelType.YOLO)) {
-            Log.e(TAG, "Cannot acquire YOLO lifecycle — another model active or insufficient memory")
+            AppLog.e(TAG, "Cannot acquire YOLO lifecycle — another model active or insufficient memory")
             return@withContext false
         }
 
@@ -62,14 +62,14 @@ class MnnYoloEngine @Inject constructor(
             // Load MNN-format YOLO model from assets
             // Per D-01: Model bundled in APK assets (~5-20MB)
             val modelPath = config.modelAssetPath
-            Log.d(TAG, "Loading YOLO model from assets: $modelPath")
+            AppLog.d(TAG, "Loading YOLO model from assets: $modelPath")
 
             // Verify asset exists per T-08-01-03 (threat mitigation: check asset before native call)
             try {
                 context.assets.open(modelPath).close()
-                Log.d(TAG, "YOLO model asset found: $modelPath")
+                AppLog.d(TAG, "YOLO model asset found: $modelPath")
             } catch (e: Exception) {
-                Log.e(TAG, "YOLO model asset not found: $modelPath", e)
+                AppLog.e(TAG, "YOLO model asset not found: $modelPath", e)
                 lifecycleManager.release(ModelLifecycleManager.ModelType.YOLO)
                 return@withContext false
             }
@@ -78,16 +78,16 @@ class MnnYoloEngine @Inject constructor(
             // Per D-04: Custom JNI bridge pattern (same as MnnLlmNative)
             nativeHandle = MnnYoloNative.nativeCreateYolo(modelPath, 4) // 4 threads default
             if (nativeHandle == 0L) {
-                Log.e(TAG, "Failed to create YOLO native instance")
+                AppLog.e(TAG, "Failed to create YOLO native instance")
                 lifecycleManager.release(ModelLifecycleManager.ModelType.YOLO)
                 return@withContext false
             }
 
             isLoaded = true
-            Log.d(TAG, "YOLO model loaded successfully (handle=$nativeHandle)")
+            AppLog.d(TAG, "YOLO model loaded successfully (handle=$nativeHandle)")
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Error loading YOLO model", e)
+            AppLog.e(TAG, "Error loading YOLO model", e)
             lifecycleManager.release(ModelLifecycleManager.ModelType.YOLO)
             isLoaded = false
             false
@@ -112,7 +112,7 @@ class MnnYoloEngine @Inject constructor(
      */
     fun detect(bitmap: Bitmap): List<DetectionResult> {
         if (!isLoaded) {
-            Log.w(TAG, "detect() called but model not loaded")
+            AppLog.w(TAG, "detect() called but model not loaded")
             return emptyList()
         }
 
@@ -144,7 +144,7 @@ class MnnYoloEngine @Inject constructor(
 
             nmsResults.take(config.maxDetections)
         } catch (e: Exception) {
-            Log.e(TAG, "YOLO detection error", e)
+            AppLog.e(TAG, "YOLO detection error", e)
             emptyList()
         }
     }
@@ -157,12 +157,12 @@ class MnnYoloEngine @Inject constructor(
         try {
             if (nativeHandle != 0L) {
                 MnnYoloNative.nativeDestroyYolo(nativeHandle)
-                Log.d(TAG, "YOLO model unloaded (native handle released)")
+                AppLog.d(TAG, "YOLO model unloaded (native handle released)")
             }
             nativeHandle = 0L
             isLoaded = false
         } catch (e: Exception) {
-            Log.e(TAG, "Error unloading YOLO model", e)
+            AppLog.e(TAG, "Error unloading YOLO model", e)
             nativeHandle = 0L
             isLoaded = false
         }

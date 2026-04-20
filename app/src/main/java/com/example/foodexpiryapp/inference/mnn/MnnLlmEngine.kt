@@ -2,7 +2,7 @@ package com.example.foodexpiryapp.inference.mnn
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import com.example.foodexpiryapp.data.local.ModelStorageManager
 import com.example.foodexpiryapp.domain.model.FoodIdentification
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -29,7 +29,7 @@ class MnnLlmEngine @Inject constructor(
             try {
                 MnnLlmNative
             } catch (_: UnsatisfiedLinkError) {
-                Log.w(TAG, "MNN native libraries not available — LLM features unavailable")
+                AppLog.w(TAG, "MNN native libraries not available — LLM features unavailable")
             }
         }
     }
@@ -44,23 +44,23 @@ class MnnLlmEngine @Inject constructor(
         if (isLoaded) return@withContext true
 
         if (!MnnLlmNative.nativeLoaded) {
-            Log.e(TAG, "Native libraries not loaded — cannot load model")
+            AppLog.e(TAG, "Native libraries not loaded — cannot load model")
             return@withContext false
         }
 
         if (!storageManager.areAllModelFilesReady()) {
-            Log.e(TAG, "Model files not ready — cannot load")
+            AppLog.e(TAG, "Model files not ready — cannot load")
             return@withContext false
         }
 
         if (!lifecycleManager.acquire(ModelLifecycleManager.ModelType.LLM)) {
-            Log.e(TAG, "Cannot acquire LLM lifecycle — another model active or insufficient memory")
+            AppLog.e(TAG, "Cannot acquire LLM lifecycle — another model active or insufficient memory")
             return@withContext false
         }
 
         try {
             val modelDir = storageManager.getModelDirectory().absolutePath
-            Log.d(TAG, "Loading LLM model from: $modelDir")
+            AppLog.d(TAG, "Loading LLM model from: $modelDir")
 
             nativeHandle = MnnLlmNative.nativeCreateLlm(
                 modelDir, config.threadNum,
@@ -68,16 +68,16 @@ class MnnLlmEngine @Inject constructor(
             )
 
             if (nativeHandle == 0L) {
-                Log.e(TAG, "Failed to create LLM native instance")
+                AppLog.e(TAG, "Failed to create LLM native instance")
                 lifecycleManager.release(ModelLifecycleManager.ModelType.LLM)
                 return@withContext false
             }
 
             isLoaded = true
-            Log.d(TAG, "LLM model loaded successfully (handle=$nativeHandle)")
+            AppLog.d(TAG, "LLM model loaded successfully (handle=$nativeHandle)")
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Error loading LLM model", e)
+            AppLog.e(TAG, "Error loading LLM model", e)
             lifecycleManager.release(ModelLifecycleManager.ModelType.LLM)
             nativeHandle = 0L
             false
@@ -86,7 +86,7 @@ class MnnLlmEngine @Inject constructor(
 
     suspend fun runInference(bitmap: Bitmap, retryHint: String? = null): FoodIdentification? = withContext(Dispatchers.IO) {
         if (!isLoaded || nativeHandle == 0L) {
-            Log.e(TAG, "Model not loaded — call loadModel() first")
+            AppLog.e(TAG, "Model not loaded — call loadModel() first")
             return@withContext null
         }
 
@@ -109,9 +109,9 @@ class MnnLlmEngine @Inject constructor(
                 .joinToString("") { "%02x".format(it) }
                 .take(16)
 
-            Log.d(TAG, "Prepared in-memory image: ${byteArray.size} bytes, ${resizedBitmap.width}x${resizedBitmap.height}, sha256=$fingerprint")
+            AppLog.d(TAG, "Prepared in-memory image: ${byteArray.size} bytes, ${resizedBitmap.width}x${resizedBitmap.height}, sha256=$fingerprint")
             val savedFile = debugImageSaver.saveJpeg(byteArray, "vision_input_$fingerprint")
-            Log.d(TAG, "Saved debug input image to ${savedFile.absolutePath}")
+            AppLog.d(TAG, "Saved debug input image to ${savedFile.absolutePath}")
 
             val rawResponse = if (retryHint != null) {
                 MnnLlmNative.nativeRunInferenceWithHint(nativeHandle, byteArray, retryHint)
@@ -119,13 +119,13 @@ class MnnLlmEngine @Inject constructor(
                 MnnLlmNative.nativeRunInference(nativeHandle, byteArray)
             }
 
-            Log.d(TAG, "Raw LLM response: $rawResponse")
+            AppLog.d(TAG, "Raw LLM response: $rawResponse")
 
             val result = StructuredOutputParser.parse(rawResponse)
 
             result?.copy(rawResponse = rawResponse)
         } catch (e: Exception) {
-            Log.e(TAG, "Inference failed", e)
+            AppLog.e(TAG, "Inference failed", e)
             null
         }
     }
@@ -134,9 +134,9 @@ class MnnLlmEngine @Inject constructor(
         if (nativeHandle != 0L) {
             try {
                 MnnLlmNative.nativeDestroyLlm(nativeHandle)
-                Log.d(TAG, "LLM model unloaded")
+                AppLog.d(TAG, "LLM model unloaded")
             } catch (e: Exception) {
-                Log.e(TAG, "Error unloading model", e)
+                AppLog.e(TAG, "Error unloading model", e)
             }
             nativeHandle = 0L
             isLoaded = false

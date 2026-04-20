@@ -4,6 +4,7 @@ import com.example.foodexpiryapp.data.remote.ollama.dto.OllamaChatRequest
 import com.example.foodexpiryapp.data.remote.ollama.dto.OllamaChatResponse
 import com.example.foodexpiryapp.data.remote.ollama.dto.OllamaModelsResponse
 import com.example.foodexpiryapp.data.remote.ollama.dto.OllamaVersionResponse
+import com.example.foodexpiryapp.util.AppLog
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -39,10 +40,9 @@ class OllamaApiClient @Inject constructor(
             val url = "${config.baseUrl}/api/chat"
             val jsonBody = gson.toJson(request)
 
-            android.util.Log.d(TAG, "─────────────────────────────────")
-            android.util.Log.d(TAG, "REQUEST → ${request.model} @ ${config.baseUrl}")
-            android.util.Log.d(TAG, "OPTIONS → temp=${request.options?.temperature} topP=${request.options?.topP} topK=${request.options?.topK} numPredict=${request.options?.numPredict}")
-            android.util.Log.d(TAG, "PROMPT → ${request.messages.firstOrNull()?.content?.take(200)}")
+            AppLog.d(TAG, "REQUEST → ${request.model} @ ${config.baseUrl}")
+            AppLog.d(TAG, "OPTIONS → temp=${request.options?.temperature} topP=${request.options?.topP} numPredict=${request.options?.numPredict}")
+            AppLog.d(TAG, "PROMPT → ${request.messages.firstOrNull()?.content?.take(200)}")
 
             val startTime = System.currentTimeMillis()
             val requestBuilder = Request.Builder()
@@ -58,24 +58,20 @@ class OllamaApiClient @Inject constructor(
             val elapsed = System.currentTimeMillis() - startTime
 
             if (!response.isSuccessful) {
-                android.util.Log.e(TAG, "API ERROR ← ${response.code} (${elapsed}ms): $responseBody")
+                AppLog.e(TAG, "API ERROR ← ${response.code} (${elapsed}ms): $responseBody")
                 throw Exception("API error ${response.code}: $responseBody")
             }
 
-            android.util.Log.d(TAG, "RESPONSE ← ${response.code} in ${elapsed}ms")
-            android.util.Log.d(TAG, "RAW BODY → $responseBody")
+            AppLog.d(TAG, "RESPONSE ← ${response.code} in ${elapsed}ms")
 
             val parsed = gson.fromJson(responseBody, OllamaChatResponse::class.java)
                 ?: throw Exception("Failed to parse response")
 
-            android.util.Log.d(TAG, "MODEL → ${parsed.model}")
-            android.util.Log.d(TAG, "CONTENT → ${parsed.message?.content}")
-            android.util.Log.d(TAG, "TOKENS → eval_count=${parsed.evalCount} eval_duration=${parsed.evalDuration}ms total_duration=${parsed.totalDuration}ms")
+            AppLog.d(TAG, "MODEL → ${parsed.model}, TOKENS → eval_count=${parsed.evalCount} eval_duration=${parsed.evalDuration}ms")
             if (parsed.evalCount != null && parsed.evalDuration != null && parsed.evalDuration > 0) {
                 val tokensPerSec = parsed.evalCount.toDouble() / (parsed.evalDuration.toDouble() / 1_000_000_000.0)
-                android.util.Log.d(TAG, "SPEED → %.1f tokens/sec".format(tokensPerSec))
+                AppLog.d(TAG, "SPEED → %.1f tokens/sec".format(tokensPerSec))
             }
-            android.util.Log.d(TAG, "─────────────────────────────────")
 
             parsed
         }

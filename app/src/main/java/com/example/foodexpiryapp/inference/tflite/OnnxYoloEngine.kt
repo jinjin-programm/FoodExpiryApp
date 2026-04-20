@@ -2,7 +2,7 @@ package com.example.foodexpiryapp.inference.tflite
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import com.example.foodexpiryapp.domain.model.DetectionResult
 import com.example.foodexpiryapp.domain.model.FoodCategory
 import com.example.foodexpiryapp.inference.mnn.ModelLifecycleManager
@@ -43,7 +43,7 @@ class OnnxYoloEngine @Inject constructor(
         if (isLoaded) return@withContext true
 
         if (!lifecycleManager.acquire(ModelLifecycleManager.ModelType.YOLO)) {
-            Log.e(TAG, "Cannot acquire YOLO lifecycle")
+            AppLog.e(TAG, "Cannot acquire YOLO lifecycle")
             return@withContext false
         }
 
@@ -59,15 +59,15 @@ class OnnxYoloEngine @Inject constructor(
 
             session?.inputNames?.let { inputs ->
                 session?.outputNames?.let { outputs ->
-                    Log.d(TAG, "Session created with inputs=$inputs, outputs=$outputs")
+                    AppLog.d(TAG, "Session created with inputs=$inputs, outputs=$outputs")
                 }
             }
 
             isLoaded = true
-            Log.d(TAG, "ONNX YOLOE model loaded successfully")
+            AppLog.d(TAG, "ONNX YOLOE model loaded successfully")
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to load ONNX YOLOE model", e)
+            AppLog.e(TAG, "Failed to load ONNX YOLOE model", e)
             lifecycleManager.release(ModelLifecycleManager.ModelType.YOLO)
             false
         }
@@ -75,7 +75,7 @@ class OnnxYoloEngine @Inject constructor(
 
     override fun detect(bitmap: Bitmap): List<DetectionResult> {
         if (!isLoaded || session == null || environment == null) {
-            Log.w(TAG, "detect() called but model not loaded")
+            AppLog.w(TAG, "detect() called but model not loaded")
             return emptyList()
         }
 
@@ -83,20 +83,20 @@ class OnnxYoloEngine @Inject constructor(
             val originalWidth = bitmap.width
             val originalHeight = bitmap.height
 
-            Log.d(TAG, "Input bitmap: ${originalWidth}x${originalHeight}")
+            AppLog.d(TAG, "Input bitmap: ${originalWidth}x${originalHeight}")
 
             val letterboxResult = createLetterboxBitmap(bitmap, INPUT_SIZE)
             val resized = letterboxResult.bitmap
             val inputTensor = convertBitmapToNCHWTensor(resized)
 
-            Log.d(TAG, "Letterbox: scale=${letterboxResult.scale}, pad=(${letterboxResult.padW},${letterboxResult.padH}), resized=${resized.width}x${resized.height}")
+            AppLog.d(TAG, "Letterbox: scale=${letterboxResult.scale}, pad=(${letterboxResult.padW},${letterboxResult.padH}), resized=${resized.width}x${resized.height}")
 
             val inputName = session?.inputNames?.iterator()?.next() ?: "images"
             val results = session?.run(mapOf(inputName to inputTensor))
 
             val outputTensor = results?.get(0) as? OnnxTensor
             if (outputTensor == null) {
-                Log.e(TAG, "Failed to get output tensor")
+                AppLog.e(TAG, "Failed to get output tensor")
                 return emptyList()
             }
 
@@ -107,7 +107,7 @@ class OnnxYoloEngine @Inject constructor(
 
             val maskTensor = results?.get(1) as? OnnxTensor
             val numMasks = maskTensor?.info?.shape?.getOrNull(1)?.toInt() ?: 0
-            Log.d(TAG, "Output shape: ${shape.toList()}, detections=$numDetections, values=$numValues, numMasks=$numMasks")
+            AppLog.d(TAG, "Output shape: ${shape.toList()}, detections=$numDetections, values=$numValues, numMasks=$numMasks")
 
             val outputArray = FloatArray(outputBuffer.remaining())
             outputBuffer.get(outputArray)
@@ -117,8 +117,8 @@ class OnnxYoloEngine @Inject constructor(
                 if (base + numValues <= outputArray.size) {
                     val first15 = outputArray.sliceArray(base until base + min(15, numValues))
                     val last5 = outputArray.sliceArray(base + numValues - min(5, numValues) until base + numValues)
-                    Log.d(TAG, "Raw det[$i] first15: ${first15.map { String.format("%.4f", it) }}")
-                    Log.d(TAG, "Raw det[$i] last5: ${last5.map { String.format("%.4f", it) }}")
+                    AppLog.d(TAG, "Raw det[$i] first15: ${first15.map { String.format("%.4f", it) }}")
+                    AppLog.d(TAG, "Raw det[$i] last5: ${last5.map { String.format("%.4f", it) }}")
                 }
             }
 
@@ -139,15 +139,15 @@ class OnnxYoloEngine @Inject constructor(
             val nmsResults = MnnYoloPostprocessor.applyNms(detections, IOU_THRESHOLD)
 
             for ((index, det) in nmsResults.withIndex()) {
-                Log.d(TAG, "Detection $index: label=${det.label}, conf=${String.format("%.2f", det.confidence)}, bbox=${det.boundingBox}")
+                AppLog.d(TAG, "Detection $index: label=${det.label}, conf=${String.format("%.2f", det.confidence)}, bbox=${det.boundingBox}")
             }
 
             nmsResults
         } catch (e: OrtException) {
-            Log.e(TAG, "ONNX inference error", e)
+            AppLog.e(TAG, "ONNX inference error", e)
             emptyList()
         } catch (e: Exception) {
-            Log.e(TAG, "YOLOE detection error", e)
+            AppLog.e(TAG, "YOLOE detection error", e)
             emptyList()
         }
     }
@@ -155,9 +155,9 @@ class OnnxYoloEngine @Inject constructor(
     override suspend fun unloadModel() = withContext(Dispatchers.IO) {
         try {
             session?.close()
-            Log.d(TAG, "ONNX YOLOE model unloaded")
+            AppLog.d(TAG, "ONNX YOLOE model unloaded")
         } catch (e: Exception) {
-            Log.e(TAG, "Error unloading model", e)
+            AppLog.e(TAG, "Error unloading model", e)
         }
         session = null
         environment = null

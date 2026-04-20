@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.example.foodexpiryapp.data.local.dao.LocalRecipeDao
 import com.example.foodexpiryapp.data.local.database.LocalRecipeEntity
+import com.example.foodexpiryapp.util.AppLog
 import com.example.foodexpiryapp.domain.model.RecipeIngredient
 import com.example.foodexpiryapp.domain.model.RecipeTag
 import com.google.gson.Gson
@@ -19,7 +20,7 @@ class HkRecipeSeeder @Inject constructor(
     private val gson: Gson
 ) {
     private val prefsName = "hk_recipe_seeder"
-    private val keySeeded = "has_seeded_v2"
+    private val keySeeded = "has_seeded_v3"
 
     suspend fun seedIfNeeded(context: Context) {
         val prefs = context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
@@ -64,7 +65,7 @@ class HkRecipeSeeder @Inject constructor(
 
                 prefs.edit().putBoolean(keySeeded, true).apply()
             } catch (e: Exception) {
-                android.util.Log.e("HkRecipeSeeder", "Failed to seed recipes", e)
+                AppLog.e("HkRecipeSeeder", "Failed to seed recipes", e)
             }
         }
     }

@@ -2,7 +2,7 @@ package com.example.foodexpiryapp.data.remote.ollama
 
 import android.graphics.Bitmap
 import android.util.Base64
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import com.example.foodexpiryapp.data.remote.ollama.dto.OllamaChatRequest
 import com.example.foodexpiryapp.data.remote.ollama.dto.OllamaJsonSchema
 import com.example.foodexpiryapp.data.remote.ollama.dto.OllamaMessage
@@ -83,20 +83,20 @@ class OllamaVisionClient @Inject constructor(
             if (response.message != null) {
                 parseFoodIdentification(response.message.content)
             } else {
-                Log.e(TAG, "Empty response message")
+                AppLog.e(TAG, "Empty response message")
                 null
             }
         } catch (e: java.net.ConnectException) {
-            Log.e(TAG, "analyzeFood: Connection refused - server not running at configured URL")
+            AppLog.e(TAG, "analyzeFood: Connection refused - server not running at configured URL")
             null
         } catch (e: java.net.SocketTimeoutException) {
-            Log.e(TAG, "analyzeFood: Request timed out - server unreachable")
+            AppLog.e(TAG, "analyzeFood: Request timed out - server unreachable")
             null
         } catch (e: java.net.UnknownHostException) {
-            Log.e(TAG, "analyzeFood: Unknown host - DNS/tunnel issue: ${e.message}")
+            AppLog.e(TAG, "analyzeFood: Unknown host - DNS/tunnel issue: ${e.message}")
             null
         } catch (e: Exception) {
-            Log.e(TAG, "Error analyzing food", e)
+            AppLog.e(TAG, "Error analyzing food", e)
             null
         }
     }
@@ -104,24 +104,24 @@ class OllamaVisionClient @Inject constructor(
     override suspend fun testConnection(): Boolean = withContext(Dispatchers.IO) {
         try {
             val config = serverConfig.getConfig()
-            Log.d(TAG, "Testing connection to ${config.baseUrl} with model ${config.modelName}")
+            AppLog.d(TAG, "Testing connection to ${config.baseUrl} with model ${config.modelName}")
             apiClient.getVersion()
-            Log.d(TAG, "Connection test succeeded")
+            AppLog.d(TAG, "Connection test succeeded")
             true
         } catch (e: java.net.ConnectException) {
-            Log.e(TAG, "Connection refused - is the server running at the configured URL? ${e.message}")
+            AppLog.e(TAG, "Connection refused - is the server running at the configured URL? ${e.message}")
             false
         } catch (e: java.net.SocketTimeoutException) {
-            Log.e(TAG, "Connection timed out - server unreachable: ${e.message}")
+            AppLog.e(TAG, "Connection timed out - server unreachable: ${e.message}")
             false
         } catch (e: java.net.UnknownHostException) {
-            Log.e(TAG, "Unknown host - DNS resolution failed: ${e.message}")
+            AppLog.e(TAG, "Unknown host - DNS resolution failed: ${e.message}")
             false
         } catch (e: javax.net.ssl.SSLException) {
-            Log.e(TAG, "SSL/TLS error - check tunnel/certificate: ${e.message}")
+            AppLog.e(TAG, "SSL/TLS error - check tunnel/certificate: ${e.message}")
             false
         } catch (e: Exception) {
-            Log.e(TAG, "Connection test failed", e)
+            AppLog.e(TAG, "Connection test failed", e)
             false
         }
     }
@@ -174,7 +174,7 @@ class OllamaVisionClient @Inject constructor(
             } else null
 
             if (name.isBlank()) {
-                Log.w(TAG, "Empty food name in response")
+                AppLog.w(TAG, "Empty food name in response")
                 return null
             }
 
@@ -187,7 +187,7 @@ class OllamaVisionClient @Inject constructor(
                 rawResponse = jsonContent
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to parse JSON response", e)
+            AppLog.e(TAG, "Failed to parse JSON response", e)
             null
         }
     }

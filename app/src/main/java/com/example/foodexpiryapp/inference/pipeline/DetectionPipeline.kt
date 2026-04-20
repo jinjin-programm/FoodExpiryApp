@@ -2,7 +2,7 @@ package com.example.foodexpiryapp.inference.pipeline
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import com.example.foodexpiryapp.data.remote.ProviderConfig
 import com.example.foodexpiryapp.data.remote.lmstudio.LmStudioVisionClient
 import com.example.foodexpiryapp.data.remote.ollama.OllamaVisionClient
@@ -52,7 +52,7 @@ class DetectionPipeline @Inject constructor(
             }
             file.absolutePath
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to save crop image for item $index", e)
+            AppLog.w(TAG, "Failed to save crop image for item $index", e)
             null
         }
     }
@@ -115,7 +115,7 @@ class DetectionPipeline @Inject constructor(
                             detection.copy(status = DetectionStatus.FAILED)
                         }
                     } catch (e: Exception) {
-                        Log.w(TAG, "Classification failed for item ${index + 1}", e)
+                        AppLog.w(TAG, "Classification failed for item ${index + 1}", e)
                         detection.copy(status = DetectionStatus.FAILED)
                     }
                 } else {
@@ -140,7 +140,7 @@ class DetectionPipeline @Inject constructor(
         } catch (e: CancellationException) {
             send(PipelineState.Cancelled)
         } catch (e: Exception) {
-            Log.e(TAG, "Pipeline error", e)
+            AppLog.e(TAG, "Pipeline error", e)
             send(PipelineState.Error(e.message ?: "Unknown error"))
         } finally {
             try { yoloDetector.unloadModel() } catch (_: Exception) {}

@@ -1,6 +1,6 @@
 package com.example.foodexpiryapp.data.remote.lmstudio
 
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import com.example.foodexpiryapp.data.remote.lmstudio.dto.OpenAiChatRequest
 import com.example.foodexpiryapp.data.remote.lmstudio.dto.OpenAiChatResponse
 import com.example.foodexpiryapp.data.remote.lmstudio.dto.OpenAiModelsResponse
@@ -43,9 +43,9 @@ class LmStudioApiClient @Inject constructor(
             val url = "${config.baseUrl}/v1/chat/completions"
             val jsonBody = gson.toJson(request)
 
-            Log.d(TAG, "─────────────────────────────────")
-            Log.d(TAG, "REQUEST → ${request.model} @ ${config.baseUrl}")
-            Log.d(TAG, "OPTIONS → temp=${request.temperature} topP=${request.topP} maxTokens=${request.maxTokens}")
+            AppLog.d(TAG, "─────────────────────────────────")
+            AppLog.d(TAG, "REQUEST → ${request.model} @ ${config.baseUrl}")
+            AppLog.d(TAG, "OPTIONS → temp=${request.temperature} topP=${request.topP} maxTokens=${request.maxTokens}")
 
             val startTime = System.currentTimeMillis()
             val requestBuilder = Request.Builder()
@@ -57,24 +57,24 @@ class LmStudioApiClient @Inject constructor(
             val elapsed = System.currentTimeMillis() - startTime
 
             if (!response.isSuccessful) {
-                Log.e(TAG, "API ERROR ← ${response.code} (${elapsed}ms): $responseBody")
+                AppLog.e(TAG, "API ERROR ← ${response.code} (${elapsed}ms): $responseBody")
                 throw Exception("API error ${response.code}: $responseBody")
             }
 
-            Log.d(TAG, "RESPONSE ← ${response.code} in ${elapsed}ms")
-            Log.d(TAG, "RAW BODY → $responseBody")
+            AppLog.d(TAG, "RESPONSE ← ${response.code} in ${elapsed}ms")
+            AppLog.d(TAG, "RAW BODY → $responseBody")
 
             val parsed = gson.fromJson(responseBody, OpenAiChatResponse::class.java)
                 ?: throw Exception("Failed to parse response")
 
             val content = parsed.choices?.firstOrNull()?.message?.content
-            Log.d(TAG, "CONTENT → $content")
-            Log.d(TAG, "TOKENS → prompt=${parsed.usage?.promptTokens} completion=${parsed.usage?.completionTokens} total=${parsed.usage?.totalTokens}")
+            AppLog.d(TAG, "CONTENT → $content")
+            AppLog.d(TAG, "TOKENS → prompt=${parsed.usage?.promptTokens} completion=${parsed.usage?.completionTokens} total=${parsed.usage?.totalTokens}")
             if (parsed.usage?.completionTokens != null && elapsed > 0) {
                 val tokensPerSec = parsed.usage.completionTokens.toDouble() / (elapsed.toDouble() / 1000.0)
-                Log.d(TAG, "SPEED → %.1f tokens/sec".format(tokensPerSec))
+                AppLog.d(TAG, "SPEED → %.1f tokens/sec".format(tokensPerSec))
             }
-            Log.d(TAG, "─────────────────────────────────")
+            AppLog.d(TAG, "─────────────────────────────────")
 
             parsed
         }
@@ -104,7 +104,7 @@ class LmStudioApiClient @Inject constructor(
             val response = httpClient.newCall(request).execute()
             response.isSuccessful
         } catch (e: Exception) {
-            Log.e(TAG, "Connection test failed", e)
+            AppLog.e(TAG, "Connection test failed", e)
             false
         }
     }

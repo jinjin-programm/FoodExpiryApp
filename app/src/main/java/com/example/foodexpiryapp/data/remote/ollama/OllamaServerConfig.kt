@@ -1,6 +1,6 @@
 package com.example.foodexpiryapp.data.remote.ollama
 
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -54,21 +54,21 @@ class OllamaServerConfig @Inject constructor(
     suspend fun getConfig(): OllamaConfig = config.first()
     
     suspend fun setBaseUrl(url: String) {
-        Log.d(TAG, "Setting base URL: $url")
+        AppLog.d(TAG, "Setting base URL: $url")
         dataStore.edit { preferences ->
             preferences[KEY_BASE_URL] = url.trimEnd('/')
         }
     }
     
     suspend fun setModelName(name: String) {
-        Log.d(TAG, "Setting model name: $name")
+        AppLog.d(TAG, "Setting model name: $name")
         dataStore.edit { preferences ->
             preferences[KEY_MODEL_NAME] = name
         }
     }
     
     suspend fun setApiToken(token: String?) {
-        Log.d(TAG, "Setting API token: ${if (token != null) "***" else "null"}")
+        AppLog.d(TAG, "Setting API token: ${if (token != null) "***" else "null"}")
         dataStore.edit { preferences ->
             if (token.isNullOrBlank()) {
                 preferences.remove(KEY_API_TOKEN)

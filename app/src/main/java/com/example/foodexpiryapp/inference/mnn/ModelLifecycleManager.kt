@@ -2,7 +2,7 @@ package com.example.foodexpiryapp.inference.mnn
 
 import android.app.ActivityManager
 import android.content.Context
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -37,7 +37,7 @@ class ModelLifecycleManager @Inject constructor(
         val memoryInfo = ActivityManager.MemoryInfo()
         activityManager.getMemoryInfo(memoryInfo)
         val availMB = memoryInfo.availMem / (1024 * 1024)
-        Log.d(TAG, "Available memory: ${availMB}MB (need ${MIN_AVAILABLE_MEMORY_MB}MB)")
+        AppLog.d(TAG, "Available memory: ${availMB}MB (need ${MIN_AVAILABLE_MEMORY_MB}MB)")
         return availMB >= MIN_AVAILABLE_MEMORY_MB
     }
 
@@ -50,17 +50,17 @@ class ModelLifecycleManager @Inject constructor(
      */
     suspend fun acquire(modelType: ModelType): Boolean = mutex.withLock {
         if (activeModel != null && activeModel != modelType) {
-            Log.w(TAG, "Cannot acquire $modelType — $activeModel is active")
+            AppLog.w(TAG, "Cannot acquire $modelType — $activeModel is active")
             return false
         }
 
         if (!hasEnoughMemory()) {
-            Log.w(TAG, "Cannot acquire $modelType — insufficient memory")
+            AppLog.w(TAG, "Cannot acquire $modelType — insufficient memory")
             return false
         }
 
         activeModel = modelType
-        Log.d(TAG, "Acquired $modelType")
+        AppLog.d(TAG, "Acquired $modelType")
         return true
     }
 
@@ -70,7 +70,7 @@ class ModelLifecycleManager @Inject constructor(
     suspend fun release(modelType: ModelType) = mutex.withLock {
         if (activeModel == modelType) {
             activeModel = null
-            Log.d(TAG, "Released $modelType")
+            AppLog.d(TAG, "Released $modelType")
         }
     }
 
@@ -84,6 +84,6 @@ class ModelLifecycleManager @Inject constructor(
      */
     suspend fun releaseAll() = mutex.withLock {
         activeModel = null
-        Log.d(TAG, "Released all models")
+        AppLog.d(TAG, "Released all models")
     }
 }

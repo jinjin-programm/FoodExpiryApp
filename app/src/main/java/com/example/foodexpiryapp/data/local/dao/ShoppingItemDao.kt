@@ -12,6 +12,9 @@ interface ShoppingItemDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertShoppingItem(item: ShoppingItemEntity): Long
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertShoppingItems(items: List<ShoppingItemEntity>)
+
     @Update
     suspend fun updateShoppingItem(item: ShoppingItemEntity)
 

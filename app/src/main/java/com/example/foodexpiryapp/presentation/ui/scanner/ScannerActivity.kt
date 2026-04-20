@@ -4,7 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -142,7 +142,7 @@ class ScannerActivity : AppCompatActivity() {
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalysis)
             } catch (e: Exception) {
-                Log.e(TAG, "Camera binding failed", e)
+                AppLog.e(TAG, "Camera binding failed", e)
             }
         }, ContextCompat.getMainExecutor(this))
     }
@@ -188,7 +188,7 @@ class ScannerActivity : AppCompatActivity() {
                 }
             }
             .addOnFailureListener { e ->
-                Log.e(TAG, "Barcode scan failed", e)
+                AppLog.e(TAG, "Barcode scan failed", e)
             }
             .addOnCompleteListener {
                 imageProxy.close()
@@ -220,7 +220,7 @@ class ScannerActivity : AppCompatActivity() {
                 }
             }
             .addOnFailureListener { e ->
-                Log.e(TAG, "Text recognition failed", e)
+                AppLog.e(TAG, "Text recognition failed", e)
             }
             .addOnCompleteListener {
                 imageProxy.close()

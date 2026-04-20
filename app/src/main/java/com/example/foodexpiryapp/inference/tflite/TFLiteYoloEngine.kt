@@ -3,7 +3,7 @@ package com.example.foodexpiryapp.inference.tflite
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.RectF
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import com.example.foodexpiryapp.domain.model.DetectionResult
 import com.example.foodexpiryapp.domain.model.FoodCategory
 import com.example.foodexpiryapp.inference.mnn.ModelLifecycleManager
@@ -41,7 +41,7 @@ class TFLiteYoloEngine @Inject constructor(
         if (isLoaded) return@withContext true
 
         if (!lifecycleManager.acquire(ModelLifecycleManager.ModelType.YOLO)) {
-            Log.e(TAG, "Cannot acquire YOLO lifecycle")
+            AppLog.e(TAG, "Cannot acquire YOLO lifecycle")
             return@withContext false
         }
 
@@ -53,10 +53,10 @@ class TFLiteYoloEngine @Inject constructor(
             interpreter = org.tensorflow.lite.Interpreter(modelBuffer, options)
             labels = loadLabels(LABELS_PATH)
             isLoaded = true
-            Log.d(TAG, "TFLite YOLO model loaded (${labels.size} labels)")
+            AppLog.d(TAG, "TFLite YOLO model loaded (${labels.size} labels)")
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to load TFLite YOLO model", e)
+            AppLog.e(TAG, "Failed to load TFLite YOLO model", e)
             lifecycleManager.release(ModelLifecycleManager.ModelType.YOLO)
             false
         }
@@ -64,7 +64,7 @@ class TFLiteYoloEngine @Inject constructor(
 
     override fun detect(bitmap: Bitmap): List<DetectionResult> {
         if (!isLoaded || interpreter == null) {
-            Log.w(TAG, "detect() called but model not loaded")
+            AppLog.w(TAG, "detect() called but model not loaded")
             return emptyList()
         }
 
@@ -116,7 +116,7 @@ class TFLiteYoloEngine @Inject constructor(
 
             applyNms(results)
         } catch (e: Exception) {
-            Log.e(TAG, "YOLO detection error", e)
+            AppLog.e(TAG, "YOLO detection error", e)
             emptyList()
         }
     }
@@ -124,9 +124,9 @@ class TFLiteYoloEngine @Inject constructor(
     override suspend fun unloadModel() = withContext(Dispatchers.IO) {
         try {
             interpreter?.close()
-            Log.d(TAG, "TFLite YOLO model unloaded")
+            AppLog.d(TAG, "TFLite YOLO model unloaded")
         } catch (e: Exception) {
-            Log.e(TAG, "Error unloading model", e)
+            AppLog.e(TAG, "Error unloading model", e)
         }
         interpreter = null
         isLoaded = false

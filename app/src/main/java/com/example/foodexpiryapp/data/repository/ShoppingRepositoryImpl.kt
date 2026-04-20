@@ -50,11 +50,13 @@ class ShoppingRepositoryImpl @Inject constructor(
     }
 
     override suspend fun applyTemplate(template: ShoppingTemplate) {
-        val existingItems = shoppingItemDao.getAllShoppingItems().first().map { it.name.lowercase().trim() }
-        for (itemName in template.itemNames) {
-            if (itemName.lowercase().trim() !in existingItems) {
-                shoppingItemDao.insertShoppingItem(ShoppingItemEntity(name = itemName.trim()))
-            }
+        val existingItems = shoppingItemDao.getAllShoppingItems().first()
+            .map { it.name.lowercase().trim() }.toSet()
+        val newItems = template.itemNames
+            .filter { it.lowercase().trim() !in existingItems }
+            .map { ShoppingItemEntity(name = it.trim()) }
+        if (newItems.isNotEmpty()) {
+            shoppingItemDao.insertShoppingItems(newItems)
         }
     }
 

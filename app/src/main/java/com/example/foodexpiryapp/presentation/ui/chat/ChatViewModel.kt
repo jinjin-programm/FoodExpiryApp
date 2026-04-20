@@ -1,7 +1,7 @@
 package com.example.foodexpiryapp.presentation.ui.chat
 
 import android.content.Context
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.foodexpiryapp.data.remote.ProviderConfig
@@ -82,7 +82,7 @@ class ChatViewModel @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error checking server connection", e)
+                AppLog.e(TAG, "Error checking server connection", e)
                 _isServerConnected.value = false
                 _statusText.value = "Error checking server: ${e.message}"
             }

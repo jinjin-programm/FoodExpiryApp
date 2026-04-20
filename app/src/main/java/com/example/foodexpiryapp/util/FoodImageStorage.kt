@@ -2,7 +2,7 @@ package com.example.foodexpiryapp.util
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import java.io.File
 import java.io.FileOutputStream
 import javax.inject.Inject
@@ -34,7 +34,7 @@ class FoodImageStorage @Inject constructor(
             }
             dest.absolutePath
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to copy food image from $sourcePath", e)
+            AppLog.w(TAG, "Failed to copy food image from $sourcePath", e)
             null
         }
     }
@@ -49,7 +49,7 @@ class FoodImageStorage @Inject constructor(
             if (resized !== bitmap) resized.recycle()
             dest.absolutePath
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to save food image bitmap for item $foodItemId", e)
+            AppLog.w(TAG, "Failed to save food image bitmap for item $foodItemId", e)
             null
         }
     }
@@ -60,7 +60,7 @@ class FoodImageStorage @Inject constructor(
             val file = File(imagePath)
             if (file.exists()) file.delete()
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to delete food image: $imagePath", e)
+            AppLog.w(TAG, "Failed to delete food image: $imagePath", e)
         }
     }
 
@@ -71,7 +71,7 @@ class FoodImageStorage @Inject constructor(
                 dir.listFiles()?.forEach { it.delete() }
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to delete all food images", e)
+            AppLog.w(TAG, "Failed to delete all food images", e)
         }
     }
 

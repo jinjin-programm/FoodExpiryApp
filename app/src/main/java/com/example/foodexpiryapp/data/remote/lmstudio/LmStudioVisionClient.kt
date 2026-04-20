@@ -2,7 +2,7 @@ package com.example.foodexpiryapp.data.remote.lmstudio
 
 import android.graphics.Bitmap
 import android.util.Base64
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import com.example.foodexpiryapp.data.remote.lmstudio.dto.OpenAiChatRequest
 import com.example.foodexpiryapp.data.remote.lmstudio.dto.OpenAiImageContent
 import com.example.foodexpiryapp.data.remote.lmstudio.dto.OpenAiImageUrl
@@ -65,11 +65,11 @@ class LmStudioVisionClient @Inject constructor(
                 if (content != null) {
                     parseFoodIdentification(content)
                 } else {
-                    Log.e(TAG, "Empty response message")
+                    AppLog.e(TAG, "Empty response message")
                     null
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error analyzing food", e)
+                AppLog.e(TAG, "Error analyzing food", e)
                 null
             }
         }
@@ -78,7 +78,7 @@ class LmStudioVisionClient @Inject constructor(
         try {
             apiClient.testConnection()
         } catch (e: Exception) {
-            Log.e(TAG, "Connection test failed", e)
+            AppLog.e(TAG, "Connection test failed", e)
             false
         }
     }
@@ -128,7 +128,7 @@ class LmStudioVisionClient @Inject constructor(
             } else null
 
             if (name.isBlank()) {
-                Log.w(TAG, "Empty food name in response")
+                AppLog.w(TAG, "Empty food name in response")
                 return null
             }
 
@@ -141,7 +141,7 @@ class LmStudioVisionClient @Inject constructor(
                 rawResponse = jsonContent
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to parse JSON response", e)
+            AppLog.e(TAG, "Failed to parse JSON response", e)
             null
         }
     }

@@ -3,7 +3,7 @@ package com.example.foodexpiryapp.presentation.ui.yolo
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.RectF
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import com.example.foodexpiryapp.domain.model.FoodCategory
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
@@ -90,7 +90,7 @@ class YoloDetector(
             loadLabels(context)
             buildFoodCategoryMap()
         } catch (e: Exception) {
-            Log.e(TAG, "Error initialising YoloDetector", e)
+            AppLog.e(TAG, "Error initialising YoloDetector", e)
         }
     }
 
@@ -111,19 +111,19 @@ class YoloDetector(
         // NMS-free head is used for yolo26n exports only; yolo11n uses classic head
                 usingNmsFreeModel = candidate.contains("yolo26n")
                 loadedModelFile = candidate
-                Log.i(TAG, "Loaded model: \$candidate (nmsFree=\$usingNmsFreeModel)")
+                AppLog.i(TAG, "Loaded model: \$candidate (nmsFree=\$usingNmsFreeModel)")
 
                 // Log actual output tensor shape for debugging
                 interpreter?.let { interp ->
                     val outShape = interp.getOutputTensor(0).shape()
-                    Log.i(TAG, "Output tensor shape: ${outShape.toList()}")
+                    AppLog.i(TAG, "Output tensor shape: ${outShape.toList()}")
                 }
                 return
             } catch (e: IOException) {
-                Log.w(TAG, "Model not found or failed to load: $candidate")
+                AppLog.w(TAG, "Model not found or failed to load: $candidate")
             }
         }
-        Log.e(TAG, "No YOLO model could be loaded. Tried: ${candidates.joinToString()}")
+        AppLog.e(TAG, "No YOLO model could be loaded. Tried: ${candidates.joinToString()}")
     }
 
     private fun loadLabels(context: Context) {
@@ -154,9 +154,9 @@ class YoloDetector(
                     }
                 }
             }
-            Log.i(TAG, "Loaded ${labels.size} labels from $file")
+            AppLog.i(TAG, "Loaded ${labels.size} labels from $file")
         } catch (e: IOException) {
-            Log.e(TAG, "Could not load labels file $file: ${e.message}")
+            AppLog.e(TAG, "Could not load labels file $file: ${e.message}")
             labels.addAll(listOf("DAIRY", "MEAT", "VEGETABLES", "FRUITS", "GRAINS", "OTHER"))
         }
     }
@@ -317,7 +317,7 @@ class YoloDetector(
      */
     fun detect(bitmap: Bitmap): List<DetectionResult> {
         val interp = interpreter ?: run {
-            Log.w(TAG, "detect() called but interpreter is null")
+            AppLog.w(TAG, "detect() called but interpreter is null")
             return emptyList()
         }
 
@@ -340,7 +340,7 @@ class YoloDetector(
 
             parseDetections(outputBuffer.floatArray, numDetections, numValues)
         } catch (e: Exception) {
-            Log.e(TAG, "Inference error", e)
+            AppLog.e(TAG, "Inference error", e)
             emptyList()
         }
     }

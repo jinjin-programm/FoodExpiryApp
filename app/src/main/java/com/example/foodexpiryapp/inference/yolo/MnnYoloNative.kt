@@ -1,6 +1,6 @@
 package com.example.foodexpiryapp.inference.yolo
 
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 
 /**
  * JNI native method declarations for MNN YOLO C++ bridge.
@@ -19,19 +19,19 @@ object MnnYoloNative {
         try {
             try {
                 System.loadLibrary("c++_shared")
-                Log.i(TAG, "c++_shared loaded")
+                AppLog.i(TAG, "c++_shared loaded")
             } catch (e: UnsatisfiedLinkError) {
-                Log.i(TAG, "c++_shared already loaded or not available: ${e.message}")
+                AppLog.i(TAG, "c++_shared already loaded or not available: ${e.message}")
             }
-            System.loadLibrary("MNN"); Log.i(TAG, "MNN loaded")
-            System.loadLibrary("MNN_Express"); Log.i(TAG, "MNN_Express loaded")
+            System.loadLibrary("MNN"); AppLog.i(TAG, "MNN loaded")
+            System.loadLibrary("MNN_Express"); AppLog.i(TAG, "MNN_Express loaded")
             try { System.loadLibrary("MNN_CL") } catch (_: UnsatisfiedLinkError) { }
             try { System.loadLibrary("MNN_Vulkan") } catch (_: UnsatisfiedLinkError) { }
-            System.loadLibrary("mnn_yolo_bridge"); Log.i(TAG, "mnn_yolo_bridge loaded")
+            System.loadLibrary("mnn_yolo_bridge"); AppLog.i(TAG, "mnn_yolo_bridge loaded")
             nativeLoaded = true
-            Log.i(TAG, "All YOLO native libraries loaded successfully")
+            AppLog.i(TAG, "All YOLO native libraries loaded successfully")
         } catch (e: UnsatisfiedLinkError) {
-            Log.e(TAG, "FAILED to load YOLO native libraries: ${e.message}", e)
+            AppLog.e(TAG, "FAILED to load YOLO native libraries: ${e.message}", e)
         }
     }
 

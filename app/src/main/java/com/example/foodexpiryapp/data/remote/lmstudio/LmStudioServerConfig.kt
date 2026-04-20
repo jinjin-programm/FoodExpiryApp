@@ -1,6 +1,6 @@
 package com.example.foodexpiryapp.data.remote.lmstudio
 
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -39,12 +39,12 @@ class LmStudioServerConfig @Inject constructor(
     suspend fun getConfig(): LmStudioConfig = config.first()
 
     suspend fun setBaseUrl(url: String) {
-        Log.d(TAG, "Setting base URL: $url")
+        AppLog.d(TAG, "Setting base URL: $url")
         dataStore.edit { it[KEY_BASE_URL] = url.trimEnd('/') }
     }
 
     suspend fun setModelName(name: String) {
-        Log.d(TAG, "Setting model name: $name")
+        AppLog.d(TAG, "Setting model name: $name")
         dataStore.edit { it[KEY_MODEL_NAME] = name }
     }
 

@@ -3,7 +3,7 @@ package com.example.foodexpiryapp.domain.vision
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.SystemClock
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.common.ops.NormalizeOp
@@ -90,9 +90,9 @@ class FoodClassifier(private val context: Context) {
                 numThreads = 4
             }
             interpreter = Interpreter(loadModelFile(), options)
-            Log.i(TAG, "TFLite model initialized successfully")
+            AppLog.i(TAG, "TFLite model initialized successfully")
         } catch (e: Exception) {
-            Log.e(TAG, "Error initializing TFLite model", e)
+            AppLog.e(TAG, "Error initializing TFLite model", e)
             // Model file probably doesn't exist yet in assets, which is expected during dev
         }
     }
@@ -152,12 +152,12 @@ class FoodClassifier(private val context: Context) {
             val classId = if (maxIdx in classLabels.indices) classLabels[maxIdx] else "others"
             val category = categories[classId] ?: categories["others"]!!
 
-            Log.d(TAG, "Classification: ${category.nameTw} (confidence: $maxProb) in ${inferenceTime}ms")
+            AppLog.d(TAG, "Classification: ${category.nameTw} (confidence: $maxProb) in ${inferenceTime}ms")
 
             return ClassificationResult(category, maxProb, inferenceTime)
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error running inference", e)
+            AppLog.e(TAG, "Error running inference", e)
             return null
         }
     }

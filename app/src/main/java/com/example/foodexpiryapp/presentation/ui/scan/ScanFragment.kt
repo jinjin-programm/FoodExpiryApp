@@ -9,7 +9,7 @@ import android.graphics.ImageFormat
 import android.graphics.Rect
 import android.graphics.YuvImage
 import android.os.Bundle
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -168,7 +168,7 @@ class ScanFragment : Fragment() {
             cameraProvider.unbindAll()
             cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalyzer)
         } catch (exc: Exception) {
-            Log.e(TAG, "Use case binding failed", exc)
+            AppLog.e(TAG, "Use case binding failed", exc)
         }
     }
 
@@ -212,7 +212,7 @@ class ScanFragment : Fragment() {
                 yuvImage.compressToJpeg(Rect(0, 0, width, height), 90, out)
                 BitmapFactory.decodeByteArray(out.toByteArray(), 0, out.size())
             } catch (e: Exception) {
-                Log.e(TAG, "YUV→Bitmap conversion failed", e)
+                AppLog.e(TAG, "YUV→Bitmap conversion failed", e)
                 null
             }
         }

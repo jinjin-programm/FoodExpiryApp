@@ -1,6 +1,6 @@
 package com.example.foodexpiryapp.data.remote
 
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -27,7 +27,7 @@ class ProviderConfig @Inject constructor(
     suspend fun getProvider(): String = provider.first()
 
     suspend fun setProvider(provider: String) {
-        Log.d(TAG, "Setting provider: $provider")
+        AppLog.d(TAG, "Setting provider: $provider")
         dataStore.edit { it[KEY_PROVIDER] = provider }
     }
 }

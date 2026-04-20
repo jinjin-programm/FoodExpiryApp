@@ -1,7 +1,7 @@
 package com.example.foodexpiryapp.data.repository
 
 import android.graphics.Bitmap
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import com.example.foodexpiryapp.data.remote.ProviderConfig
 import com.example.foodexpiryapp.data.remote.lmstudio.LmStudioVisionClient
 import com.example.foodexpiryapp.data.remote.ollama.OllamaVisionClient
@@ -57,7 +57,7 @@ class LlmInferenceRepositoryImpl @Inject constructor(
                 val providerName = if (provider == ProviderConfig.PROVIDER_LMSTUDIO) "LM Studio" else "Ollama"
 
                 if (!client.testConnection()) {
-                    Log.w(TAG, "$providerName server not connected")
+                    AppLog.w(TAG, "$providerName server not connected")
                     _modelState.value = ModelState.Error("無法連接${providerName}服務器")
                     emit(
                         FoodIdentification(
@@ -72,15 +72,15 @@ class LlmInferenceRepositoryImpl @Inject constructor(
 
                 _modelState.value = ModelState.Loading
 
-                Log.d(TAG, "Running food analysis on ${bitmap.width}x${bitmap.height} bitmap via $providerName")
+                AppLog.d(TAG, "Running food analysis on ${bitmap.width}x${bitmap.height} bitmap via $providerName")
                 val result = client.analyzeFood(bitmap)
 
                 if (result != null) {
-                    Log.d(TAG, "Analysis result: ${result.name} / ${result.nameZh} (confidence: ${result.confidence})")
+                    AppLog.d(TAG, "Analysis result: ${result.name} / ${result.nameZh} (confidence: ${result.confidence})")
                     _modelState.value = ModelState.Ready
                     emit(result)
                 } else {
-                    Log.w(TAG, "Analysis returned null")
+                    AppLog.w(TAG, "Analysis returned null")
                     _modelState.value = ModelState.Error("識別失敗")
                     emit(
                         FoodIdentification(
@@ -92,7 +92,7 @@ class LlmInferenceRepositoryImpl @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Analysis error", e)
+                AppLog.e(TAG, "Analysis error", e)
                 _modelState.value = ModelState.Error(e.message ?: "未知錯誤")
                 emit(
                     FoodIdentification(
@@ -117,7 +117,7 @@ class LlmInferenceRepositoryImpl @Inject constructor(
             }
             isConnected
         } catch (e: Exception) {
-            Log.e(TAG, "Connection check failed", e)
+            AppLog.e(TAG, "Connection check failed", e)
             _modelState.value = ModelState.Error("連接錯誤: ${e.message}")
             false
         }

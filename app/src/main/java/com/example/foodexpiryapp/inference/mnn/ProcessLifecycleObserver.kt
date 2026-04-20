@@ -1,6 +1,6 @@
 package com.example.foodexpiryapp.inference.mnn
 
-import android.util.Log
+import com.example.foodexpiryapp.util.AppLog
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.CoroutineScope
@@ -30,7 +30,7 @@ class ProcessLifecycleObserver @Inject constructor(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     override fun onStop(owner: LifecycleOwner) {
-        Log.d(TAG, "App backgrounded — unloading LLM model to free memory")
+        AppLog.d(TAG, "App backgrounded — unloading LLM model to free memory")
         if (engine.isModelLoaded()) {
             scope.launch {
                 engine.unloadModel()
