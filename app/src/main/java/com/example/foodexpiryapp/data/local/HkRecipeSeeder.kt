@@ -19,7 +19,7 @@ class HkRecipeSeeder @Inject constructor(
     private val gson: Gson
 ) {
     private val prefsName = "hk_recipe_seeder"
-    private val keySeeded = "has_seeded_v1"
+    private val keySeeded = "has_seeded_v2"
 
     suspend fun seedIfNeeded(context: Context) {
         val prefs = context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
@@ -39,7 +39,7 @@ class HkRecipeSeeder @Inject constructor(
                         id = recipe.id + HK_RECIPE_ID_OFFSET,
                         name = recipe.name,
                         description = recipe.description,
-                        imageUrl = null,
+                        imageUrl = recipe.imageUrl,
                         ingredients = gson.toJson(recipe.ingredients.map {
                             RecipeIngredient(
                                 name = it.name,
@@ -86,7 +86,8 @@ private data class HkRecipeJson(
     val estimatedCost: Double,
     val ingredients: List<HkIngredientJson>,
     val steps: List<String>,
-    val tags: List<String>
+    val tags: List<String>,
+    val imageUrl: String? = null
 )
 
 private data class HkIngredientJson(
