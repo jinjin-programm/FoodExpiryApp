@@ -41,6 +41,7 @@ class RecipeAdapter(
             binding.imageRecipe.load(recipe.imageUrl) {
                 crossfade(true)
                 placeholder(android.R.drawable.progress_horizontal)
+                error(android.R.drawable.ic_menu_report_image)
             }
 
             binding.textRecipeName.text = recipe.name

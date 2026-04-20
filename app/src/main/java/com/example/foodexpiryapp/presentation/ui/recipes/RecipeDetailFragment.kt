@@ -103,7 +103,11 @@ class RecipeDetailFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
                     state.recipe?.let { recipe ->
-                        binding.imageRecipeDetail.load(recipe.imageUrl)
+                        binding.imageRecipeDetail.load(recipe.imageUrl) {
+                            crossfade(true)
+                            placeholder(android.R.drawable.progress_horizontal)
+                            error(android.R.drawable.ic_menu_report_image)
+                        }
                         binding.textRecipeTitle.text = recipe.name
                         binding.textRecipeInfo.text = "Cuisine: ${recipe.cuisine} | Time: ${recipe.totalTimeMinutes} min"
                         binding.textInstructions.text = recipe.description
