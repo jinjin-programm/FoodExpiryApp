@@ -18,5 +18,6 @@ data class LocalRecipeEntity(
     val cuisine: String = "",
     val tags: String = "",
     val estimatedCost: Double = 0.0,
+    val category: String = "",
     val createdAt: Long = System.currentTimeMillis()
 )

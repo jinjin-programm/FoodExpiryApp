@@ -1,0 +1,1688 @@
+[
+  {
+    "id": 101,
+    "name": "Satay Beef with Rice",
+    "description": "Cha Chaan Teng classic — tender beef in creamy satay sauce over rice.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 10,
+    "cookTimeMinutes": 10,
+    "servings": 1,
+    "estimatedCost": 45.0,
+    "ingredients": [
+      {
+        "name": "beef sirloin",
+        "quantity": "150",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "satay sauce",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "onion",
+        "quantity": "0.25",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "cornstarch",
+        "quantity": "1",
+        "unit": "tsp",
+        "isOptional": false
+      },
+      {
+        "name": "cooking oil",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Slice beef thinly. Marinate with soy sauce and cornstarch.",
+      "Fry onion until soft. Add beef, stir-fry until browned.",
+      "Add satay sauce and water. Simmer 2 min.",
+      "Serve over steamed rice."
+    ],
+    "tags": [
+      "STIRFRY",
+      "ONE_POT",
+      "RICE"
+    ]
+  },
+  {
+    "id": 102,
+    "name": "Scrambled Egg with Shrimp over Rice",
+    "description": "HK diner-style — silky scrambled eggs with shrimp on rice.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 10,
+    "cookTimeMinutes": 5,
+    "servings": 1,
+    "estimatedCost": 50.0,
+    "ingredients": [
+      {
+        "name": "shrimp",
+        "quantity": "100",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "egg",
+        "quantity": "3",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "scallion",
+        "quantity": "1",
+        "unit": "stalk",
+        "isOptional": false
+      },
+      {
+        "name": "salt",
+        "quantity": "0.25",
+        "unit": "tsp",
+        "isOptional": false
+      },
+      {
+        "name": "cooking oil",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Beat eggs with salt. Add shrimp and scallion.",
+      "Heat oil in non-stick pan.",
+      "Pour in egg, cook gently until just set but soft.",
+      "Serve over rice."
+    ],
+    "tags": [
+      "STIRFRY",
+      "QUICK",
+      "RICE"
+    ]
+  },
+  {
+    "id": 103,
+    "name": "Curry Beef Brisket with Rice",
+    "description": "HK-style curry beef brisket with potatoes.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 15,
+    "cookTimeMinutes": 60,
+    "servings": 2,
+    "estimatedCost": 70.0,
+    "ingredients": [
+      {
+        "name": "beef brisket",
+        "quantity": "300",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "potato",
+        "quantity": "1",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "onion",
+        "quantity": "0.5",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "curry powder",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "coconut milk",
+        "quantity": "0.5",
+        "unit": "cup",
+        "isOptional": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "cooking oil",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Blanch beef 5 min, drain.",
+      "Fry onion, add curry powder. Add beef and potato.",
+      "Add water to cover. Simmer 50 min.",
+      "Add coconut milk and soy sauce, cook 10 min. Serve over rice."
+    ],
+    "tags": [
+      "BRAISED",
+      "ONE_POT",
+      "RICE"
+    ]
+  },
+  {
+    "id": 104,
+    "name": "Cream Corn Minced Pork with Rice",
+    "description": "Sweet and savory cream corn sauce with minced pork over rice.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 5,
+    "cookTimeMinutes": 10,
+    "servings": 1,
+    "estimatedCost": 35.0,
+    "ingredients": [
+      {
+        "name": "ground pork",
+        "quantity": "100",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "cream-style corn",
+        "quantity": "0.5",
+        "unit": "cup",
+        "isOptional": false
+      },
+      {
+        "name": "egg",
+        "quantity": "1",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "cornstarch",
+        "quantity": "1",
+        "unit": "tsp",
+        "isOptional": false
+      },
+      {
+        "name": "cooking oil",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Fry pork until browned.",
+      "Add cream corn and water. Simmer.",
+      "Thicken with cornstarch, drizzle in egg for ribbons.",
+      "Pour over rice."
+    ],
+    "tags": [
+      "QUICK",
+      "ONE_POT",
+      "RICE"
+    ]
+  },
+  {
+    "id": 105,
+    "name": "Black Pepper Pork Chop with Rice",
+    "description": "Juicy pork chop with fiery black pepper sauce.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 10,
+    "cookTimeMinutes": 15,
+    "servings": 1,
+    "estimatedCost": 50.0,
+    "ingredients": [
+      {
+        "name": "pork chop",
+        "quantity": "1",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "black pepper sauce",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "onion",
+        "quantity": "0.25",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "cooking oil",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Marinate pork chop with soy sauce 10 min.",
+      "Pan-fry pork chop until golden and cooked. Remove.",
+      "Saute onion, add pepper sauce and water. Simmer.",
+      "Pour sauce over chop. Serve with rice."
+    ],
+    "tags": [
+      "PAN_FRIED",
+      "RICE"
+    ]
+  },
+  {
+    "id": 106,
+    "name": "Black Bean Spare Ribs with Rice",
+    "description": "Spare ribs steamed with black bean sauce over rice.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 15,
+    "cookTimeMinutes": 20,
+    "servings": 1,
+    "estimatedCost": 60.0,
+    "ingredients": [
+      {
+        "name": "pork spare ribs",
+        "quantity": "200",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "fermented black beans",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "garlic",
+        "quantity": "3",
+        "unit": "clove",
+        "isOptional": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "cornstarch",
+        "quantity": "1",
+        "unit": "tsp",
+        "isOptional": false
+      },
+      {
+        "name": "sugar",
+        "quantity": "0.5",
+        "unit": "tsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Cut ribs small. Mash black beans with garlic.",
+      "Mix ribs with bean mixture, soy sauce, cornstarch, sugar.",
+      "Steam over high heat 20 min.",
+      "Serve over rice."
+    ],
+    "tags": [
+      "STEAMED",
+      "RICE"
+    ]
+  },
+  {
+    "id": 107,
+    "name": "Onion Pork Chop with Rice",
+    "description": "Pan-fried pork chop in sweet caramelized onion gravy.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 10,
+    "cookTimeMinutes": 15,
+    "servings": 1,
+    "estimatedCost": 45.0,
+    "ingredients": [
+      {
+        "name": "pork chop",
+        "quantity": "1",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "onion",
+        "quantity": "0.5",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "sugar",
+        "quantity": "1",
+        "unit": "tsp",
+        "isOptional": false
+      },
+      {
+        "name": "cornstarch",
+        "quantity": "1",
+        "unit": "tsp",
+        "isOptional": false
+      },
+      {
+        "name": "cooking oil",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Marinate chop with soy sauce and cornstarch.",
+      "Pan-fry chop until golden. Remove.",
+      "Caramelize onion. Add soy sauce, sugar, water.",
+      "Return chop, simmer 2 min. Serve over rice."
+    ],
+    "tags": [
+      "PAN_FRIED",
+      "RICE"
+    ]
+  },
+  {
+    "id": 108,
+    "name": "Fresh Tomato Beef with Rice",
+    "description": "Tender beef in tangy tomato sauce with onions.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 10,
+    "cookTimeMinutes": 10,
+    "servings": 1,
+    "estimatedCost": 45.0,
+    "ingredients": [
+      {
+        "name": "beef sirloin",
+        "quantity": "150",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "tomato",
+        "quantity": "1",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "onion",
+        "quantity": "0.25",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "ketchup",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "cooking oil",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Slice beef. Marinate with soy sauce and cornstarch.",
+      "Stir-fry beef, remove.",
+      "Fry onion and tomato until soft. Add ketchup and water.",
+      "Return beef, simmer 2 min. Serve over rice."
+    ],
+    "tags": [
+      "STIRFRY",
+      "QUICK",
+      "RICE"
+    ]
+  },
+  {
+    "id": 109,
+    "name": "Fu Rong Egg Rice",
+    "description": "Large fluffy omelette with char siu, shrimp, vegetables over rice.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 10,
+    "cookTimeMinutes": 10,
+    "servings": 1,
+    "estimatedCost": 50.0,
+    "ingredients": [
+      {
+        "name": "egg",
+        "quantity": "3",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "char siu",
+        "quantity": "50",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "shrimp",
+        "quantity": "50",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "frozen mixed vegetables",
+        "quantity": "0.25",
+        "unit": "cup",
+        "isOptional": false
+      },
+      {
+        "name": "salt",
+        "quantity": "0.25",
+        "unit": "tsp",
+        "isOptional": false
+      },
+      {
+        "name": "cooking oil",
+        "quantity": "3",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Dice char siu. Beat eggs with salt, add char siu, shrimp, veg.",
+      "Heat oil in non-stick pan.",
+      "Cook without stirring until bottom golden, flip.",
+      "Slide omelette over rice."
+    ],
+    "tags": [
+      "PAN_FRIED",
+      "RICE"
+    ]
+  },
+  {
+    "id": 110,
+    "name": "Salted Fish and Chicken Fried Rice",
+    "description": "Wok-fried rice with salted fish, diced chicken, and egg.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 10,
+    "cookTimeMinutes": 10,
+    "servings": 2,
+    "estimatedCost": 50.0,
+    "ingredients": [
+      {
+        "name": "salted fish",
+        "quantity": "30",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "chicken thigh",
+        "quantity": "100",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "egg",
+        "quantity": "2",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "scallion",
+        "quantity": "2",
+        "unit": "stalk",
+        "isOptional": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "cooking oil",
+        "quantity": "3",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Flake salted fish. Dice chicken. Beat eggs.",
+      "Fry salted fish until crispy.",
+      "Scramble eggs. Fry chicken until cooked.",
+      "Add rice, soy sauce. Return egg, fish, scallions.",
+      "Stir-fry on high 2 min."
+    ],
+    "tags": [
+      "STIRFRY",
+      "RICE"
+    ]
+  },
+  {
+    "id": 111,
+    "name": "Beef Chow Fun — Dry Style",
+    "description": "Wide rice noodles stir-fried with beef and bean sprouts, dry and smoky.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 10,
+    "cookTimeMinutes": 10,
+    "servings": 2,
+    "estimatedCost": 60.0,
+    "ingredients": [
+      {
+        "name": "ho fun noodles",
+        "quantity": "400",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "beef sirloin",
+        "quantity": "150",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "bean sprouts",
+        "quantity": "100",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "scallion",
+        "quantity": "2",
+        "unit": "stalk",
+        "isOptional": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "dark soy sauce",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "cooking oil",
+        "quantity": "3",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Separate noodles. Slice beef.",
+      "Stir-fry beef until browned, remove.",
+      "Add more oil, fry noodles until slightly charred.",
+      "Add bean sprouts, scallions, beef, soy sauces. Toss 2 min."
+    ],
+    "tags": [
+      "STIRFRY",
+      "NOODLE"
+    ]
+  },
+  {
+    "id": 112,
+    "name": "Beef Chow Fun — Wet Style",
+    "description": "Rice noodles with beef in thickened gravy.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 10,
+    "cookTimeMinutes": 10,
+    "servings": 2,
+    "estimatedCost": 60.0,
+    "ingredients": [
+      {
+        "name": "ho fun noodles",
+        "quantity": "400",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "beef sirloin",
+        "quantity": "150",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "onion",
+        "quantity": "0.5",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "oyster sauce",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "cornstarch",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "cooking oil",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Separate noodles. Marinate beef.",
+      "Stir-fry beef, remove. Fry onion, add noodles.",
+      "Return beef, add soy sauce, oyster sauce, water.",
+      "Thicken with cornstarch. Serve."
+    ],
+    "tags": [
+      "STIRFRY",
+      "NOODLE"
+    ]
+  },
+  {
+    "id": 113,
+    "name": "Singapore Noodles",
+    "description": "Curry-spiced rice vermicelli with shrimp, char siu, egg.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 15,
+    "cookTimeMinutes": 10,
+    "servings": 2,
+    "estimatedCost": 60.0,
+    "ingredients": [
+      {
+        "name": "rice vermicelli",
+        "quantity": "150",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "shrimp",
+        "quantity": "100",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "char siu",
+        "quantity": "50",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "egg",
+        "quantity": "2",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "curry powder",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "cooking oil",
+        "quantity": "3",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Soak vermicelli 10 min, drain.",
+      "Scramble eggs, remove. Fry shrimp, remove.",
+      "Add curry powder, then vermicelli. Stir-fry.",
+      "Add soy sauce, return shrimp, egg, char siu. Toss."
+    ],
+    "tags": [
+      "STIRFRY",
+      "NOODLE",
+      "SPICY"
+    ]
+  },
+  {
+    "id": 114,
+    "name": "Yangzhou Fried Rice",
+    "description": "Classic fried rice with ham, shrimp, and egg.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 10,
+    "cookTimeMinutes": 8,
+    "servings": 2,
+    "estimatedCost": 40.0,
+    "ingredients": [
+      {
+        "name": "ham",
+        "quantity": "50",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "shrimp",
+        "quantity": "50",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "egg",
+        "quantity": "2",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "frozen peas and carrots",
+        "quantity": "0.25",
+        "unit": "cup",
+        "isOptional": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "cooking oil",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Dice ham. Beat eggs.",
+      "Scramble eggs, remove. Fry shrimp and ham.",
+      "Add rice, veg, soy sauce.",
+      "Return egg, stir-fry 2 min."
+    ],
+    "tags": [
+      "STIRFRY",
+      "RICE",
+      "QUICK"
+    ]
+  },
+  {
+    "id": 115,
+    "name": "Xiamen Fried Rice Noodles",
+    "description": "Tangy, sweet rice noodles with shrimp and ham.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 10,
+    "cookTimeMinutes": 10,
+    "servings": 2,
+    "estimatedCost": 50.0,
+    "ingredients": [
+      {
+        "name": "rice vermicelli",
+        "quantity": "150",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "shrimp",
+        "quantity": "80",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "ham",
+        "quantity": "50",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "egg",
+        "quantity": "2",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "ketchup",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "cooking oil",
+        "quantity": "3",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Soak vermicelli, drain.",
+      "Scramble eggs, remove. Fry shrimp and ham.",
+      "Add vermicelli, ketchup, soy sauce.",
+      "Return egg, toss. Serve."
+    ],
+    "tags": [
+      "STIRFRY",
+      "NOODLE",
+      "QUICK"
+    ]
+  },
+  {
+    "id": 116,
+    "name": "Crispy Noodles with Black Bean Spareribs",
+    "description": "Deep-fried crispy noodles topped with black bean ribs.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 15,
+    "cookTimeMinutes": 20,
+    "servings": 2,
+    "estimatedCost": 70.0,
+    "ingredients": [
+      {
+        "name": "thin egg noodles",
+        "quantity": "200",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "pork spare ribs",
+        "quantity": "200",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "fermented black beans",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "garlic",
+        "quantity": "3",
+        "unit": "clove",
+        "isOptional": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "cornstarch",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "cooking oil",
+        "quantity": "2",
+        "unit": "cup",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Deep-fry noodles until golden crispy.",
+      "Steam ribs with black beans and garlic 15 min.",
+      "Combine rib juices, soy sauce, water. Thicken.",
+      "Pour gravy and ribs over crispy noodles."
+    ],
+    "tags": [
+      "DEEP_FRIED",
+      "NOODLE"
+    ]
+  },
+  {
+    "id": 117,
+    "name": "Pork Shredded Crispy Noodles",
+    "description": "Crispy noodles topped with shredded pork and vegetables.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 15,
+    "cookTimeMinutes": 15,
+    "servings": 2,
+    "estimatedCost": 50.0,
+    "ingredients": [
+      {
+        "name": "thin egg noodles",
+        "quantity": "200",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "pork tenderloin",
+        "quantity": "150",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "carrot",
+        "quantity": "0.5",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "wood ear fungus",
+        "quantity": "30",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "cornstarch",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "cooking oil",
+        "quantity": "2",
+        "unit": "cup",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Deep-fry noodles until crispy.",
+      "Shred pork, carrot, wood ear. Stir-fry pork.",
+      "Add veg, soy sauce, water. Thicken.",
+      "Pour over crispy noodles."
+    ],
+    "tags": [
+      "DEEP_FRIED",
+      "NOODLE"
+    ]
+  },
+  {
+    "id": 118,
+    "name": "Braised Beef Brisket Noodles in Chu Hou Sauce",
+    "description": "Rich slow-braised beef with chu hou paste over noodles.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 15,
+    "cookTimeMinutes": 60,
+    "servings": 2,
+    "estimatedCost": 80.0,
+    "ingredients": [
+      {
+        "name": "beef brisket",
+        "quantity": "400",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "chu hou paste",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "ginger",
+        "quantity": "5",
+        "unit": "slice",
+        "isOptional": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "noodles of choice",
+        "quantity": "200",
+        "unit": "g",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Blanch beef. Fry ginger, add chu hou paste.",
+      "Add beef, soy sauce, water. Simmer 1 hour.",
+      "Cook noodles. Drain.",
+      "Serve noodles topped with beef and sauce."
+    ],
+    "tags": [
+      "BRAISED",
+      "NOODLE"
+    ]
+  },
+  {
+    "id": 119,
+    "name": "Braised Rice Vermicelli with Pickled Mustard and Pork",
+    "description": "Rice vermicelli braised with pickled mustard greens and pork.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 10,
+    "cookTimeMinutes": 10,
+    "servings": 2,
+    "estimatedCost": 40.0,
+    "ingredients": [
+      {
+        "name": "rice vermicelli",
+        "quantity": "150",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "pickled mustard greens",
+        "quantity": "100",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "pork tenderloin",
+        "quantity": "100",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "cooking oil",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Soak vermicelli. Shred pork and mustard greens.",
+      "Stir-fry pork until white. Add mustard greens.",
+      "Add vermicelli, soy sauce, water. Simmer until absorbed."
+    ],
+    "tags": [
+      "NOODLE",
+      "ONE_POT"
+    ]
+  },
+  {
+    "id": 120,
+    "name": "Satay Beef Chow Fun",
+    "description": "Rice noodles stir-fried with satay beef — creamy and spicy.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 10,
+    "cookTimeMinutes": 10,
+    "servings": 2,
+    "estimatedCost": 60.0,
+    "ingredients": [
+      {
+        "name": "ho fun noodles",
+        "quantity": "400",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "beef sirloin",
+        "quantity": "150",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "satay sauce",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "onion",
+        "quantity": "0.5",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "cooking oil",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Slice beef. Marinate with soy sauce.",
+      "Stir-fry beef, remove. Saute onion.",
+      "Add noodles, beef, satay sauce, soy sauce, water.",
+      "Simmer 2 min. Serve."
+    ],
+    "tags": [
+      "STIRFRY",
+      "NOODLE"
+    ]
+  },
+  {
+    "id": 121,
+    "name": "Pineapple Bun with Butter",
+    "description": "Iconic HK bakery bun with thick butter slice.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 15,
+    "cookTimeMinutes": 15,
+    "servings": 2,
+    "estimatedCost": 15.0,
+    "ingredients": [
+      {
+        "name": "pineapple bun",
+        "quantity": "2",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "butter",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Warm pineapple buns in oven until hot.",
+      "Slice each bun horizontally.",
+      "Insert thick butter slice.",
+      "Serve immediately while butter melts."
+    ],
+    "tags": [
+      "BREAKFAST",
+      "QUICK"
+    ]
+  },
+  {
+    "id": 122,
+    "name": "Scrambled Egg and Corned Beef Sandwich",
+    "description": "HK classic — creamy eggs with corned beef in toast.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 5,
+    "cookTimeMinutes": 5,
+    "servings": 1,
+    "estimatedCost": 25.0,
+    "ingredients": [
+      {
+        "name": "egg",
+        "quantity": "2",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "canned corned beef",
+        "quantity": "50",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "bread",
+        "quantity": "2",
+        "unit": "slice",
+        "isOptional": false
+      },
+      {
+        "name": "butter",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Beat eggs. Flake in corned beef.",
+      "Melt butter, scramble egg mixture until just set.",
+      "Toast bread. Place egg between slices.",
+      "Cut diagonally. Serve."
+    ],
+    "tags": [
+      "PAN_FRIED",
+      "BREAKFAST",
+      "QUICK"
+    ]
+  },
+  {
+    "id": 123,
+    "name": "Condensed Milk and Peanut Butter Toast",
+    "description": "Sweet, creamy, and crunchy HK toast.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 2,
+    "cookTimeMinutes": 3,
+    "servings": 1,
+    "estimatedCost": 10.0,
+    "ingredients": [
+      {
+        "name": "bread",
+        "quantity": "2",
+        "unit": "slice",
+        "isOptional": false
+      },
+      {
+        "name": "peanut butter",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "condensed milk",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Toast bread until golden.",
+      "Spread peanut butter, drizzle condensed milk.",
+      "Top with other slice."
+    ],
+    "tags": [
+      "NO_COOK",
+      "BREAKFAST",
+      "DESSERT",
+      "QUICK"
+    ]
+  },
+  {
+    "id": 124,
+    "name": "Butter and Jam Toast",
+    "description": "Simple toast with butter and fruit jam.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 2,
+    "cookTimeMinutes": 2,
+    "servings": 1,
+    "estimatedCost": 8.0,
+    "ingredients": [
+      {
+        "name": "bread",
+        "quantity": "2",
+        "unit": "slice",
+        "isOptional": false
+      },
+      {
+        "name": "butter",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "jam",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Toast bread.",
+      "Spread butter, then jam.",
+      "Serve."
+    ],
+    "tags": [
+      "NO_COOK",
+      "BREAKFAST",
+      "QUICK"
+    ]
+  },
+  {
+    "id": 125,
+    "name": "French Toast",
+    "description": "HK-style — thick bread soaked in egg, deep-fried, with condensed milk.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 5,
+    "cookTimeMinutes": 8,
+    "servings": 1,
+    "estimatedCost": 20.0,
+    "ingredients": [
+      {
+        "name": "thick white bread",
+        "quantity": "2",
+        "unit": "slice",
+        "isOptional": false
+      },
+      {
+        "name": "egg",
+        "quantity": "2",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "milk",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "butter",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "cooking oil",
+        "quantity": "0.5",
+        "unit": "cup",
+        "isOptional": false
+      },
+      {
+        "name": "condensed milk or syrup",
+        "quantity": "2",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Beat eggs with milk. Soak bread.",
+      "Fry bread in oil until golden both sides.",
+      "Top with butter and condensed milk."
+    ],
+    "tags": [
+      "DEEP_FRIED",
+      "BREAKFAST",
+      "DESSERT"
+    ]
+  },
+  {
+    "id": 126,
+    "name": "Kaya Toast",
+    "description": "Southeast Asian toast with coconut egg jam and butter.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 2,
+    "cookTimeMinutes": 3,
+    "servings": 1,
+    "estimatedCost": 15.0,
+    "ingredients": [
+      {
+        "name": "bread",
+        "quantity": "2",
+        "unit": "slice",
+        "isOptional": false
+      },
+      {
+        "name": "kaya jam",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "butter",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Toast bread until crispy.",
+      "Spread kaya on one slice, butter on other.",
+      "Press together and serve."
+    ],
+    "tags": [
+      "NO_COOK",
+      "BREAKFAST",
+      "QUICK"
+    ]
+  },
+  {
+    "id": 127,
+    "name": "Satay Beef Hot Dog Bun",
+    "description": "HK fusion — hot dog bun filled with satay beef.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 10,
+    "cookTimeMinutes": 8,
+    "servings": 1,
+    "estimatedCost": 30.0,
+    "ingredients": [
+      {
+        "name": "hot dog bun",
+        "quantity": "1",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "beef sirloin",
+        "quantity": "80",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "satay sauce",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "onion",
+        "quantity": "0.25",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "cooking oil",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Slice beef thinly. Stir-fry with onion and satay sauce.",
+      "Warm bun. Slice open.",
+      "Stuff with satay beef. Serve."
+    ],
+    "tags": [
+      "STIRFRY",
+      "QUICK"
+    ]
+  },
+  {
+    "id": 128,
+    "name": "Cheese and Ham Sandwich",
+    "description": "Toasted sandwich with ham and melted cheese.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 3,
+    "cookTimeMinutes": 3,
+    "servings": 1,
+    "estimatedCost": 15.0,
+    "ingredients": [
+      {
+        "name": "bread",
+        "quantity": "2",
+        "unit": "slice",
+        "isOptional": false
+      },
+      {
+        "name": "ham",
+        "quantity": "1",
+        "unit": "slice",
+        "isOptional": false
+      },
+      {
+        "name": "cheese slice",
+        "quantity": "1",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "butter",
+        "quantity": "1",
+        "unit": "tsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Butter one side of each bread.",
+      "Place ham and cheese between, buttered sides out.",
+      "Toast in sandwich press or pan-fry until golden.",
+      "Cut in half."
+    ],
+    "tags": [
+      "BREAKFAST",
+      "QUICK",
+      "PAN_FRIED"
+    ]
+  },
+  {
+    "id": 129,
+    "name": "Satay Beef Instant Noodles",
+    "description": "All-day meal — instant noodles with satay beef.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 5,
+    "cookTimeMinutes": 8,
+    "servings": 1,
+    "estimatedCost": 30.0,
+    "ingredients": [
+      {
+        "name": "instant noodles",
+        "quantity": "1",
+        "unit": "packet",
+        "isOptional": false
+      },
+      {
+        "name": "beef sirloin",
+        "quantity": "100",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "satay sauce",
+        "quantity": "1.5",
+        "unit": "tbsp",
+        "isOptional": false
+      },
+      {
+        "name": "onion",
+        "quantity": "0.25",
+        "unit": "whole",
+        "isOptional": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": "1",
+        "unit": "tsp",
+        "isOptional": false
+      },
+      {
+        "name": "cooking oil",
+        "quantity": "1",
+        "unit": "tbsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Cook instant noodles, drain.",
+      "Stir-fry onion and beef until browned.",
+      "Add satay sauce, soy sauce, water. Simmer 2 min.",
+      "Add noodles, toss to coat."
+    ],
+    "tags": [
+      "STIRFRY",
+      "NOODLE",
+      "QUICK"
+    ]
+  },
+  {
+    "id": 130,
+    "name": "Soup Rice Vermicelli with Pickled Mustard and Shredded Pork",
+    "description": "Light tangy noodle soup with pickled mustard and pork.",
+    "category": "CHA_CHAAN_TENG",
+    "cuisine": "Hong Kong",
+    "prepTimeMinutes": 10,
+    "cookTimeMinutes": 10,
+    "servings": 1,
+    "estimatedCost": 35.0,
+    "ingredients": [
+      {
+        "name": "rice vermicelli",
+        "quantity": "80",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "pork tenderloin",
+        "quantity": "80",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "pickled mustard greens",
+        "quantity": "60",
+        "unit": "g",
+        "isOptional": false
+      },
+      {
+        "name": "chicken broth",
+        "quantity": "2",
+        "unit": "cup",
+        "isOptional": false
+      },
+      {
+        "name": "soy sauce",
+        "quantity": "1",
+        "unit": "tsp",
+        "isOptional": false
+      },
+      {
+        "name": "white pepper",
+        "quantity": "0.25",
+        "unit": "tsp",
+        "isOptional": false
+      }
+    ],
+    "steps": [
+      "Soak vermicelli 10 min, drain.",
+      "Shred pork and mustard greens.",
+      "Boil broth. Add pork and mustard greens 3 min.",
+      "Add vermicelli 2 min. Season with soy sauce, pepper."
+    ],
+    "tags": [
+      "SOUP",
+      "NOODLE",
+      "QUICK"
+    ]
+  }
+]

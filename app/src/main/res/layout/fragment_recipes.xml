@@ -229,18 +229,60 @@
                     android:text="Use Soon" />
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_waste_buster"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Waste Buster" />
-
-                <com.google.android.material.chip.Chip
                     android:id="@+id/chip_quick"
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Quick" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_stir_fry"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Stir Fry" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_steamed"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Steamed" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_soup"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Soup" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_rice_noodle"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Rice &amp; Noodle" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_braised"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Braised" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_pan_fried"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Pan/Deep Fried" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_cold_dish"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Cold Dish" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_vegetarian"
@@ -257,32 +299,18 @@
                     android:text="Vegan" />
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_dairy_free"
+                    android:id="@+id/chip_cha_chaan_teng"
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Dairy Free" />
+                    android:text="Cha Chaan Teng" />
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_gluten_free"
+                    android:id="@+id/chip_hong_kong"
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Gluten Free" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_breakfast"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Breakfast" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_dessert"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Dessert" />
+                    android:text="Hong Kong" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_chinese"
@@ -292,13 +320,6 @@
                     android:text="Chinese" />
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_mexican"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Mexican" />
-
-                <com.google.android.material.chip.Chip
                     android:id="@+id/chip_japanese"
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
@@ -306,18 +327,18 @@
                     android:text="Japanese" />
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_indian"
+                    android:id="@+id/chip_thai"
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Indian" />
+                    android:text="Thai" />
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_italian"
+                    android:id="@+id/chip_korean"
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Italian" />
+                    android:text="Korean" />
             </com.google.android.material.chip.ChipGroup>
         </HorizontalScrollView>
 

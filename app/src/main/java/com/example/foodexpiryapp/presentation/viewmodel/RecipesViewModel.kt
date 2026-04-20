@@ -26,22 +26,25 @@ data class RecipesUiState(
 )
 
 enum class RecipeFilter(val displayName: String) {
-    ALL("All Recipes"),
+    ALL("All"),
     BEST_MATCH("Best Match"),
     USE_SOON("Use Soon"),
-    WASTE_BUSTER("Waste Buster"),
-    QUICK("Quick (< 30 min)"),
+    QUICK("Quick"),
+    STIRFRY("Stir Fry"),
+    STEAMED("Steamed"),
+    SOUP("Soup"),
+    RICE_NOODLE("Rice & Noodle"),
+    BRAISED("Braised"),
+    PAN_FRIED("Pan/Deep Fried"),
+    COLD_DISH("Cold Dish"),
     VEGETARIAN("Vegetarian"),
     VEGAN("Vegan"),
-    DAIRY_FREE("Dairy Free"),
-    GLUTEN_FREE("Gluten Free"),
-    BREAKFAST("Breakfast"),
-    DESSERT("Dessert"),
+    CHA_CHAAN_TENG("Cha Chaan Teng"),
+    HONG_KONG("Hong Kong"),
     CHINESE("Chinese"),
-    MEXICAN("Mexican"),
     JAPANESE("Japanese"),
-    INDIAN("Indian"),
-    ITALIAN("Italian")
+    THAI("Thai"),
+    KOREAN("Korean")
 }
 
 sealed class RecipesEvent {
@@ -74,7 +77,7 @@ class RecipesViewModel @Inject constructor(
     private val allFetchedRecipes = MutableStateFlow<List<Recipe>>(emptyList())
 
     private val inventoryItems = getAllFoodItems()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val cookedStats = combine(
         cookedRecipeRepository.getCookedRecipesCount(),
@@ -82,21 +85,19 @@ class RecipesViewModel @Inject constructor(
         cookedRecipeRepository.getAverageWasteRescued()
     ) { count, money, waste ->
         Triple(count, money, waste)
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, Triple(0, 0.0, 0))
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Triple(0, 0.0, 0))
 
     private val recipesFlow = combine(inventoryItems, _searchQuery, _selectedFilter, _loadMoreTrigger) { items, query, filter, _ ->
         Triple(items, query, filter)
-    }.flatMapLatest { (items, query, filter) ->
+    }.debounce(1000)
+    .flatMapLatest { (items, query, filter) ->
         when {
             query.isNotBlank() -> searchRecipes(query)
             filter == RecipeFilter.ALL -> getRecipesMatchingInventory(items)
-            filter == RecipeFilter.BREAKFAST -> getRecipesByCategory("Breakfast")
-            filter == RecipeFilter.DESSERT -> getRecipesByCategory("Dessert")
             filter == RecipeFilter.CHINESE -> getRecipesByArea("Chinese")
-            filter == RecipeFilter.MEXICAN -> getRecipesByArea("Mexican")
             filter == RecipeFilter.JAPANESE -> getRecipesByArea("Japanese")
-            filter == RecipeFilter.INDIAN -> getRecipesByArea("Indian")
-            filter == RecipeFilter.ITALIAN -> getRecipesByArea("Italian")
+            filter == RecipeFilter.THAI -> getRecipesByArea("Thai")
+            filter == RecipeFilter.KOREAN -> getRecipesByArea("Korean")
             else -> getRecipesMatchingInventory(items)
         }
     }.onEach { newBatch ->
@@ -118,7 +119,17 @@ class RecipesViewModel @Inject constructor(
         _selectedFilter,
         cookedStats
     ) { recipes, inventory, query, filter, stats ->
-        
+        computeUiState(recipes, inventory, query, filter, stats)
+    }.flowOn(kotlinx.coroutines.Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RecipesUiState())
+
+    private fun computeUiState(
+        recipes: List<Recipe>,
+        inventory: List<FoodItem>,
+        query: String,
+        filter: RecipeFilter,
+        stats: Triple<Int, Double, Int>
+    ): RecipesUiState {
         val expiringItems = inventory.filter { it.daysUntilExpiry <= 7 && !it.isExpired }
             .sortedBy { it.daysUntilExpiry }
 
@@ -137,7 +148,7 @@ class RecipesViewModel @Inject constructor(
             filteredMatches
         }
 
-        RecipesUiState(
+        return RecipesUiState(
             recipeMatches = sortedMatches,
             expiringItems = expiringItems,
             isLoading = false,
@@ -148,7 +159,7 @@ class RecipesViewModel @Inject constructor(
             recipesUsedCount = stats.first,
             errorMessage = null
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RecipesUiState())
+    }
 
     fun onSearchQueryChanged(query: String) {
         _searchQuery.value = query
@@ -175,19 +186,22 @@ class RecipesViewModel @Inject constructor(
             RecipeFilter.ALL -> matches
             RecipeFilter.BEST_MATCH -> matches.sortedByDescending { it.matchCount * 10 + it.wasteRescuePercent }
             RecipeFilter.USE_SOON -> matches.filter { it.recipe.tags.any { t -> t == RecipeTag.USE_SOON || t == RecipeTag.URGENT } }
-            RecipeFilter.WASTE_BUSTER -> matches.filter { it.recipe.tags.contains(RecipeTag.WASTE_BUSTER) }
             RecipeFilter.QUICK -> matches.filter { it.recipe.totalTimeMinutes < 30 }
+            RecipeFilter.STIRFRY -> matches.filter { it.recipe.tags.contains(RecipeTag.STIRFRY) }
+            RecipeFilter.STEAMED -> matches.filter { it.recipe.tags.contains(RecipeTag.STEAMED) }
+            RecipeFilter.SOUP -> matches.filter { it.recipe.tags.contains(RecipeTag.SOUP) }
+            RecipeFilter.RICE_NOODLE -> matches.filter { it.recipe.tags.any { t -> t == RecipeTag.RICE || t == RecipeTag.NOODLE } }
+            RecipeFilter.BRAISED -> matches.filter { it.recipe.tags.contains(RecipeTag.BRAISED) }
+            RecipeFilter.PAN_FRIED -> matches.filter { it.recipe.tags.any { t -> t == RecipeTag.PAN_FRIED || t == RecipeTag.DEEP_FRIED } }
+            RecipeFilter.COLD_DISH -> matches.filter { it.recipe.cuisine == "Cold Dish" || it.recipe.description.lowercase().contains("cold") }
             RecipeFilter.VEGETARIAN -> matches.filter { it.recipe.tags.contains(RecipeTag.VEGETARIAN) }
             RecipeFilter.VEGAN -> matches.filter { it.recipe.tags.contains(RecipeTag.VEGAN) }
-            RecipeFilter.DAIRY_FREE -> matches.filter { it.recipe.tags.contains(RecipeTag.DAIRY_FREE) }
-            RecipeFilter.GLUTEN_FREE -> matches.filter { it.recipe.tags.contains(RecipeTag.GLUTEN_FREE) }
-            RecipeFilter.BREAKFAST,
-            RecipeFilter.DESSERT,
+            RecipeFilter.CHA_CHAAN_TENG -> matches.filter { it.recipe.cuisine == "Cha Chaan Teng" || it.recipe.tags.contains(RecipeTag.BREAKFAST) }
+            RecipeFilter.HONG_KONG -> matches.filter { it.recipe.cuisine.equals("Hong Kong", ignoreCase = true) }
             RecipeFilter.CHINESE,
-            RecipeFilter.MEXICAN,
             RecipeFilter.JAPANESE,
-            RecipeFilter.INDIAN,
-            RecipeFilter.ITALIAN -> matches
+            RecipeFilter.THAI,
+            RecipeFilter.KOREAN -> matches
         }
 
         if (query.isNotBlank()) {

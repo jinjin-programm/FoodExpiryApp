@@ -45,21 +45,10 @@ class RecipeAdapter(
 
             binding.textRecipeName.text = recipe.name
             binding.textRecipeDescription.text = recipe.description
-            binding.textTime.text = "${recipe.totalTimeMinutes} min"
-            binding.textMoneySaved.text = "Save ~$${String.format("%.2f", match.estimatedMoneySaved)}"
-            binding.textWasteScore.text = "${match.matchCount} item${if (match.matchCount != 1) "s" else ""} rescued"
-            binding.textWasteScore.setTextColor(
-                if (match.matchCount >= 2) 0xFF2E7D32.toInt() else 0xFFE65100.toInt()
-            )
+            binding.textTime.text = "⏱ ${recipe.totalTimeMinutes} min"
+            binding.textMoneySaved.text = "💰 $${String.format("%.2f", match.estimatedMoneySaved)}"
 
-            val matchedNames = match.matchedIngredients.joinToString(", ") { it.name }
-            binding.textMatchedIngredients.text = if (matchedNames.isNotEmpty()) {
-                "✅ Matches: $matchedNames"
-            } else {
-                ""
-            }
-
-            binding.textMatchCount.text = "${match.matchCount} item${if (match.matchCount != 1) "s" else ""} matched"
+            binding.textMatchCount.text = "${match.matchCount} matched"
 
             binding.textWasteBusterBadge.visibility = if (recipe.tags.contains(RecipeTag.WASTE_BUSTER)) View.VISIBLE else View.GONE
             binding.textQuickBadge.visibility = if (recipe.totalTimeMinutes < 30) View.VISIBLE else View.GONE
@@ -80,10 +69,6 @@ class RecipeAdapter(
                     else -> 0xFF757575.toInt()
                 }
             )
-
-            binding.buttonCook.setOnClickListener {
-                onRecipeCooked(match)
-            }
 
             binding.root.setOnClickListener {
                 onRecipeClick(recipe)

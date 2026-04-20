@@ -29,6 +29,9 @@ class FoodExpiryApp : Application(), Configuration.Provider {
     @Inject
     lateinit var modelStorageManager: com.example.foodexpiryapp.data.local.ModelStorageManager
 
+    @Inject
+    lateinit var hkRecipeSeeder: com.example.foodexpiryapp.data.local.HkRecipeSeeder
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
@@ -41,6 +44,10 @@ class FoodExpiryApp : Application(), Configuration.Provider {
         CoroutineScope(Dispatchers.IO).launch {
             val settings = notificationSettingsRepository.getNotificationSettings().first()
             NotificationScheduler.scheduleDailyNotification(this@FoodExpiryApp, settings)
+        }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            hkRecipeSeeder.seedIfNeeded(this@FoodExpiryApp)
         }
 
         // Phase 5: Cleanup incomplete model downloads from previous sessions

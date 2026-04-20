@@ -18,7 +18,7 @@ import com.example.foodexpiryapp.data.local.dao.ShelfLifeDao
 
 @Database(
     entities = [FoodItemEntity::class, AnalyticsEventEntity::class, MealPlanEntity::class, ShoppingItemEntity::class, CookedRecipeEntity::class, LocalRecipeEntity::class, ShoppingTemplateEntity::class, DownloadStateEntity::class, DetectionResultEntity::class, ShelfLifeEntity::class],
-    version = 14,
+    version = 15,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -213,6 +213,12 @@ abstract class AppDatabase : RoomDatabase() {
         val MIGRATION_13_14 = object : Migration(13, 14) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE food_items ADD COLUMN imagePath TEXT")
+            }
+        }
+
+        val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE local_recipes ADD COLUMN category TEXT NOT NULL DEFAULT ''")
             }
         }
     }

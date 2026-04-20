@@ -112,19 +112,22 @@ class RecipesFragment : Fragment() {
                 binding.chipAll.id -> RecipeFilter.ALL
                 binding.chipBestMatch.id -> RecipeFilter.BEST_MATCH
                 binding.chipUseSoon.id -> RecipeFilter.USE_SOON
-                binding.chipWasteBuster.id -> RecipeFilter.WASTE_BUSTER
                 binding.chipQuick.id -> RecipeFilter.QUICK
+                binding.chipStirFry.id -> RecipeFilter.STIRFRY
+                binding.chipSteamed.id -> RecipeFilter.STEAMED
+                binding.chipSoup.id -> RecipeFilter.SOUP
+                binding.chipRiceNoodle.id -> RecipeFilter.RICE_NOODLE
+                binding.chipBraised.id -> RecipeFilter.BRAISED
+                binding.chipPanFried.id -> RecipeFilter.PAN_FRIED
+                binding.chipColdDish.id -> RecipeFilter.COLD_DISH
                 binding.chipVegetarian.id -> RecipeFilter.VEGETARIAN
                 binding.chipVegan.id -> RecipeFilter.VEGAN
-                binding.chipDairyFree.id -> RecipeFilter.DAIRY_FREE
-                binding.chipGlutenFree.id -> RecipeFilter.GLUTEN_FREE
-                binding.chipBreakfast.id -> RecipeFilter.BREAKFAST
-                binding.chipDessert.id -> RecipeFilter.DESSERT
+                binding.chipChaChaanTeng.id -> RecipeFilter.CHA_CHAAN_TENG
+                binding.chipHongKong.id -> RecipeFilter.HONG_KONG
                 binding.chipChinese.id -> RecipeFilter.CHINESE
-                binding.chipMexican.id -> RecipeFilter.MEXICAN
                 binding.chipJapanese.id -> RecipeFilter.JAPANESE
-                binding.chipIndian.id -> RecipeFilter.INDIAN
-                binding.chipItalian.id -> RecipeFilter.ITALIAN
+                binding.chipThai.id -> RecipeFilter.THAI
+                binding.chipKorean.id -> RecipeFilter.KOREAN
                 else -> RecipeFilter.ALL
             }
             viewModel.onFilterChanged(filter)
@@ -168,19 +171,22 @@ class RecipesFragment : Fragment() {
             RecipeFilter.ALL -> binding.chipAll
             RecipeFilter.BEST_MATCH -> binding.chipBestMatch
             RecipeFilter.USE_SOON -> binding.chipUseSoon
-            RecipeFilter.WASTE_BUSTER -> binding.chipWasteBuster
             RecipeFilter.QUICK -> binding.chipQuick
+            RecipeFilter.STIRFRY -> binding.chipStirFry
+            RecipeFilter.STEAMED -> binding.chipSteamed
+            RecipeFilter.SOUP -> binding.chipSoup
+            RecipeFilter.RICE_NOODLE -> binding.chipRiceNoodle
+            RecipeFilter.BRAISED -> binding.chipBraised
+            RecipeFilter.PAN_FRIED -> binding.chipPanFried
+            RecipeFilter.COLD_DISH -> binding.chipColdDish
             RecipeFilter.VEGETARIAN -> binding.chipVegetarian
             RecipeFilter.VEGAN -> binding.chipVegan
-            RecipeFilter.DAIRY_FREE -> binding.chipDairyFree
-            RecipeFilter.GLUTEN_FREE -> binding.chipGlutenFree
-            RecipeFilter.BREAKFAST -> binding.chipBreakfast
-            RecipeFilter.DESSERT -> binding.chipDessert
+            RecipeFilter.CHA_CHAAN_TENG -> binding.chipChaChaanTeng
+            RecipeFilter.HONG_KONG -> binding.chipHongKong
             RecipeFilter.CHINESE -> binding.chipChinese
-            RecipeFilter.MEXICAN -> binding.chipMexican
             RecipeFilter.JAPANESE -> binding.chipJapanese
-            RecipeFilter.INDIAN -> binding.chipIndian
-            RecipeFilter.ITALIAN -> binding.chipItalian
+            RecipeFilter.THAI -> binding.chipThai
+            RecipeFilter.KOREAN -> binding.chipKorean
         }
         if (!chipToSelect.isChecked) {
             chipToSelect.isChecked = true

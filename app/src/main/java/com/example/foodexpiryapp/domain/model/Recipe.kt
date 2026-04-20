@@ -21,15 +21,17 @@ data class Recipe(
 
     fun matchScoreWithInventory(inventoryItems: List<FoodItem>): Int {
         val inventoryNames = inventoryItems.map { it.name.lowercase() }.toSet()
-        return ingredients.count { ing ->
-            inventoryNames.any { invName -> ing.name.lowercase().contains(invName) || invName.contains(ing.name.lowercase()) }
+        val ingNames = ingredients.map { it.name.lowercase() }
+        return ingNames.count { ingName ->
+            inventoryNames.any { invName -> ingName.contains(invName) || invName.contains(ingName) }
         }
     }
 
     fun matchedInventoryItems(inventoryItems: List<FoodItem>): List<FoodItem> {
-        val inventoryNames = inventoryItems.map { it.name.lowercase() }.toSet()
+        val ingNamesLower = ingredients.map { it.name.lowercase() }
         return inventoryItems.filter { item ->
-            ingredients.any { ing -> ing.name.lowercase().contains(item.name.lowercase()) || item.name.lowercase().contains(ing.name.lowercase()) }
+            val itemNameLower = item.name.lowercase()
+            ingNamesLower.any { ingName -> ingName.contains(itemNameLower) || itemNameLower.contains(ingName) }
         }
     }
 
@@ -74,6 +76,12 @@ enum class RecipeTag(val displayName: String) {
     BREAD("Bread"),
     SMOOTHIE("Smoothie"),
     JUICE("Juice"),
+    NOODLE("Noodle"),
+    STEAMED("Steamed"),
+    SPICY("Spicy"),
+    BRAISED("Braised"),
+    DEEP_FRIED("Deep Fried"),
+    PAN_FRIED("Pan Fried"),
     USE_SOON("Use Soon"),
     URGENT("Urgent - Expiring Today!"),
     WASTE_BUSTER("Waste Buster"),

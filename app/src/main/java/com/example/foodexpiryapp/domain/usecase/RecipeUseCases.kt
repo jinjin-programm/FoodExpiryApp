@@ -41,13 +41,16 @@ class ScoreRecipesForInventoryUseCase @Inject constructor(
     private val repository: RecipeRepository
 ) {
     operator fun invoke(recipes: List<Recipe>, inventoryItems: List<FoodItem>): List<RecipeMatch> {
+        val invNamesLower = inventoryItems.map { it.name.lowercase() }
         return recipes.map { recipe ->
-            val matchedInvItems = recipe.matchedInventoryItems(inventoryItems)
+            val ingNamesLower = recipe.ingredients.map { it.name.lowercase() }
+            val matchedInvItems = inventoryItems.filter { item ->
+                val itemNameLower = item.name.lowercase()
+                ingNamesLower.any { ingName -> ingName.contains(itemNameLower) || itemNameLower.contains(ingName) }
+            }
             val matchedIngs = recipe.ingredients.filter { ing ->
-                matchedInvItems.any { item -> 
-                    ing.name.lowercase().contains(item.name.lowercase()) || 
-                    item.name.lowercase().contains(ing.name.lowercase())
-                }
+                val ingNameLower = ing.name.lowercase()
+                invNamesLower.any { invName -> ingNameLower.contains(invName) || invName.contains(ingNameLower) }
             }
             
             val avgItemCost = 3.0

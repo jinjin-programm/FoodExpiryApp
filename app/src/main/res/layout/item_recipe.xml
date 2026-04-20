@@ -5,10 +5,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="12dp"
-    android:layout_marginVertical="6dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="3dp"
+    android:layout_marginHorizontal="10dp"
+    android:layout_marginVertical="3dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="1dp"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground">
@@ -16,242 +16,144 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="8dp">
 
-        <!-- Recipe Image -->
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/image_recipe"
-            android:layout_width="match_parent"
-            android:layout_height="160dp"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
             android:scaleType="centerCrop"
-            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Corner16Top"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Corner12"
             tools:src="@tools:sample/backgrounds/scenic" />
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:orientation="vertical">
 
-        <!-- Top Row: Recipe Name + Match Badge -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <TextView
-                android:id="@+id/text_recipe_name"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textSize="17sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/black"
-                android:maxLines="2"
-                android:ellipsize="end"
-                tools:text="Quick Stir Fry with Expiring Vegetables" />
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/badge_match"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="0dp"
-                app:cardBackgroundColor="#E8F5E9">
-
-                <TextView
-                    android:id="@+id/text_match_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingHorizontal="10dp"
-                    android:paddingVertical="4dp"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:textColor="#2E7D32"
-                    tools:text="3 items matched" />
-            </com.google.android.material.card.MaterialCardView>
-        </LinearLayout>
-
-        <!-- Description -->
-        <TextView
-            android:id="@+id/text_recipe_description"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:textSize="13sp"
-            android:textColor="?android:attr/textColorSecondary"
-            android:maxLines="2"
-            android:ellipsize="end"
-            tools:text="A fast and healthy stir fry that uses up soft vegetables before they go bad." />
-
-        <!-- Tags Row -->
-        <LinearLayout
-            android:id="@+id/layout_tags"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <TextView
-                android:id="@+id/text_waste_buster_badge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/badge_background"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="3dp"
-                android:textSize="11sp"
-                android:textColor="#FFFFFF"
-                android:visibility="gone"
-                tools:text="🏆 Waste Buster"
-                tools:visibility="visible" />
-
-            <TextView
-                android:id="@+id/text_quick_badge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:background="@drawable/badge_background_quick"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="3dp"
-                android:textSize="11sp"
-                android:textColor="#FFFFFF"
-                android:visibility="gone"
-                tools:text="⚡ Quick"
-                tools:visibility="visible" />
-
-            <TextView
-                android:id="@+id/text_urgent_badge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:background="@drawable/badge_background_urgent"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="3dp"
-                android:textSize="11sp"
-                android:textColor="#FFFFFF"
-                android:visibility="gone"
-                tools:text="⚠️ Urgent"
-                tools:visibility="visible" />
-        </LinearLayout>
-
-        <!-- Stats Row: Time + Money Saved + Waste -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <!-- Time -->
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical">
 
                 <TextView
+                    android:id="@+id/text_recipe_name"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/black"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    tools:text="Quick Stir Fry with Vegetables" />
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/badge_match"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="⏱️"
-                    android:textSize="13sp" />
+                    android:layout_marginStart="6dp"
+                    app:cardCornerRadius="10dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="#E8F5E9">
+
+                    <TextView
+                        android:id="@+id/text_match_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="2dp"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:textColor="#2E7D32"
+                        tools:text="3 matched" />
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/text_recipe_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textSize="12sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:maxLines="1"
+                android:ellipsize="end"
+                tools:text="A fast and healthy stir fry with soft vegetables." />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
                 <TextView
                     android:id="@+id/text_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:textSize="13sp"
+                    android:textSize="12sp"
                     android:textColor="?android:attr/textColorSecondary"
-                    tools:text="20 min" />
-            </LinearLayout>
-
-            <View
-                android:layout_width="1dp"
-                android:layout_height="14dp"
-                android:layout_marginHorizontal="12dp"
-                android:background="?android:attr/textColorHint" />
-
-            <!-- Money Saved -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="💰"
-                    android:textSize="13sp" />
+                    tools:text="⏱ 20 min" />
 
                 <TextView
                     android:id="@+id/text_money_saved"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:textSize="13sp"
+                    android:layout_marginStart="10dp"
+                    android:textSize="12sp"
                     android:textColor="#2E7D32"
                     android:textStyle="bold"
-                    tools:text="Save ~$3.00" />
-            </LinearLayout>
-
-            <View
-                android:layout_width="1dp"
-                android:layout_height="14dp"
-                android:layout_marginHorizontal="12dp"
-                android:background="?android:attr/textColorHint" />
-
-            <!-- Waste Rescue -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
+                    tools:text="💰 $3.00" />
 
                 <TextView
+                    android:id="@+id/text_waste_buster_badge"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="♻️"
-                    android:textSize="13sp" />
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/badge_background"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="1dp"
+                    android:textSize="10sp"
+                    android:textColor="#FFFFFF"
+                    android:visibility="gone"
+                    tools:text="🏆 Waste Buster"
+                    tools:visibility="visible" />
 
                 <TextView
-                    android:id="@+id/text_waste_score"
+                    android:id="@+id/text_quick_badge"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
-                    android:textSize="13sp"
-                    android:textColor="#E65100"
-                    android:textStyle="bold"
-                    tools:text="2 items rescued" />
+                    android:background="@drawable/badge_background_quick"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="1dp"
+                    android:textSize="10sp"
+                    android:textColor="#FFFFFF"
+                    android:visibility="gone"
+                    tools:text="⚡ Quick"
+                    tools:visibility="visible" />
+
+                <TextView
+                    android:id="@+id/text_urgent_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:background="@drawable/badge_background_urgent"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="1dp"
+                    android:textSize="10sp"
+                    android:textColor="#FFFFFF"
+                    android:visibility="gone"
+                    tools:text="⚠️ Urgent"
+                    tools:visibility="visible" />
             </LinearLayout>
         </LinearLayout>
-
-        <!-- Matched Ingredients -->
-        <TextView
-            android:id="@+id/text_matched_ingredients"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textSize="12sp"
-            android:textColor="#558B2F"
-            android:fontStyle="italic"
-            tools:text="✅ Matches: Banana, Oats, Milk" />
-
-        <!-- Cook Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_cook"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="I Cooked This!"
-            android:textAllCaps="false"
-            app:cornerRadius="24dp" />
-
     </LinearLayout>
-
-</LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

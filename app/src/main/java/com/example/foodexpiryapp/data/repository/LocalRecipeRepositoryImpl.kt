@@ -58,7 +58,9 @@ class LocalRecipeRepositoryImpl @Inject constructor(
             servings = servings,
             cuisine = cuisine,
             tags = gson.fromJson(tags, tagsType) ?: emptySet(),
-            estimatedCost = estimatedCost
+            estimatedCost = estimatedCost,
+            wasteRescueScore = 0,
+            estimatedSaving = 0.0
         )
     }
 
@@ -75,7 +77,8 @@ class LocalRecipeRepositoryImpl @Inject constructor(
             servings = servings,
             cuisine = cuisine,
             tags = gson.toJson(tags),
-            estimatedCost = estimatedCost
+            estimatedCost = estimatedCost,
+            category = ""
         )
     }
 }
