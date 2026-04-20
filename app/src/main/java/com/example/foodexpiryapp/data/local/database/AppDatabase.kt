@@ -19,7 +19,7 @@ import com.example.foodexpiryapp.data.local.dao.ShelfLifeDao
 @Database(
     entities = [FoodItemEntity::class, AnalyticsEventEntity::class, MealPlanEntity::class, ShoppingItemEntity::class, CookedRecipeEntity::class, LocalRecipeEntity::class, ShoppingTemplateEntity::class, DownloadStateEntity::class, DetectionResultEntity::class, ShelfLifeEntity::class],
     version = 15,
-    exportSchema = false
+    exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun foodItemDao(): FoodItemDao
@@ -34,17 +34,13 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun shelfLifeDao(): ShelfLifeDao
 
     companion object {
-        val MIGRATION_4_5 = object : Migration(4, 5) {
+        val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("""
-                    CREATE TABLE IF NOT EXISTS shopping_items (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                        name TEXT NOT NULL,
-                        isChecked INTEGER NOT NULL DEFAULT 0
-                    )
-                """.trimIndent())
+                database.execSQL("ALTER TABLE food_items ADD COLUMN notifyEnabled INTEGER NOT NULL DEFAULT 1")
+                database.execSQL("ALTER TABLE food_items ADD COLUMN notifyDaysBefore INTEGER")
             }
         }
+
         val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("""
