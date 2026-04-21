@@ -15,6 +15,7 @@ import com.example.foodexpiryapp.domain.usecase.GetMealPlansForDateUseCase
 import com.example.foodexpiryapp.domain.usecase.SaveMealPlanUseCase
 import com.example.foodexpiryapp.domain.usecase.ScoreRecipesForInventoryUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -68,7 +70,9 @@ class PlannerViewModel @Inject constructor(
     val events: SharedFlow<PlannerEvent> = _events.asSharedFlow()
 
     private val _searchQuery = MutableStateFlow("")
+    private val _selectedDate = MutableStateFlow(LocalDate.now())
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     init {
         loadData()
     }
@@ -78,11 +82,12 @@ class PlannerViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true) }
 
             combine(
-                getMealPlansForDate(_uiState.value.selectedDate),
+                _selectedDate.flatMapLatest { date -> getMealPlansForDate(date) },
                 getAllRecipes(),
                 getAllFoodItems(),
-                _searchQuery
-            ) { mealPlans, recipes, inventory, query ->
+                _searchQuery,
+                _selectedDate
+            ) { mealPlans, recipes, inventory, query, selectedDate ->
                 val plansMap = MealSlot.entries.associateWith { slot ->
                     mealPlans.find { it.slot == slot }
                 }
@@ -114,7 +119,7 @@ class PlannerViewModel @Inject constructor(
                 }
 
                 PlannerUiState(
-                    selectedDate = _uiState.value.selectedDate,
+                    selectedDate = selectedDate,
                     mealPlans = plansMap,
                     allRecipes = recipes,
                     inventoryItems = inventory,
@@ -131,15 +136,7 @@ class PlannerViewModel @Inject constructor(
     }
 
     fun onDateSelected(date: LocalDate) {
-        _uiState.update { it.copy(selectedDate = date) }
-        viewModelScope.launch {
-            getMealPlansForDate(date).collect { mealPlans ->
-                val plansMap = MealSlot.entries.associateWith { slot ->
-                    mealPlans.find { it.slot == slot }
-                }
-                _uiState.update { it.copy(mealPlans = plansMap) }
-            }
-        }
+        _selectedDate.value = date
     }
 
     fun onSearchQueryChanged(query: String) {
