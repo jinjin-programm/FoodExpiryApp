@@ -5,6 +5,8 @@ import com.example.foodexpiryapp.data.local.database.ShelfLifeEntity
 import com.example.foodexpiryapp.domain.engine.SeedData
 import com.example.foodexpiryapp.domain.repository.ShelfLifeRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -15,6 +17,7 @@ class ShelfLifeRepositoryImpl @Inject constructor(
 
     @Volatile
     private var seeded = false
+    private val seedMutex = Mutex()
 
     override fun getAll(): Flow<List<ShelfLifeEntity>> = dao.getAll()
 
@@ -77,12 +80,15 @@ class ShelfLifeRepositoryImpl @Inject constructor(
 
     override suspend fun ensureSeeded() {
         if (seeded) return
-        if (dao.count() > 0) {
+        seedMutex.withLock {
+            if (seeded) return
+            if (dao.count() > 0) {
+                seeded = true
+                return
+            }
+            val entries = SeedData.getSeedEntries()
+            dao.insertAll(entries)
             seeded = true
-            return
         }
-        val entries = SeedData.getSeedEntries()
-        dao.insertAll(entries)
-        seeded = true
     }
 }
