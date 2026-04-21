@@ -156,15 +156,14 @@ class InventoryFragment : Fragment() {
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val adapter = binding.foodItemsRecyclerView.adapter
-                if (adapter is FoodListAdapter) {
-                    val position = viewHolder.bindingAdapterPosition
-                    val item = adapter.currentList[position]
-                    viewModel.onDeleteFoodItem(item)
-                } else if (adapter is FoodItemCuteAdapter) {
-                    val position = viewHolder.bindingAdapterPosition
-                    val item = adapter.currentList[position]
-                    viewModel.onDeleteFoodItem(item)
+                val position = viewHolder.bindingAdapterPosition
+                if (position == RecyclerView.NO_POSITION) return
+                val item = when (adapter) {
+                    is FoodListAdapter -> adapter.currentList[position]
+                    is FoodItemCuteAdapter -> adapter.currentList[position]
+                    else -> return
                 }
+                viewModel.onDeleteFoodItem(item)
             }
         }
         ItemTouchHelper(swipeCallback).attachToRecyclerView(binding.foodItemsRecyclerView)
