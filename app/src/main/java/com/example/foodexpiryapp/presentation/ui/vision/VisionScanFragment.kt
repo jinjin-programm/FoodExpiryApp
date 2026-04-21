@@ -785,7 +785,7 @@ object ScanResultHolder {
 }
 
 object Tasks {
-    fun <TResult : Any?> await(task: com.google.android.gms.tasks.Task<TResult>): TResult? {
+    fun <TResult : Any?> await(task: com.google.android.gms.tasks.Task<TResult>, timeoutSeconds: Long = 30): TResult? {
         var result: TResult? = null
         var exception: Exception? = null
         val latch = java.util.concurrent.CountDownLatch(1)
@@ -798,7 +798,7 @@ object Tasks {
             latch.countDown()
         }
 
-        latch.await()
+        latch.await(timeoutSeconds, java.util.concurrent.TimeUnit.SECONDS)
 
         if (exception != null) {
             throw exception!!
