@@ -139,10 +139,12 @@ class InventoryFragment : Fragment() {
 
         binding.recyclerExpiringSoon.apply {
             layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+            adapter = expiringOriginalAdapter
         }
 
         binding.foodItemsRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
+            adapter = foodListOriginalAdapter
         }
 
         val swipeCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
@@ -455,9 +457,11 @@ class InventoryFragment : Fragment() {
     private fun updateAllergenHighlight(items: List<FoodItem>) {
         if (items.isEmpty()) return
         
-        CoroutineScope(Dispatchers.IO).launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val userProfile = userRepository.getUserProfile().first()
+                val userProfile = withContext(Dispatchers.IO) {
+                    userRepository.getUserProfile().first()
+                }
                 val allergenNames = userProfile.allergens.presetAllergens.map { it.displayName.lowercase() } +
                                    userProfile.allergens.customAllergens.map { it.lowercase() }
                 
@@ -471,12 +475,10 @@ class InventoryFragment : Fragment() {
                 }.map { it.id }.toSet()
                 
                 if (allergenItemIds.isNotEmpty()) {
-                    withContext(Dispatchers.Main) {
-                        foodListCuteAdapter.updateAllergenItems(allergenItemIds)
-                        expiringCuteAdapter.updateAllergenItems(allergenItemIds)
-                        foodListOriginalAdapter.updateAllergenItems(allergenItemIds)
-                        expiringOriginalAdapter.updateAllergenItems(allergenItemIds)
-                    }
+                    foodListCuteAdapter.updateAllergenItems(allergenItemIds)
+                    expiringCuteAdapter.updateAllergenItems(allergenItemIds)
+                    foodListOriginalAdapter.updateAllergenItems(allergenItemIds)
+                    expiringOriginalAdapter.updateAllergenItems(allergenItemIds)
                 }
             } catch (e: Exception) {
                 // Silently fail - don't crash if allergen check fails
@@ -685,7 +687,7 @@ class InventoryFragment : Fragment() {
                 }
 
                 // Check for allergens
-                CoroutineScope(Dispatchers.Main).launch {
+                viewLifecycleOwner.lifecycleScope.launch {
                     val warning = withContext(Dispatchers.IO) {
                         checkAllergenUseCase.invoke(foodName)
                     }
@@ -835,5 +837,6 @@ class InventoryFragment : Fragment() {
         binding.recyclerExpiringSoon.cancelResumeTimer()
         _binding = null
         currentDialog = null
+        currentStyle = ""
     }
 }
