@@ -1,6 +1,5 @@
 package com.example.foodexpiryapp.presentation.ui.chat
 
-import android.content.Context
 import com.example.foodexpiryapp.util.AppLog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,7 +10,6 @@ import com.example.foodexpiryapp.data.remote.ollama.OllamaServerConfig
 import com.example.foodexpiryapp.data.remote.ollama.OllamaVisionClient
 import com.example.foodexpiryapp.domain.client.FoodVisionClient
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,7 +18,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val ollamaClient: OllamaVisionClient,
     private val lmStudioClient: LmStudioVisionClient,
     private val ollamaServerConfig: OllamaServerConfig,
