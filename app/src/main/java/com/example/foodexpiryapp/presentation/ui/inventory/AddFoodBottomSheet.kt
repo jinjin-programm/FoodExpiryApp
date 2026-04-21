@@ -8,7 +8,7 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import javax.inject.Inject
 import androidx.core.widget.doAfterTextChanged
-import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import com.bumptech.glide.Glide
 import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.databinding.DialogAddFoodBinding
@@ -38,7 +38,7 @@ class AddFoodBottomSheet : BottomSheetDialogFragment() {
     private var _binding: DialogAddFoodBinding? = null
     private val binding get() = _binding!!
 
-    private val inventoryViewModel: InventoryViewModel by activityViewModels()
+    private val inventoryViewModel: InventoryViewModel by viewModels({ requireParentFragment() })
     @Inject
     lateinit var checkAllergenUseCase: CheckAllergenUseCase
 

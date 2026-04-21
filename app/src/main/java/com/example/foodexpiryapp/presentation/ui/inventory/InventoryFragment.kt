@@ -520,7 +520,7 @@ class InventoryFragment : Fragment() {
                 handleBarcodeResult(barcode)
             } else if (dateString != null) {
                 val bottomSheet = AddFoodBottomSheet.newInstance(expiryDate = dateString)
-                bottomSheet.show(requireActivity().supportFragmentManager, AddFoodBottomSheet.TAG)
+                bottomSheet.show(childFragmentManager, AddFoodBottomSheet.TAG)
             }
         }
 
@@ -565,13 +565,13 @@ class InventoryFragment : Fragment() {
                         expiryDate = result.estimatedExpiryDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
                         notes = result.brand?.let { "Brand: $it" } ?: ""
                     )
-                    bottomSheet.show(requireActivity().supportFragmentManager, AddFoodBottomSheet.TAG)
+                    bottomSheet.show(childFragmentManager, AddFoodBottomSheet.TAG)
                 },
                 onFailure = {
                     val bottomSheet = AddFoodBottomSheet.newInstance(
                         barcode = barcode
                     )
-                    bottomSheet.show(requireActivity().supportFragmentManager, AddFoodBottomSheet.TAG)
+                    bottomSheet.show(childFragmentManager, AddFoodBottomSheet.TAG)
                 }
             )
         }
