@@ -11,7 +11,7 @@ import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.core.widget.NestedScrollView
 import androidx.core.widget.doAfterTextChanged
-import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import com.bumptech.glide.Glide
 import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.databinding.BottomSheetFoodDetailBinding
@@ -35,7 +35,7 @@ class FoodDetailBottomSheet : BottomSheetDialogFragment() {
     private var _binding: BottomSheetFoodDetailBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: InventoryViewModel by activityViewModels()
+    private val viewModel: InventoryViewModel by viewModels({ requireParentFragment() })
 
     private val displayFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
     private val shortFormatter = DateTimeFormatter.ofPattern("MMM d")
