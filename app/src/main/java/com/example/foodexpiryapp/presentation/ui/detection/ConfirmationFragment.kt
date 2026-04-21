@@ -1,11 +1,15 @@
 package com.example.foodexpiryapp.presentation.ui.detection
 
 import android.os.Bundle
+import android.text.InputType
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -84,6 +88,29 @@ class ConfirmationFragment : Fragment() {
             onDeleteClick = { entity ->
                 viewModel.cancelQuickModeCountdown()
                 viewModel.removeItem(entity.id)
+            },
+            onShowEditDialog = { entity, callback ->
+                viewModel.cancelQuickModeCountdown()
+                val editText = EditText(requireContext()).apply {
+                    setText(entity.foodName)
+                    inputType = InputType.TYPE_CLASS_TEXT
+                    setSelection(text.length)
+                    setPadding(48, 24, 48, 24)
+                }
+                val container = LinearLayout(requireContext()).apply {
+                    orientation = LinearLayout.VERTICAL
+                    setPadding(48, 24, 48, 0)
+                    addView(editText)
+                }
+                AlertDialog.Builder(requireContext())
+                    .setTitle(if (entity.status == DetectionResultEntity.STATUS_FAILED) "Fix item name" else "Edit item name")
+                    .setView(container)
+                    .setPositiveButton("Save") { _, _ ->
+                        val newName = editText.text.toString().trim()
+                        callback(newName)
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
             }
         )
         binding.recyclerResults.adapter = adapter

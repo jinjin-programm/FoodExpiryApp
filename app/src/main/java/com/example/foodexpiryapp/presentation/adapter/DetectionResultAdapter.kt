@@ -27,7 +27,8 @@ import java.io.File
  */
 class DetectionResultAdapter(
     private val onEditClick: (DetectionResultEntity) -> Unit,
-    private val onDeleteClick: (DetectionResultEntity) -> Unit
+    private val onDeleteClick: (DetectionResultEntity) -> Unit,
+    private val onShowEditDialog: ((DetectionResultEntity, callback: (String) -> Unit) -> Unit)? = null
 ) : ListAdapter<DetectionResultEntity, DetectionResultAdapter.ViewHolder>(DetectionResultDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -141,9 +142,19 @@ class DetectionResultAdapter(
         }
 
         /**
-         * Opens a simple AlertDialog with EditText for name editing.
+         * Opens a dialog for name editing.
+         * Delegates to fragment via onShowEditDialog callback if available,
+         * otherwise falls back to creating an AlertDialog directly.
          */
         private fun showEditDialog(entity: DetectionResultEntity) {
+            if (onShowEditDialog != null) {
+                onShowEditDialog.invoke(entity) { newName ->
+                    if (newName.isNotEmpty()) {
+                        onEditClick(entity.copy(foodName = newName))
+                    }
+                }
+                return
+            }
             val context = binding.root.context
             val editText = EditText(context).apply {
                 setText(entity.foodName)
