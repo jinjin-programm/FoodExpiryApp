@@ -39,28 +39,30 @@ class MainTabsFragment : Fragment() {
         binding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 super.onPageSelected(position)
-                when (position) {
-                    0 -> bottomNav.selectedItemId = R.id.navigation_inventory
-                    1 -> bottomNav.selectedItemId = R.id.navigation_shopping
+                val itemId = when (position) {
+                    0 -> R.id.navigation_inventory
+                    1 -> R.id.navigation_shopping
+                    2 -> R.id.navigation_recipes
+                    3 -> R.id.navigation_planner
+                    4 -> R.id.navigation_profile
+                    else -> return
                 }
+                bottomNav.selectedItemId = itemId
             }
         })
 
         // Listen for BottomNav changes to update ViewPager
         bottomNav.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.navigation_inventory -> {
-                    binding.viewPager.currentItem = 0
-                    true
-                }
-                R.id.navigation_shopping -> {
-                    binding.viewPager.currentItem = 1
-                    true
-                }
-                // For other items, we let the NavController handle it if needed
-                // But for now we only support Inventory/Shopping as tabs
-                else -> false
+            val position = when (item.itemId) {
+                R.id.navigation_inventory -> 0
+                R.id.navigation_shopping -> 1
+                R.id.navigation_recipes -> 2
+                R.id.navigation_planner -> 3
+                R.id.navigation_profile -> 4
+                else -> return@setOnItemSelectedListener false
             }
+            binding.viewPager.currentItem = position
+            true
         }
         
         // Initial selection based on where we came from if needed
