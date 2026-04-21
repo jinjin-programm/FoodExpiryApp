@@ -14,8 +14,10 @@ import com.example.foodexpiryapp.domain.repository.UserRepository
 import com.example.foodexpiryapp.util.NotificationScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 data class ProfileUiState(
@@ -72,7 +74,9 @@ class ProfileViewModel @Inject constructor(
 
     fun setUIStyle(style: String) {
         viewModelScope.launch {
-            uiStyleRepository.setUIStyle(style)
+            withContext(NonCancellable) {
+                uiStyleRepository.setUIStyle(style)
+            }
         }
     }
 

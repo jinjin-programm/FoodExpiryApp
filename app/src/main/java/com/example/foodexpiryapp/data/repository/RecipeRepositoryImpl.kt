@@ -40,6 +40,11 @@ class RecipeRepositoryImpl @Inject constructor(
 
     override suspend fun getRecipeById(id: Long): Recipe? {
         cachedDetails[id]?.let { return it }
+        val local = localRecipeRepository.getLocalRecipeById(id)
+        if (local != null) {
+            cachedDetails[id] = local
+            return local
+        }
         return try {
             val response = theMealDbApi.getMealDetails(id.toString())
             val domain = response.meals?.firstOrNull()?.toDomain()

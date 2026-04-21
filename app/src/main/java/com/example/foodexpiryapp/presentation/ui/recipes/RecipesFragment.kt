@@ -120,7 +120,7 @@ class RecipesFragment : Fragment() {
         recipeAdapter = RecipeAdapter(
             onRecipeClick = { recipe ->
                 val bundle = bundleOf("recipeId" to recipe.id)
-                findNavController().navigate(R.id.action_inventory_to_recipe_detail, bundle)
+                findNavController().navigate(R.id.action_navigation_recipes_to_recipeDetailFragment, bundle)
             },
             onRecipeCooked = { match ->
                 viewModel.onRecipeCooked(match.recipe, match.matchedInventoryItems)

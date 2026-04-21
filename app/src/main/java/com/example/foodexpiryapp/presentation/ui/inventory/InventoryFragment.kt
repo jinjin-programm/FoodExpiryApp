@@ -265,6 +265,45 @@ class InventoryFragment : Fragment() {
     private fun applyStyle(style: String) {
         val isCute = style == UIStyleRepository.STYLE_CUTE
 
+        binding.heroBanner.apply {
+            cardElevation = 2f
+            background = null
+            setCardBackgroundColor(android.graphics.Color.WHITE)
+        }
+        binding.newBadge.visibility = View.GONE
+        binding.imgRobot.clearAnimation()
+        binding.imgRobot.visibility = View.GONE
+        binding.textHeroTitle.setTextColor(android.graphics.Color.parseColor("#171725"))
+        binding.textHeroSubtitle.setTextColor(android.graphics.Color.parseColor("#6B7280"))
+        binding.btnTryAIScan.backgroundTintList = android.content.res.ColorStateList.valueOf(
+            android.graphics.Color.parseColor("#4D644F")
+        )
+        binding.btnTryAIScan.setTextColor(android.graphics.Color.WHITE)
+        binding.btnTryAIScan.iconTint = android.content.res.ColorStateList.valueOf(
+            android.graphics.Color.WHITE
+        )
+        binding.iconPhotoCircle.background = null
+        binding.iconBarcodeCircle.background = null
+        binding.iconManualCircle.background = null
+        binding.iconAiChatCircle.background = null
+        stopPulseAnimation()
+        binding.imgEmptyIllustration.setImageResource(android.R.drawable.ic_menu_camera)
+        binding.imgEmptyIllustration.imageTintList = android.content.res.ColorStateList.valueOf(
+            android.graphics.Color.parseColor("#D1D5DB")
+        )
+        binding.textEmptyTitle.text = "Get Started"
+        binding.textEmptySubtitle.text = "Add your first item using a quick photo scan to get started tracking."
+        binding.recyclerExpiringSoon.adapter = expiringOriginalAdapter
+        binding.foodItemsRecyclerView.adapter = foodListOriginalAdapter
+        binding.searchBarLayout.setBoxBackgroundColorResource(R.color.search_bar_bg_original)
+        binding.searchBarLayout.setBackgroundColor(Color.TRANSPARENT)
+        binding.searchEditText.setTextColor(ContextCompat.getColor(requireContext(), R.color.search_bar_text_original))
+        binding.searchEditText.setHintTextColor(ContextCompat.getColor(requireContext(), R.color.search_bar_hint_original))
+        binding.searchBarLayout.setStartIconTintList(android.content.res.ColorStateList.valueOf(
+            ContextCompat.getColor(requireContext(), R.color.search_bar_icon_original)))
+        binding.searchBarLayout.setEndIconTintList(android.content.res.ColorStateList.valueOf(
+            ContextCompat.getColor(requireContext(), R.color.search_bar_icon_original)))
+
         if (isCute) {
             binding.heroBanner.apply {
                 cardElevation = 8f
@@ -310,50 +349,6 @@ class InventoryFragment : Fragment() {
                 ContextCompat.getColor(requireContext(), R.color.search_bar_icon_cute)))
             binding.searchBarLayout.setEndIconTintList(android.content.res.ColorStateList.valueOf(
                 ContextCompat.getColor(requireContext(), R.color.search_bar_icon_cute)))
-        } else {
-            binding.heroBanner.apply {
-                cardElevation = 2f
-                background = null
-                setCardBackgroundColor(android.graphics.Color.WHITE)
-            }
-            binding.newBadge.visibility = View.GONE
-            binding.imgRobot.visibility = View.GONE
-            binding.imgRobot.clearAnimation()
-            binding.textHeroTitle.setTextColor(android.graphics.Color.parseColor("#171725"))
-            binding.textHeroSubtitle.setTextColor(android.graphics.Color.parseColor("#6B7280"))
-            binding.btnTryAIScan.backgroundTintList = android.content.res.ColorStateList.valueOf(
-                android.graphics.Color.parseColor("#4D644F")
-            )
-            binding.btnTryAIScan.setTextColor(android.graphics.Color.WHITE)
-            binding.btnTryAIScan.iconTint = android.content.res.ColorStateList.valueOf(
-                android.graphics.Color.WHITE
-            )
-
-            binding.iconPhotoCircle.background = null
-            binding.iconBarcodeCircle.background = null
-            binding.iconManualCircle.background = null
-            binding.iconAiChatCircle.background = null
-
-            stopPulseAnimation()
-
-            binding.imgEmptyIllustration.setImageResource(android.R.drawable.ic_menu_camera)
-            binding.imgEmptyIllustration.imageTintList = android.content.res.ColorStateList.valueOf(
-                android.graphics.Color.parseColor("#D1D5DB")
-            )
-            binding.textEmptyTitle.text = "Get Started"
-            binding.textEmptySubtitle.text = "Add your first item using a quick photo scan to get started tracking."
-
-            binding.recyclerExpiringSoon.adapter = expiringOriginalAdapter
-            binding.foodItemsRecyclerView.adapter = foodListOriginalAdapter
-
-            binding.searchBarLayout.setBoxBackgroundColorResource(R.color.search_bar_bg_original)
-            binding.searchBarLayout.setBackgroundColor(Color.TRANSPARENT)
-            binding.searchEditText.setTextColor(ContextCompat.getColor(requireContext(), R.color.search_bar_text_original))
-            binding.searchEditText.setHintTextColor(ContextCompat.getColor(requireContext(), R.color.search_bar_hint_original))
-            binding.searchBarLayout.setStartIconTintList(android.content.res.ColorStateList.valueOf(
-                ContextCompat.getColor(requireContext(), R.color.search_bar_icon_original)))
-            binding.searchBarLayout.setEndIconTintList(android.content.res.ColorStateList.valueOf(
-                ContextCompat.getColor(requireContext(), R.color.search_bar_icon_original)))
         }
     }
 
@@ -800,6 +795,12 @@ class InventoryFragment : Fragment() {
         super.onResume()
         if (expiringCuteAdapter.infiniteMode && expiringCuteAdapter.currentList.isNotEmpty()) {
             binding.recyclerExpiringSoon.startAutoScroll()
+        }
+        if (currentStyle == UIStyleRepository.STYLE_CUTE) {
+            binding.imgRobot.startAnimation(
+                AnimationUtils.loadAnimation(requireContext(), R.anim.float_animation)
+            )
+            startPulseAnimation()
         }
         ScanResultHolder.result?.let { scanResult ->
             ScanResultHolder.result = null
