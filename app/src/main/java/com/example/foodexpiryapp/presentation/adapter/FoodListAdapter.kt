@@ -1,5 +1,6 @@
 package com.example.foodexpiryapp.presentation.adapter
 
+import android.graphics.Color
 import java.io.File
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -12,8 +13,14 @@ import com.example.foodexpiryapp.domain.model.FoodItem
 import com.example.foodexpiryapp.util.FoodImageResolver
 
 class FoodListAdapter(
-    private val onItemClick: (FoodItem) -> Unit
+    private val onItemClick: (FoodItem) -> Unit,
+    private var allergenItemIds: Set<Long> = emptySet()
 ) : ListAdapter<FoodItem, FoodListAdapter.FoodListViewHolder>(FoodListDiffCallback()) {
+
+    fun updateAllergenItems(newAllergenItemIds: Set<Long>) {
+        allergenItemIds = newAllergenItemIds
+        notifyDataSetChanged()
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FoodListViewHolder {
         val binding = ItemFoodListBinding.inflate(
@@ -32,6 +39,13 @@ class FoodListAdapter(
 
         fun bind(item: FoodItem) {
             binding.textFoodName.text = item.name
+            
+            if (allergenItemIds.contains(item.id)) {
+                binding.textFoodName.setTextColor(Color.parseColor("#C62828"))
+            } else {
+                binding.textFoodName.setTextColor(Color.parseColor("#212121"))
+            }
+            
             binding.textFoodInfo.text = "Added recently • ${item.category.displayName}"
             
             val days = item.daysUntilExpiry

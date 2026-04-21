@@ -6,19 +6,28 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import javax.inject.Inject
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.activityViewModels
 import com.bumptech.glide.Glide
 import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.databinding.DialogAddFoodBinding
+import com.example.foodexpiryapp.domain.model.AllergenWarning
 import com.example.foodexpiryapp.domain.model.FoodCategory
 import com.example.foodexpiryapp.domain.model.FoodItem
 import com.example.foodexpiryapp.domain.model.ScanSource
 import com.example.foodexpiryapp.domain.model.StorageLocation
+import com.example.foodexpiryapp.domain.usecase.CheckAllergenUseCase
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryViewModel
 import com.example.foodexpiryapp.util.FoodImageResolver
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -30,6 +39,8 @@ class AddFoodBottomSheet : BottomSheetDialogFragment() {
     private val binding get() = _binding!!
 
     private val inventoryViewModel: InventoryViewModel by activityViewModels()
+    @Inject
+    lateinit var checkAllergenUseCase: CheckAllergenUseCase
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,7 +58,52 @@ class AddFoodBottomSheet : BottomSheetDialogFragment() {
         prefillData()
 
         binding.btnSave.setOnClickListener {
-            saveFoodItem()
+            checkAndSaveFoodItem()
+        }
+    }
+
+    private fun checkAndSaveFoodItem() {
+        val name = binding.editFoodName.text.toString().trim()
+        
+        if (name.isEmpty()) {
+            Toast.makeText(context, "Please enter a food name", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        CoroutineScope(Dispatchers.Main).launch {
+            val warning = withContext(Dispatchers.IO) {
+                checkAllergenUseCase.invoke(name)
+            }
+            if (warning != null) {
+                showAllergenWarningDialog(warning, name)
+            } else {
+                saveFoodItem()
+            }
+        }
+    }
+
+    private fun showAllergenWarningDialog(warning: AllergenWarning, foodName: String) {
+        val message = when (warning) {
+            is AllergenWarning.Preset -> 
+                "This food may contain: ${warning.allergens.joinToString { it.displayName }}. Are you sure you want to add it?"
+            is AllergenWarning.Custom -> 
+                "You marked '${warning.allergens.joinToString()}' as an allergen. Are you sure you want to add '$foodName'?"
+        }
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Allergen Warning")
+            .setMessage(message)
+            .setPositiveButton("Add Anyway") { _, _ ->
+                saveFoodItemWithWarning(foodName)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun saveFoodItemWithWarning(foodName: String) {
+        saveFoodItem()
+        view?.let {
+            Snackbar.make(it, "Warning: Contains allergen", Snackbar.LENGTH_SHORT).show()
         }
     }
 
@@ -120,11 +176,6 @@ class AddFoodBottomSheet : BottomSheetDialogFragment() {
         val categoryStr = binding.dropdownCategory.text.toString().trim()
         val locationStr = binding.dropdownLocation.text.toString().trim()
         val expiryStr = binding.editExpiryDate.text.toString().trim()
-
-        if (name.isEmpty()) {
-            Toast.makeText(context, "Please enter a food name", Toast.LENGTH_SHORT).show()
-            return
-        }
 
         if (expiryStr.isEmpty()) {
             Toast.makeText(context, "Please enter an expiry date", Toast.LENGTH_SHORT).show()

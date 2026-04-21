@@ -20,6 +20,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.foodexpiryapp.R
 import com.example.foodexpiryapp.databinding.FragmentProfileBinding
 import com.example.foodexpiryapp.domain.model.DietaryPreference
+import com.example.foodexpiryapp.domain.model.FoodAllergen
 import com.example.foodexpiryapp.domain.repository.UIStyleRepository
 import com.example.foodexpiryapp.presentation.viewmodel.ProfileEvent
 import com.example.foodexpiryapp.presentation.viewmodel.ProfileViewModel
@@ -31,6 +32,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.timepicker.MaterialTimePicker
@@ -134,6 +136,23 @@ class ProfileFragment : Fragment() {
             }
             binding.chipGroupDiet.addView(chip)
         }
+
+        binding.chipGroupAllergens.removeAllViews()
+        FoodAllergen.values().forEach { allergen ->
+            val chip = Chip(requireContext()).apply {
+                text = allergen.displayName
+                isCheckable = true
+                id = View.generateViewId()
+                tag = allergen
+                setOnCheckedChangeListener { _, isChecked ->
+                    val isAlreadyChecked = viewModel.uiState.value.userProfile.allergens.presetAllergens.contains(allergen)
+                    if (isChecked != isAlreadyChecked) {
+                        viewModel.togglePresetAllergen(allergen)
+                    }
+                }
+            }
+            binding.chipGroupAllergens.addView(chip)
+        }
     }
 
     private fun setupListeners() {
@@ -183,7 +202,15 @@ class ProfileFragment : Fragment() {
         binding.btnSetTime.setOnClickListener {
             showTimePicker()
         }
-        
+
+        binding.btnAddCustomAllergen.setOnClickListener {
+            val allergen = binding.editCustomAllergen.text?.toString()?.trim() ?: ""
+            if (allergen.isNotBlank()) {
+                viewModel.addCustomAllergen(allergen)
+                binding.editCustomAllergen.text?.clear()
+            }
+        }
+
         binding.btnSave.setOnClickListener {
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Confirm Changes")
@@ -281,6 +308,17 @@ class ProfileFragment : Fragment() {
                             chip.isChecked = shouldBeChecked
                         }
                     }
+
+                    for (i in 0 until binding.chipGroupAllergens.childCount) {
+                        val chip = binding.chipGroupAllergens.getChildAt(i) as Chip
+                        val allergen = chip.tag as FoodAllergen
+                        val shouldBeChecked = state.userProfile.allergens.presetAllergens.contains(allergen)
+                        if (chip.isChecked != shouldBeChecked) {
+                            chip.isChecked = shouldBeChecked
+                        }
+                    }
+
+                    updateCustomAllergenChips(state.userProfile.allergens.customAllergens)
                     
                     // Update notification settings UI
                     val settings = state.notificationSettings
@@ -356,6 +394,34 @@ class ProfileFragment : Fragment() {
                 Snackbar.make(binding.root, "Signed in as ${account.email}", Snackbar.LENGTH_SHORT).show()
             } catch (e: ApiException) {
                 Snackbar.make(binding.root, "Google Sign-In failed: ${e.message}", Snackbar.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun updateCustomAllergenChips(customAllergens: Set<String>) {
+        val existingChips = mutableMapOf<String, Chip>()
+        for (i in 0 until binding.chipGroupCustomAllergens.childCount) {
+            val chip = binding.chipGroupCustomAllergens.getChildAt(i) as Chip
+            existingChips[chip.text.toString()] = chip
+        }
+
+        val allergensToRemove = existingChips.keys.filter { it !in customAllergens }
+        allergensToRemove.forEach { allergen ->
+            existingChips[allergen]?.let { binding.chipGroupCustomAllergens.removeView(it) }
+        }
+
+        customAllergens.forEach { allergen ->
+            if (allergen !in existingChips) {
+                val chip = Chip(requireContext()).apply {
+                    text = allergen
+                    isCloseIconVisible = true
+                    id = View.generateViewId()
+                    tag = allergen
+                    setOnCloseIconClickListener {
+                        viewModel.removeCustomAllergen(allergen)
+                    }
+                }
+                binding.chipGroupCustomAllergens.addView(chip)
             }
         }
     }

@@ -58,13 +58,17 @@
     <color name="detection_box_failed">#F44336</color>        <!-- Red 500 for FAILED status -->
 
     <!-- Detection result adapter colors (replacing hardcoded Color.parseColor) -->
-    <color name="detection_text_primary">#212121</color>      <!-- Grey 900 -->
+<color name="detection_text_primary">#212121</color>      <!-- Grey 900 -->
     <color name="detection_confidence_high">#2E7D32</color>   <!-- Green 800 -->
     <color name="detection_confidence_medium">#F57F17</color>  <!-- Yellow 900 -->
     <color name="detection_confidence_low">#C62828</color>     <!-- Red 800 -->
     <color name="detection_failed_text">#9E9E9E</color>        <!-- Grey 500 -->
     <color name="detection_failed_badge">#E65100</color>       <!-- Orange 900 -->
     <color name="detection_failed_background">#FFF3E0</color>  <!-- Orange 50 -->
+
+    <!-- Allergen Warning Colors -->
+    <color name="allergen_red">#C62828</color>
+    <color name="allergen_background">#FFEBEE</color>
 
     <!-- Hero Banner & Quick Action Colors -->
     <color name="hero_gradient_start">#4D644F</color>

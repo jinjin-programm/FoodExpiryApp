@@ -59,6 +59,8 @@ class RecipesViewModel @Inject constructor(
     private val getRecipesMatchingInventory: GetRecipesMatchingInventoryUseCase,
     private val getRecipesByCategory: GetRecipesByCategoryUseCase,
     private val getRecipesByArea: GetRecipesByAreaUseCase,
+    private val getAllLocalRecipes: GetAllLocalRecipesUseCase,
+    private val saveLocalRecipe: SaveLocalRecipeUseCase,
     private val consumeIngredients: ConsumeIngredientsUseCase,
     private val cookedRecipeRepository: CookedRecipeRepository,
     private val analyticsRepository: AnalyticsRepository
@@ -87,7 +89,7 @@ class RecipesViewModel @Inject constructor(
     private val recipesFlow = combine(inventoryItems, _searchQuery, _selectedFilter, _loadMoreTrigger) { items, query, filter, _ ->
         Triple(items, query, filter)
     }.flatMapLatest { (items, query, filter) ->
-        when {
+        val remoteFlow = when {
             query.isNotBlank() -> searchRecipes(query)
             filter == RecipeFilter.ALL -> getRecipesMatchingInventory(items)
             filter == RecipeFilter.BREAKFAST -> getRecipesByCategory("Breakfast")
@@ -99,16 +101,61 @@ class RecipesViewModel @Inject constructor(
             filter == RecipeFilter.ITALIAN -> getRecipesByArea("Italian")
             else -> getRecipesMatchingInventory(items)
         }
-    }.onEach { newBatch ->
-        if (_searchQuery.value.isNotBlank() || _selectedFilter.value != RecipeFilter.ALL) {
-             allFetchedRecipes.value = newBatch
-        } else {
-             allFetchedRecipes.value = (allFetchedRecipes.value + newBatch).distinctBy { it.id }
+        
+        combine(remoteFlow, getAllLocalRecipes()) { remote, local ->
+            val filteredLocal = if (query.isNotBlank()) {
+                local.filter { it.name.contains(query, ignoreCase = true) || it.description.contains(query, ignoreCase = true) }
+            } else local
+            
+            (filteredLocal + remote).distinctBy { it.id }
         }
+    }.onEach { newBatch ->
+        allFetchedRecipes.value = newBatch
     }
 
     init {
         recipesFlow.launchIn(viewModelScope)
+    }
+
+    fun onAddRecipeRequested(
+        name: String,
+        description: String,
+        ingredientsRaw: String,
+        stepsRaw: String,
+        prepTime: Int,
+        cookTime: Int,
+        cuisine: String,
+        imageUrl: String? = null
+    ) {
+        viewModelScope.launch {
+            val ingredients = ingredientsRaw.split("\n")
+                .filter { it.isNotBlank() }
+                .map { line ->
+                    val parts = line.split("-")
+                    if (parts.size >= 2) {
+                        RecipeIngredient(name = parts[0].trim(), quantity = parts[1].trim())
+                    } else {
+                        RecipeIngredient(name = line.trim(), quantity = "as needed")
+                    }
+                }
+
+            val steps = stepsRaw.split("\n").filter { it.isNotBlank() }.map { it.trim() }
+
+            val recipe = Recipe(
+                name = name,
+                description = description,
+                ingredients = ingredients,
+                steps = steps,
+                prepTimeMinutes = prepTime,
+                cookTimeMinutes = cookTime,
+                cuisine = cuisine,
+                imageUrl = imageUrl,
+                tags = setOf(RecipeTag.FAMILY_FAV)
+            )
+
+            saveLocalRecipe(recipe)
+            _events.emit(RecipesEvent.ShowMessage("Recipe '$name' saved!"))
+        }
     }
 
     val uiState: StateFlow<RecipesUiState> = combine(

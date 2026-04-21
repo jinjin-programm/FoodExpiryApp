@@ -31,10 +31,14 @@ import com.example.foodexpiryapp.databinding.FragmentInventoryBinding
 import com.example.foodexpiryapp.domain.model.FoodCategory
 import com.example.foodexpiryapp.domain.model.FoodItem
 import com.example.foodexpiryapp.domain.model.StorageLocation
+import com.example.foodexpiryapp.domain.model.AllergenWarning
 import com.example.foodexpiryapp.domain.model.AnalyticsEvent
 import com.example.foodexpiryapp.domain.model.EventType
+import com.example.foodexpiryapp.domain.model.UserProfile
 import com.example.foodexpiryapp.domain.repository.AnalyticsRepository
 import com.example.foodexpiryapp.domain.repository.UIStyleRepository
+import com.example.foodexpiryapp.domain.repository.UserRepository
+import com.example.foodexpiryapp.domain.usecase.CheckAllergenUseCase
 import com.example.foodexpiryapp.presentation.adapter.ExpiringCuteAdapter
 import com.example.foodexpiryapp.presentation.adapter.FoodCardAdapter
 import com.example.foodexpiryapp.presentation.adapter.FoodItemCuteAdapter
@@ -51,7 +55,11 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
@@ -73,6 +81,12 @@ class InventoryFragment : Fragment() {
 
     @Inject
     lateinit var foodImageStorage: FoodImageStorage
+
+    @Inject
+    lateinit var checkAllergenUseCase: CheckAllergenUseCase
+
+    @Inject
+    lateinit var userRepository: UserRepository
 
     private var pendingScanImageBytes: ByteArray? = null
 
@@ -429,13 +443,47 @@ class InventoryFragment : Fragment() {
                             }
                         }
                         foodListCuteAdapter.submitList(otherItems)
+                        updateAllergenHighlight(otherItems + expiringSoon)
                     } else {
                         binding.recyclerExpiringSoon.stopAutoScroll()
                         binding.recyclerExpiringSoon.cancelResumeTimer()
                         expiringOriginalAdapter.submitList(expiringSoon)
                         foodListOriginalAdapter.submitList(otherItems)
+                        updateAllergenHighlight(otherItems + expiringSoon)
                     }
                 }
+            }
+        }
+    }
+
+    private fun updateAllergenHighlight(items: List<FoodItem>) {
+        if (items.isEmpty()) return
+        
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val userProfile = userRepository.getUserProfile().first()
+                val allergenNames = userProfile.allergens.presetAllergens.map { it.displayName.lowercase() } +
+                                   userProfile.allergens.customAllergens.map { it.lowercase() }
+                
+                if (allergenNames.isEmpty()) return@launch
+                
+                val allergenItemIds = items.filter { item ->
+                    val itemName = item.name.lowercase()
+                    allergenNames.any { allergen ->
+                        itemName == allergen || itemName.contains(allergen)
+                    }
+                }.map { it.id }.toSet()
+                
+                if (allergenItemIds.isNotEmpty()) {
+                    withContext(Dispatchers.Main) {
+                        foodListCuteAdapter.updateAllergenItems(allergenItemIds)
+                        expiringCuteAdapter.updateAllergenItems(allergenItemIds)
+                        foodListOriginalAdapter.updateAllergenItems(allergenItemIds)
+                        expiringOriginalAdapter.updateAllergenItems(allergenItemIds)
+                    }
+                }
+            } catch (e: Exception) {
+                // Silently fail - don't crash if allergen check fails
             }
         }
     }
@@ -615,35 +663,76 @@ class InventoryFragment : Fragment() {
             .setTitle(if (existingItem?.id != 0L) "Edit Item" else "Add Item")
             .setView(dialogBinding.root)
             .setPositiveButton("Save") { _, _ ->
-                val categoryName = dialogBinding.dropdownCategory.text.toString()
-                val category = FoodCategory.values().find { it.displayName == categoryName } ?: FoodCategory.OTHER
+                val foodName = dialogBinding.editFoodName.text.toString().trim()
+                if (foodName.isEmpty()) {
+                    Toast.makeText(context, "Please enter a food name", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
 
-                val locationName = dialogBinding.dropdownLocation.text.toString()
-                val location = StorageLocation.values().find { it.displayName == locationName } ?: StorageLocation.FRIDGE
-
-                val item = (existingItem ?: FoodItem(name = "", category = category, expiryDate = selectedDate, quantity = 1, location = location, dateAdded = LocalDate.now())).copy(
-                    name = dialogBinding.editFoodName.text.toString(),
-                    category = category,
-                    location = location,
-                    quantity = dialogBinding.editQuantity.text.toString().toIntOrNull() ?: 1,
-                    expiryDate = selectedDate,
-                    notes = dialogBinding.editNotes.text.toString()
-                )
-                if (item.id != 0L) {
-                    viewModel.onUpdateFoodItem(item)
-                } else {
-                    val imageBytes = pendingScanImageBytes
-                    pendingScanImageBytes = null
-                    if (imageBytes != null) {
-                        viewModel.onAddFoodItemWithImage(item, imageBytes)
+                // Check for allergens
+                CoroutineScope(Dispatchers.Main).launch {
+                    val warning = withContext(Dispatchers.IO) {
+                        checkAllergenUseCase.invoke(foodName)
+                    }
+                    if (warning != null) {
+                        showAllergenWarningDialog(warning, foodName) {
+                            saveFoodItemFromDialog(dialogBinding, existingItem, selectedDate)
+                        }
                     } else {
-                        viewModel.onAddFoodItem(item)
+                        saveFoodItemFromDialog(dialogBinding, existingItem, selectedDate)
                     }
                 }
             }
             .setNegativeButton("Cancel", null)
             .create()
         currentDialog?.show()
+    }
+
+    private fun showAllergenWarningDialog(warning: AllergenWarning, foodName: String, onConfirm: () -> Unit) {
+        val message = when (warning) {
+            is AllergenWarning.Preset -> 
+                "This food may contain: ${warning.allergens.joinToString { it.displayName }}. Are you sure you want to add it?"
+            is AllergenWarning.Custom -> 
+                "You marked '${warning.allergens.joinToString()}' as an allergen. Are you sure you want to add '$foodName'?"
+        }
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Allergen Warning")
+            .setMessage(message)
+            .setPositiveButton("Add Anyway") { _, _ ->
+                onConfirm()
+                Snackbar.make(binding.root, "Warning: Contains allergen", Snackbar.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun saveFoodItemFromDialog(dialogBinding: com.example.foodexpiryapp.databinding.DialogAddFoodBinding, existingItem: FoodItem?, selectedDate: LocalDate) {
+        val categoryName = dialogBinding.dropdownCategory.text.toString()
+        val category = FoodCategory.values().find { it.displayName == categoryName } ?: FoodCategory.OTHER
+
+        val locationName = dialogBinding.dropdownLocation.text.toString()
+        val location = StorageLocation.values().find { it.displayName == locationName } ?: StorageLocation.FRIDGE
+
+        val item = (existingItem ?: FoodItem(name = "", category = category, expiryDate = selectedDate, quantity = 1, location = location, dateAdded = LocalDate.now())).copy(
+            name = dialogBinding.editFoodName.text.toString(),
+            category = category,
+            location = location,
+            quantity = dialogBinding.editQuantity.text.toString().toIntOrNull() ?: 1,
+            expiryDate = selectedDate,
+            notes = dialogBinding.editNotes.text.toString()
+        )
+        if (item.id != 0L) {
+            viewModel.onUpdateFoodItem(item)
+        } else {
+            val imageBytes = pendingScanImageBytes
+            pendingScanImageBytes = null
+            if (imageBytes != null) {
+                viewModel.onAddFoodItemWithImage(item, imageBytes)
+            } else {
+                viewModel.onAddFoodItem(item)
+            }
+        }
     }
 
     private fun logNavState(tag: String) {
