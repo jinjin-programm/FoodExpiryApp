@@ -67,8 +67,22 @@ class ProfileFragment : Fragment() {
         }
     }
 
-    companion object {
-        private const val RC_GOOGLE_SIGN_IN = 9001
+    private val googleSignInLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(ApiException::class.java)
+            viewModel.updateGoogleSignInState(
+                isSignedIn = true,
+                displayName = account.displayName,
+                email = account.email,
+                photoUrl = account.photoUrl?.toString()
+            )
+            Snackbar.make(binding.root, "Signed in as ${account.email}", Snackbar.LENGTH_SHORT).show()
+        } catch (e: ApiException) {
+            Snackbar.make(binding.root, "Google Sign-In failed: ${e.message}", Snackbar.LENGTH_LONG).show()
+        }
     }
 
     override fun onCreateView(
@@ -367,34 +381,13 @@ class ProfileFragment : Fragment() {
 
     private fun signInWithGoogle() {
         val signInIntent = googleSignInClient.signInIntent
-        startActivityForResult(signInIntent, RC_GOOGLE_SIGN_IN)
+        googleSignInLauncher.launch(signInIntent)
     }
 
     private fun signOutFromGoogle() {
         googleSignInClient.signOut().addOnCompleteListener {
             viewModel.signOutGoogle()
             Snackbar.make(binding.root, "Signed out successfully", Snackbar.LENGTH_SHORT).show()
-        }
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if (requestCode == RC_GOOGLE_SIGN_IN) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-            try {
-                val account = task.getResult(ApiException::class.java)
-                viewModel.updateGoogleSignInState(
-                    isSignedIn = true,
-                    displayName = account.displayName,
-                    email = account.email,
-                    photoUrl = account.photoUrl?.toString()
-                )
-                Snackbar.make(binding.root, "Signed in as ${account.email}", Snackbar.LENGTH_SHORT).show()
-            } catch (e: ApiException) {
-                Snackbar.make(binding.root, "Google Sign-In failed: ${e.message}", Snackbar.LENGTH_LONG).show()
-            }
         }
     }
 
