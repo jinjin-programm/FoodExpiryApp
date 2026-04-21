@@ -72,11 +72,11 @@ class PlannerViewModel @Inject constructor(
     private val _searchQuery = MutableStateFlow("")
     private val _selectedDate = MutableStateFlow(LocalDate.now())
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     init {
         loadData()
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun loadData() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
