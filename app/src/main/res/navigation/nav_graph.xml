@@ -24,6 +24,9 @@
         <action
             android:id="@+id/action_inventory_to_vision_scan"
             app:destination="@id/navigation_vision_scan" />
+        <action
+            android:id="@+id/action_inventory_to_recipe_detail"
+            app:destination="@id/recipeDetailFragment" />
     </fragment>
 
     <fragment

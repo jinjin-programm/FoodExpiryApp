@@ -1,5 +1,6 @@
 package com.example.foodexpiryapp.presentation.adapter
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
@@ -9,8 +10,14 @@ import com.example.foodexpiryapp.databinding.ItemFoodCardBinding
 import com.example.foodexpiryapp.domain.model.FoodItem
 
 class FoodCardAdapter(
-    private val onItemClick: (FoodItem) -> Unit
+    private val onItemClick: (FoodItem) -> Unit,
+    private var allergenItemIds: Set<Long> = emptySet()
 ) : ListAdapter<FoodItem, FoodCardAdapter.FoodCardViewHolder>(FoodCardDiffCallback()) {
+
+    fun updateAllergenItems(newAllergenItemIds: Set<Long>) {
+        allergenItemIds = newAllergenItemIds
+        notifyDataSetChanged()
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FoodCardViewHolder {
         val binding = ItemFoodCardBinding.inflate(
@@ -29,6 +36,13 @@ class FoodCardAdapter(
 
         fun bind(item: FoodItem) {
             binding.textFoodName.text = item.name
+            
+            if (allergenItemIds.contains(item.id)) {
+                binding.textFoodName.setTextColor(Color.parseColor("#C62828"))
+            } else {
+                binding.textFoodName.setTextColor(Color.parseColor("#212121"))
+            }
+            
             binding.textFoodInfo.text = "${item.category.displayName} \u2022 ${item.location.displayName}"
 
             val days = item.daysUntilExpiry

@@ -10,10 +10,16 @@ import com.example.foodexpiryapp.databinding.ItemExpiringCuteBinding
 import com.example.foodexpiryapp.domain.model.FoodItem
 
 class ExpiringCuteAdapter(
-    private val onItemClick: (FoodItem) -> Unit
+    private val onItemClick: (FoodItem) -> Unit,
+    private var allergenItemIds: Set<Long> = emptySet()
 ) : ListAdapter<FoodItem, ExpiringCuteAdapter.ViewHolder>(DiffCallback()) {
 
     var infiniteMode: Boolean = false
+    
+    fun updateAllergenItems(newAllergenItemIds: Set<Long>) {
+        allergenItemIds = newAllergenItemIds
+        notifyDataSetChanged()
+    }
 
     private data class CardColors(val bgColor: Int, val textColor: Int)
 
@@ -54,6 +60,7 @@ class ExpiringCuteAdapter(
         fun bind(item: FoodItem, position: Int) {
             binding.textFoodName.text = item.name
 
+            val isAllergen = allergenItemIds.contains(item.id)
             val days = item.daysUntilExpiry
             binding.textDaysLeft.text = when {
                 days < 0 -> "Expired"
@@ -61,10 +68,17 @@ class ExpiringCuteAdapter(
                 else -> "$days day${if (days > 1) "s" else ""} left"
             }
 
-            val colors = palette[position % palette.size]
-            binding.root.setCardBackgroundColor(colors.bgColor)
-            binding.textFoodName.setTextColor(colors.textColor)
-            binding.textDaysLeft.setTextColor(colors.textColor)
+            if (isAllergen) {
+                val allergenColor = Color.parseColor("#C62828")
+                binding.root.setCardBackgroundColor(Color.parseColor("#FFEBEE"))
+                binding.textFoodName.setTextColor(allergenColor)
+                binding.textDaysLeft.setTextColor(allergenColor)
+            } else {
+                val colors = palette[position % palette.size]
+                binding.root.setCardBackgroundColor(colors.bgColor)
+                binding.textFoodName.setTextColor(colors.textColor)
+                binding.textDaysLeft.setTextColor(colors.textColor)
+            }
 
             binding.root.setOnClickListener { onItemClick(item) }
         }

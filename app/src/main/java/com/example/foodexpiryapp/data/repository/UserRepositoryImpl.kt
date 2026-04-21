@@ -3,6 +3,8 @@ package com.example.foodexpiryapp.data.repository
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import com.example.foodexpiryapp.domain.model.DietaryPreference
+import com.example.foodexpiryapp.domain.model.FoodAllergen
+import com.example.foodexpiryapp.domain.model.UserAllergens
 import com.example.foodexpiryapp.domain.model.UserProfile
 import com.example.foodexpiryapp.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
@@ -23,6 +25,8 @@ class UserRepositoryImpl @Inject constructor(
         val HOUSEHOLD_SIZE = intPreferencesKey("household_size")
         val DIETARY_PREFERENCES = stringSetPreferencesKey("dietary_preferences")
         val PROFILE_PHOTO_URI = stringPreferencesKey("profile_photo_uri")
+        val PRESET_ALLERGENS = stringSetPreferencesKey("preset_allergens")
+        val CUSTOM_ALLERGENS = stringSetPreferencesKey("custom_allergens")
     }
 
     override fun getUserProfile(): Flow<UserProfile> = dataStore.data
@@ -39,6 +43,8 @@ class UserRepositoryImpl @Inject constructor(
             val householdSize = (preferences[PreferencesKeys.HOUSEHOLD_SIZE] ?: 1).coerceIn(1, 10)
             val dietStrings = preferences[PreferencesKeys.DIETARY_PREFERENCES] ?: emptySet()
             val profilePhotoUri = preferences[PreferencesKeys.PROFILE_PHOTO_URI]
+            val allergenStrings = preferences[PreferencesKeys.PRESET_ALLERGENS] ?: emptySet()
+            val customAllergenStrings = preferences[PreferencesKeys.CUSTOM_ALLERGENS] ?: emptySet()
             
             val dietaryPreferences = dietStrings.mapNotNull { dietName ->
                 try {
@@ -48,7 +54,18 @@ class UserRepositoryImpl @Inject constructor(
                 }
             }.toSet()
 
-            UserProfile(name, email, householdSize, dietaryPreferences, profilePhotoUri)
+            val presetAllergens = allergenStrings.mapNotNull { allergenName ->
+                try {
+                    FoodAllergen.valueOf(allergenName)
+                } catch (e: IllegalArgumentException) {
+                    null
+                }
+            }.toSet()
+
+            val customAllergens = customAllergenStrings
+            val allergens = UserAllergens(presetAllergens, customAllergens)
+
+            UserProfile(name, email, householdSize, dietaryPreferences, profilePhotoUri, allergens)
         }
 
     override suspend fun saveUserProfile(profile: UserProfile) {
@@ -60,6 +77,8 @@ class UserRepositoryImpl @Inject constructor(
             profile.profilePhotoUri?.let { 
                 preferences[PreferencesKeys.PROFILE_PHOTO_URI] = it 
             } ?: preferences.remove(PreferencesKeys.PROFILE_PHOTO_URI)
+            preferences[PreferencesKeys.PRESET_ALLERGENS] = profile.allergens.presetAllergens.map { it.name }.toSet()
+            preferences[PreferencesKeys.CUSTOM_ALLERGENS] = profile.allergens.customAllergens
         }
     }
 }

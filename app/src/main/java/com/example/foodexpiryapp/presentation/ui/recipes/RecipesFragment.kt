@@ -16,6 +16,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.foodexpiryapp.R
+import com.example.foodexpiryapp.databinding.DialogAddRecipeBinding
 import com.example.foodexpiryapp.databinding.FragmentRecipesBinding
 import com.example.foodexpiryapp.domain.model.AnalyticsEvent
 import com.example.foodexpiryapp.domain.model.EventType
@@ -25,6 +26,7 @@ import com.example.foodexpiryapp.presentation.adapter.RecipeAdapter
 import com.example.foodexpiryapp.presentation.viewmodel.RecipeFilter
 import com.example.foodexpiryapp.presentation.viewmodel.RecipesEvent
 import com.example.foodexpiryapp.presentation.viewmodel.RecipesViewModel
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -56,8 +58,51 @@ class RecipesFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
         setupFilterChips()
+        setupFab()
         observeState()
         observeEvents()
+    }
+
+    private fun setupFab() {
+        binding.fabAddRecipe.setOnClickListener {
+            showAddRecipeDialog()
+        }
+    }
+
+    private fun showAddRecipeDialog() {
+        val dialogBinding = DialogAddRecipeBinding.inflate(layoutInflater)
+        
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Add Custom Recipe")
+            .setView(dialogBinding.root)
+            .setPositiveButton("Save") { _, _ ->
+                val name = dialogBinding.editRecipeName.text.toString()
+                val description = dialogBinding.editRecipeDescription.text.toString()
+                val ingredients = dialogBinding.editRecipeIngredients.text.toString()
+                val steps = dialogBinding.editRecipeSteps.text.toString()
+                val prepTime = dialogBinding.editPrepTime.text.toString().toIntOrNull() ?: 15
+                val cookTime = dialogBinding.editCookTime.text.toString().toIntOrNull() ?: 30
+                val cuisine = dialogBinding.editCuisine.text.toString()
+                val imageUrl = dialogBinding.editRecipeImageUrl.text.toString().takeIf { it.isNotBlank() }
+
+                if (name.isBlank()) {
+                    Snackbar.make(binding.root, "Recipe name is required", Snackbar.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+
+                viewModel.onAddRecipeRequested(
+                    name = name,
+                    description = description,
+                    ingredientsRaw = ingredients,
+                    stepsRaw = steps,
+                    prepTime = prepTime,
+                    cookTime = cookTime,
+                    cuisine = cuisine,
+                    imageUrl = imageUrl
+                )
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     override fun onResume() {
@@ -74,9 +119,8 @@ class RecipesFragment : Fragment() {
     private fun setupRecyclerView() {
         recipeAdapter = RecipeAdapter(
             onRecipeClick = { recipe ->
-                // Use the destination ID directly to avoid ViewPager navigation conflicts
                 val bundle = bundleOf("recipeId" to recipe.id)
-                findNavController().navigate(R.id.recipeDetailFragment, bundle)
+                findNavController().navigate(R.id.action_inventory_to_recipe_detail, bundle)
             },
             onRecipeCooked = { match ->
                 viewModel.onRecipeCooked(match.recipe, match.matchedInventoryItems)

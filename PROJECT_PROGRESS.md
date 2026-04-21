@@ -73,6 +73,10 @@ app/src/main/java/com/example/foodexpiryapp/
    - FoodListAdapter, FoodItemAdapter updated to show real food images via Glide
    - item_food.xml redesigned with 48x48 rounded food image + eaten checkbox overlay
    - InventoryFragment + AddFoodBottomSheet dynamically update food preview based on typed name
+ - Phase 5: Local Recipe Storage + Manual Add UI (DONE - 2026-04-19)
+   - Wiring up FAB click handler in RecipesFragment
+   - Implementing AddRecipe dialog with data extraction and validation
+   - Merging local recipes with remote ones in RecipesViewModel
 
 ### In Progress
 
@@ -80,14 +84,13 @@ app/src/main/java/com/example/foodexpiryapp/
 - Feature stabilization across scan / chat / inventory flows
 - Test coverage expansion
 - TheMealDB integration plan (local-first, cached online recipes)
-- Phase 5: Manual recipe add UI dialog (wiring up FAB click handler)
 
 ### Next
 
 - Finalize repository cleanup and code consistency
 - Improve error handling and edge cases
 - Verify notifications, analytics, and model loading on device
-- Complete Phase 5: AddRecipe dialog integration with RecipesFragment
+- Complete Phase 5: AddRecipe dialog integration with RecipesFragment (DONE - 2026-04-19)
 
 ## Recipes Page Optimization - Detailed Progress
 

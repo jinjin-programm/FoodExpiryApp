@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.foodexpiryapp.domain.model.DietaryPreference
+import com.example.foodexpiryapp.domain.model.FoodAllergen
 import com.example.foodexpiryapp.domain.model.NotificationSettings
+import com.example.foodexpiryapp.domain.model.UserAllergens
 import com.example.foodexpiryapp.domain.model.UserProfile
 import com.example.foodexpiryapp.domain.repository.NotificationSettingsRepository
 import com.example.foodexpiryapp.domain.repository.UIStyleRepository
@@ -159,6 +161,61 @@ class ProfileViewModel @Inject constructor(
                 currentPrefs.add(preference)
             }
             state.copy(userProfile = state.userProfile.copy(dietaryPreferences = currentPrefs))
+        }
+        checkUnsavedChanges()
+    }
+
+    fun togglePresetAllergen(allergen: FoodAllergen) {
+        _uiState.update { state ->
+            val currentAllergens = state.userProfile.allergens.presetAllergens.toMutableSet()
+            if (currentAllergens.contains(allergen)) {
+                currentAllergens.remove(allergen)
+            } else {
+                currentAllergens.add(allergen)
+            }
+            state.copy(
+                userProfile = state.userProfile.copy(
+                    allergens = UserAllergens(
+                        presetAllergens = currentAllergens,
+                        customAllergens = state.userProfile.allergens.customAllergens
+                    )
+                )
+            )
+        }
+        checkUnsavedChanges()
+    }
+
+    fun addCustomAllergen(allergen: String) {
+        val trimmedAllergen = allergen.trim()
+        if (trimmedAllergen.isBlank()) return
+        
+        _uiState.update { state ->
+            val currentCustom = state.userProfile.allergens.customAllergens.toMutableSet()
+            currentCustom.add(trimmedAllergen)
+            state.copy(
+                userProfile = state.userProfile.copy(
+                    allergens = UserAllergens(
+                        presetAllergens = state.userProfile.allergens.presetAllergens,
+                        customAllergens = currentCustom
+                    )
+                )
+            )
+        }
+        checkUnsavedChanges()
+    }
+
+    fun removeCustomAllergen(allergen: String) {
+        _uiState.update { state ->
+            val currentCustom = state.userProfile.allergens.customAllergens.toMutableSet()
+            currentCustom.remove(allergen)
+            state.copy(
+                userProfile = state.userProfile.copy(
+                    allergens = UserAllergens(
+                        presetAllergens = state.userProfile.allergens.presetAllergens,
+                        customAllergens = currentCustom
+                    )
+                )
+            )
         }
         checkUnsavedChanges()
     }

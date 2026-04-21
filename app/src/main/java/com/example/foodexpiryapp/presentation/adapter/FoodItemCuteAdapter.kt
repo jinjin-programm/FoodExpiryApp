@@ -13,8 +13,14 @@ import com.example.foodexpiryapp.domain.model.FoodItem
 import com.example.foodexpiryapp.util.FoodImageResolver
 
 class FoodItemCuteAdapter(
-    private val onItemClick: (FoodItem) -> Unit
+    private val onItemClick: (FoodItem) -> Unit,
+    private var allergenItemIds: Set<Long> = emptySet()
 ) : ListAdapter<FoodItem, FoodItemCuteAdapter.ViewHolder>(DiffCallback()) {
+
+    fun updateAllergenItems(newAllergenItemIds: Set<Long>) {
+        allergenItemIds = newAllergenItemIds
+        notifyDataSetChanged()
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = ItemFoodCuteBinding.inflate(
@@ -35,22 +41,33 @@ class FoodItemCuteAdapter(
             binding.textFoodName.text = item.name
             binding.textFoodSubtitle.text = item.location.displayName
 
+            val isAllergen = allergenItemIds.contains(item.id)
             val days = item.daysUntilExpiry
+            
             when {
+                isAllergen -> {
+                    binding.textStatusBadge.text = "ALLERGEN"
+                    binding.textStatusBadge.setTextColor(Color.parseColor("#C62828"))
+                    binding.textStatusBadge.setBackgroundColor(Color.parseColor("#FFEBEE"))
+                    binding.textFoodName.setTextColor(Color.parseColor("#C62828"))
+                }
                 days < 0 -> {
                     binding.textStatusBadge.text = "EXPIRED"
                     binding.textStatusBadge.setTextColor(Color.parseColor("#C62828"))
                     binding.textStatusBadge.setBackgroundColor(Color.parseColor("#FFEBEE"))
+                    binding.textFoodName.setTextColor(Color.parseColor("#212121"))
                 }
                 days <= 3 -> {
                     binding.textStatusBadge.text = "EXPIRING IN $days day${if (days > 1) "s" else ""}"
                     binding.textStatusBadge.setTextColor(Color.parseColor("#E65100"))
                     binding.textStatusBadge.setBackgroundColor(Color.parseColor("#FFF3E0"))
+                    binding.textFoodName.setTextColor(Color.parseColor("#212121"))
                 }
                 else -> {
                     binding.textStatusBadge.text = "GOOD FOR $days day${if (days > 1) "s" else ""}"
                     binding.textStatusBadge.setTextColor(Color.parseColor("#2E7D32"))
                     binding.textStatusBadge.setBackgroundColor(Color.parseColor("#E8F5E9"))
+                    binding.textFoodName.setTextColor(Color.parseColor("#212121"))
                 }
             }
 

@@ -8,7 +8,8 @@ data class UserProfile(
     val email: String = "",
     val householdSize: Int = 1,
     val dietaryPreferences: Set<DietaryPreference> = emptySet(),
-    val profilePhotoUri: String? = null
+    val profilePhotoUri: String? = null,
+    val allergens: UserAllergens = UserAllergens()
 )
 
 /**

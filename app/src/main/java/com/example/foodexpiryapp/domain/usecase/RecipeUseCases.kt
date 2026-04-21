@@ -4,9 +4,13 @@ import com.example.foodexpiryapp.domain.model.FoodItem
 import com.example.foodexpiryapp.domain.model.Recipe
 import com.example.foodexpiryapp.domain.model.RecipeIngredient
 import com.example.foodexpiryapp.domain.model.RecipeMatch
+import com.example.foodexpiryapp.domain.model.UserAllergens
 import com.example.foodexpiryapp.domain.repository.FoodRepository
+import com.example.foodexpiryapp.domain.repository.LocalRecipeRepository
 import com.example.foodexpiryapp.domain.repository.RecipeRepository
+import com.example.foodexpiryapp.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
@@ -38,11 +42,28 @@ class GetRecipesMatchingInventoryUseCase @Inject constructor(
 }
 
 class ScoreRecipesForInventoryUseCase @Inject constructor(
-    private val repository: RecipeRepository
+    private val repository: RecipeRepository,
+    private val userRepository: UserRepository
 ) {
-    operator fun invoke(recipes: List<Recipe>, inventoryItems: List<FoodItem>): List<RecipeMatch> {
+    suspend operator fun invoke(recipes: List<Recipe>, inventoryItems: List<FoodItem>): List<RecipeMatch> {
+        val profile = userRepository.getUserProfile().first()
+        val allergenNames = profile.allergens.presetAllergens.map { it.displayName.lowercase() } +
+                         profile.allergens.customAllergens.map { it.lowercase() }
+        
+        val filteredRecipes = if (allergenNames.isNotEmpty()) {
+            recipes.filter { recipe ->
+                recipe.ingredients.none { ing ->
+                    allergenNames.any { allergen ->
+                        ing.name.lowercase() == allergen
+                    }
+                }
+            }
+        } else {
+            recipes
+        }
+
         val invNamesLower = inventoryItems.map { it.name.lowercase() }
-        return recipes.map { recipe ->
+        return filteredRecipes.map { recipe ->
             val ingNamesLower = recipe.ingredients.map { it.name.lowercase() }
             val matchedInvItems = inventoryItems.filter { item ->
                 val itemNameLower = item.name.lowercase()
@@ -110,4 +131,36 @@ class GetRecipesByAreaUseCase @Inject constructor(
     private val repository: RecipeRepository
 ) {
     operator fun invoke(area: String): Flow<List<Recipe>> = repository.getRecipesByArea(area)
+}
+
+class SaveLocalRecipeUseCase @Inject constructor(
+    private val repository: LocalRecipeRepository
+) {
+    suspend operator fun invoke(recipe: Recipe): Long = repository.saveLocalRecipe(recipe)
+}
+
+class GetAllLocalRecipesUseCase @Inject constructor(
+    private val repository: LocalRecipeRepository
+) {
+    operator fun invoke(): Flow<List<Recipe>> = repository.getAllLocalRecipes()
+}
+
+class FilterRecipesByAllergensUseCase @Inject constructor(
+    private val userRepository: UserRepository
+) {
+    suspend operator fun invoke(recipes: List<Recipe>): List<Recipe> {
+        val profile = userRepository.getUserProfile().first()
+        val allergenNames = profile.allergens.presetAllergens.map { it.displayName.lowercase() } +
+                         profile.allergens.customAllergens.map { it.lowercase() }
+        
+        if (allergenNames.isEmpty()) return recipes
+        
+        return recipes.filter { recipe ->
+            recipe.ingredients.none { ing ->
+                allergenNames.any { allergen ->
+                    ing.name.lowercase() == allergen
+                }
+            }
+        }
+    }
 }
