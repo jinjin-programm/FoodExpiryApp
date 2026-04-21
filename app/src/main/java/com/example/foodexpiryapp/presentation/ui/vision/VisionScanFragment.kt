@@ -469,7 +469,7 @@ class VisionScanFragment : Fragment() {
         binding.tvProgressDetailOverlay.text = "Analyzing with YOLO + AI"
         binding.btnCancelProgress.visibility = View.VISIBLE
 
-        detectionJob = scope.launch {
+        detectionJob = viewLifecycleOwner.lifecycleScope.launch {
             detectionPipeline.detectAndClassify(bitmap).collect { state ->
                 withContext(Dispatchers.Main) {
                     when (state) {
@@ -687,7 +687,7 @@ class VisionScanFragment : Fragment() {
     private fun startProgressTicker() {
         stopProgressTicker()
         val start = System.currentTimeMillis()
-        progressTickerJob = scope.launch {
+        progressTickerJob = viewLifecycleOwner.lifecycleScope.launch {
             while (isActive && isProcessing) {
                 val elapsedSec = (System.currentTimeMillis() - start) / 1000.0
                 val stage = when {
