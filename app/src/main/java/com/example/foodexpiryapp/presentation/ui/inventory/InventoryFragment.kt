@@ -294,8 +294,12 @@ class InventoryFragment : Fragment() {
         )
         binding.textEmptyTitle.text = "Get Started"
         binding.textEmptySubtitle.text = "Add your first item using a quick photo scan to get started tracking."
-        binding.recyclerExpiringSoon.adapter = expiringOriginalAdapter
-        binding.foodItemsRecyclerView.adapter = foodListOriginalAdapter
+        if (binding.recyclerExpiringSoon.adapter !== expiringOriginalAdapter) {
+            binding.recyclerExpiringSoon.adapter = expiringOriginalAdapter
+        }
+        if (binding.foodItemsRecyclerView.adapter !== foodListOriginalAdapter) {
+            binding.foodItemsRecyclerView.adapter = foodListOriginalAdapter
+        }
         binding.searchBarLayout.setBoxBackgroundColorResource(R.color.search_bar_bg_original)
         binding.searchBarLayout.setBackgroundColor(Color.TRANSPARENT)
         binding.searchEditText.setTextColor(ContextCompat.getColor(requireContext(), R.color.search_bar_text_original))
@@ -339,8 +343,12 @@ class InventoryFragment : Fragment() {
             binding.textEmptyTitle.text = "Your kitchen is empty!"
             binding.textEmptySubtitle.text = "Let's fill it up \uD83D\uDC31"
 
-            binding.recyclerExpiringSoon.adapter = expiringCuteAdapter
-            binding.foodItemsRecyclerView.adapter = foodListCuteAdapter
+            if (binding.recyclerExpiringSoon.adapter !== expiringCuteAdapter) {
+                binding.recyclerExpiringSoon.adapter = expiringCuteAdapter
+            }
+            if (binding.foodItemsRecyclerView.adapter !== foodListCuteAdapter) {
+                binding.foodItemsRecyclerView.adapter = foodListCuteAdapter
+            }
 
             binding.searchBarLayout.setBoxBackgroundColorResource(R.color.search_bar_bg_cute)
             binding.searchBarLayout.setBackgroundColor(Color.TRANSPARENT)
