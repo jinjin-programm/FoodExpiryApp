@@ -440,8 +440,8 @@ class InventoryFragment : Fragment() {
                             expiringCuteAdapter.infiniteMode = false
                             binding.recyclerExpiringSoon.scrollToPosition(0)
                         }
-                        expiringCuteAdapter.infiniteMode = expiringSoon.size >= 2
                         expiringCuteAdapter.submitList(expiringSoon) {
+                            expiringCuteAdapter.infiniteMode = expiringSoon.size >= 2
                             if (expiringCuteAdapter.infiniteMode && expiringSoon.isNotEmpty()) {
                                 binding.recyclerExpiringSoon.scrollToMiddlePosition()
                                 binding.recyclerExpiringSoon.startAutoScroll()
