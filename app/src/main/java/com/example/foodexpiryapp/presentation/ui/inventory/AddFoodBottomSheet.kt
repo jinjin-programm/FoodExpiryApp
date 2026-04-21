@@ -20,11 +20,11 @@ import com.example.foodexpiryapp.domain.model.StorageLocation
 import com.example.foodexpiryapp.domain.usecase.CheckAllergenUseCase
 import com.example.foodexpiryapp.presentation.viewmodel.InventoryViewModel
 import com.example.foodexpiryapp.util.FoodImageResolver
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -70,7 +70,7 @@ class AddFoodBottomSheet : BottomSheetDialogFragment() {
             return
         }
 
-        CoroutineScope(Dispatchers.Main).launch {
+        lifecycleScope.launch {
             val warning = withContext(Dispatchers.IO) {
                 checkAllergenUseCase.invoke(name)
             }
