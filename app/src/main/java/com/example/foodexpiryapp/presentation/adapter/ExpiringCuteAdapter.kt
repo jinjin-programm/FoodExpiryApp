@@ -15,7 +15,13 @@ class ExpiringCuteAdapter(
 ) : ListAdapter<FoodItem, ExpiringCuteAdapter.ViewHolder>(DiffCallback()) {
 
     var infiniteMode: Boolean = false
-    
+        set(value) {
+            if (field != value) {
+                field = value
+                notifyDataSetChanged()
+            }
+        }
+
     fun updateAllergenItems(newAllergenItemIds: Set<Long>) {
         allergenItemIds = newAllergenItemIds
         notifyDataSetChanged()
@@ -39,18 +45,22 @@ class ExpiringCuteAdapter(
     }
 
     override fun getItemCount(): Int {
-        if (currentList.isEmpty()) return 0
-        return if (infiniteMode) Int.MAX_VALUE else currentList.size
+        val size = currentList.size
+        if (size == 0) return 0
+        return if (infiniteMode) Int.MAX_VALUE else size
     }
 
     private fun getRealPosition(position: Int): Int {
-        if (!infiniteMode || currentList.isEmpty()) return position
-        return position % currentList.size
+        val size = currentList.size
+        if (!infiniteMode || size == 0) return position
+        return position % size
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val realPos = getRealPosition(position)
-        holder.bind(getItem(realPos), realPos)
+        if (realPos < currentList.size) {
+            holder.bind(getItem(realPos), realPos)
+        }
     }
 
     inner class ViewHolder(
