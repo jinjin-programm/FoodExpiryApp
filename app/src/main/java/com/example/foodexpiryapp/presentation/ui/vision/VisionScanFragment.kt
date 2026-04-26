@@ -678,7 +678,7 @@ class VisionScanFragment : Fragment() {
                 hideCancelButton()
                 binding.flashOverlay.visibility = View.GONE
                 AppLog.e(TAG, "Analysis error", e)
-                Toast.makeText(context, "AI 分析失敗: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "AI analysis failed: ${e.message}", Toast.LENGTH_LONG).show()
                 updateStatus("Analysis failed", Status.ERROR)
             }
         }
@@ -720,14 +720,14 @@ class VisionScanFragment : Fragment() {
     }
 
     private fun displayAiResult(foodName: String?, expiryDate: String?, rawResponse: String) {
-        binding.tvFoodName.text = "AI 識別: ${foodName ?: "未知"}"
-        binding.tvExpiryDate.text = "有效日期: ${expiryDate ?: "未偵測到"}"
+        binding.tvFoodName.text = "AI detected: ${foodName ?: "Unknown"}"
+        binding.tvExpiryDate.text = "Expiry date: ${expiryDate ?: "Not detected"}"
         binding.tvConfidence.visibility = View.GONE
         binding.tvRawResponse.text = rawResponse
 
         binding.resultCard.visibility = View.VISIBLE
         binding.rawResponseCard.visibility = View.VISIBLE
-        updateStatus("AI 分析完成", Status.READY)
+        updateStatus("AI analysis complete", Status.READY)
     }
 
     private enum class Status {

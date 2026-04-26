@@ -77,11 +77,11 @@ class OllamaSettingsDialog : DialogFragment() {
         }
 
         return MaterialAlertDialogBuilder(requireContext())
-            .setTitle("推理服務器設置")
+            .setTitle("Inference Server Settings")
             .setView(view)
-            .setPositiveButton("保存", null)
-            .setNegativeButton("取消", null)
-            .setNeutralButton("測試連接", null)
+            .setPositiveButton("Save", null)
+            .setNegativeButton("Cancel", null)
+            .setNeutralButton("Test Connection", null)
             .create()
     }
 
@@ -104,14 +104,14 @@ class OllamaSettingsDialog : DialogFragment() {
                 editTextModel.setText(config.modelName)
                 editTextToken.setText("")
                 layoutApiToken.visibility = View.GONE
-                textHint.text = "LM Studio 預設端口: http://localhost:1234"
+                textHint.text = "LM Studio default port: http://localhost:1234"
             } else {
                 val config = ollamaServerConfig.getConfig()
                 editTextUrl.setText(config.baseUrl)
                 editTextModel.setText(config.modelName)
                 config.apiToken?.let { editTextToken.setText(it) }
                 layoutApiToken.visibility = View.VISIBLE
-                textHint.text = "例如：http://192.168.1.100:11434 或你的 Cloudflare Tunnel 域名"
+                textHint.text = "e.g. http://192.168.1.100:11434 or your Cloudflare Tunnel domain"
             }
         }
     }
@@ -122,11 +122,11 @@ class OllamaSettingsDialog : DialogFragment() {
         val token = editTextToken.text?.toString()?.trim()
 
         if (url.isNullOrBlank()) {
-            Toast.makeText(context, "請輸入服務器 URL", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Please enter a server URL", Toast.LENGTH_SHORT).show()
             return
         }
         if (model.isNullOrBlank()) {
-            Toast.makeText(context, "請輸入模型名稱", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Please enter a model name", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -141,11 +141,11 @@ class OllamaSettingsDialog : DialogFragment() {
                     ollamaServerConfig.setModelName(model)
                     ollamaServerConfig.setApiToken(token?.takeIf { it.isNotBlank() })
                 }
-                Toast.makeText(context, "設置已保存 (${if (currentProvider == ProviderConfig.PROVIDER_LMSTUDIO) "LM Studio" else "Ollama"})", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Settings saved (${if (currentProvider == ProviderConfig.PROVIDER_LMSTUDIO) "LM Studio" else "Ollama"})", Toast.LENGTH_SHORT).show()
                 parentFragmentManager.setFragmentResult("settings_saved", Bundle.EMPTY)
                 dialog.dismiss()
             } catch (e: Exception) {
-                Toast.makeText(context, "保存失敗: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Save failed: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -156,7 +156,7 @@ class OllamaSettingsDialog : DialogFragment() {
         val token = editTextToken.text?.toString()?.trim()
 
         if (url.isNullOrBlank()) {
-            Toast.makeText(context, "請輸入服務器 URL", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Please enter a server URL", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -166,16 +166,16 @@ class OllamaSettingsDialog : DialogFragment() {
                     lmStudioServerConfig.setBaseUrl(url)
                     lmStudioServerConfig.setModelName(model ?: "qwen3.5-9b")
                     val isConnected = lmStudioClient.testConnection()
-                    Toast.makeText(context, if (isConnected) "LM Studio 連接成功!" else "LM Studio 連接失敗", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, if (isConnected) "LM Studio connected!" else "LM Studio connection failed", Toast.LENGTH_SHORT).show()
                 } else {
                     ollamaServerConfig.setBaseUrl(url)
                     ollamaServerConfig.setModelName(model ?: "qwen3.5:9b")
                     ollamaServerConfig.setApiToken(token?.takeIf { it.isNotBlank() })
                     val isConnected = ollamaClient.testConnection()
-                    Toast.makeText(context, if (isConnected) "Ollama 連接成功!" else "Ollama 連接失敗", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, if (isConnected) "Ollama connected!" else "Ollama connection failed", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(context, "連接失敗: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Connection failed: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
     }

@@ -58,13 +58,13 @@ class LlmInferenceRepositoryImpl @Inject constructor(
 
                 if (!client.testConnection()) {
                     AppLog.w(TAG, "$providerName server not connected")
-                    _modelState.value = ModelState.Error("無法連接${providerName}服務器")
+                    _modelState.value = ModelState.Error("Cannot connect to ${providerName} server")
                     emit(
                         FoodIdentification(
                             name = "Error",
-                            nameZh = "${providerName}服務器未連接",
+                            nameZh = "${providerName} server not connected",
                             confidence = 0f,
-                            rawResponse = "無法連接到${providerName}服務器。請檢查設置。"
+                            rawResponse = "Cannot connect to ${providerName} server. Please check settings."
                         )
                     )
                     return@flow
@@ -81,25 +81,25 @@ class LlmInferenceRepositoryImpl @Inject constructor(
                     emit(result)
                 } else {
                     AppLog.w(TAG, "Analysis returned null")
-                    _modelState.value = ModelState.Error("識別失敗")
+                    _modelState.value = ModelState.Error("Identification failed")
                     emit(
                         FoodIdentification(
                             name = "Unknown",
-                            nameZh = "無法識別",
+                            nameZh = "Unable to identify",
                             confidence = 0f,
-                            rawResponse = "無法識別圖片中的食物。"
+                            rawResponse = "Unable to identify food in the image."
                         )
                     )
                 }
             } catch (e: Exception) {
                 AppLog.e(TAG, "Analysis error", e)
-                _modelState.value = ModelState.Error(e.message ?: "未知錯誤")
+                _modelState.value = ModelState.Error(e.message ?: "Unknown error")
                 emit(
                     FoodIdentification(
                         name = "Error",
-                        nameZh = "發生錯誤",
+                        nameZh = "An error occurred",
                         confidence = 0f,
-                        rawResponse = "錯誤: ${e.message}"
+                        rawResponse = "Error: ${e.message}"
                     )
                 )
             }
@@ -113,12 +113,12 @@ class LlmInferenceRepositoryImpl @Inject constructor(
             _modelState.value = if (isConnected) {
                 ModelState.Ready
             } else {
-                ModelState.Error("無法連接服務器")
+                ModelState.Error("Cannot connect to server")
             }
             isConnected
         } catch (e: Exception) {
             AppLog.e(TAG, "Connection check failed", e)
-            _modelState.value = ModelState.Error("連接錯誤: ${e.message}")
+            _modelState.value = ModelState.Error("Connection error: ${e.message}")
             false
         }
     }

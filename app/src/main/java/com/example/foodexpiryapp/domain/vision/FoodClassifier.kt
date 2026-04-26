@@ -28,7 +28,7 @@ data class FoodCategory(
     val description: String
 ) {
     val displayDays: String
-        get() = if (minDays > 0) "$minDays - $maxDays 天" else "--"
+        get() = if (minDays > 0) "$minDays - $maxDays days" else "--"
 }
 
 class FoodClassifier(private val context: Context) {
@@ -46,20 +46,20 @@ class FoodClassifier(private val context: Context) {
     // For now, we use a mapping to ID so we can look it up if the model provides labels,
     // or just assume a fixed order once trained.
     private val categories = mapOf(
-        "leafy_vegetables" to FoodCategory("leafy_vegetables", "葉菜類", 3, 5, "容易流失水分，需盡快食用"),
-        "root_vegetables" to FoodCategory("root_vegetables", "根莖類", 14, 30, "如紅蘿蔔、馬鈴薯（可常溫或冷藏）"),
-        "gourd_fruit_vegetables" to FoodCategory("gourd_fruit_vegetables", "瓜果類", 5, 7, "如小黃瓜、番茄、南瓜"),
-        "hard_fruits" to FoodCategory("hard_fruits", "硬水果", 10, 14, "如蘋果、芭樂"),
-        "soft_fruits" to FoodCategory("soft_fruits", "軟水果", 3, 5, "如草莓、葡萄、水蜜桃"),
-        "tropical_fruits" to FoodCategory("tropical_fruits", "熱帶水果", 5, 7, "如香蕉、芒果（通常建議先常溫後冷藏）"),
-        "fresh_meat" to FoodCategory("fresh_meat", "新鮮肉類", 2, 3, "若放冷凍可達數月，此為冷藏標準"),
-        "processed_meat" to FoodCategory("processed_meat", "加工肉類", 7, 14, "如香腸、培根（未開封）"),
-        "seafood" to FoodCategory("seafood", "海鮮類", 1, 2, "極易腐敗，建議盡速食用或冷凍"),
-        "eggs" to FoodCategory("eggs", "雞蛋", 21, 30, "需放置於冰箱深處冷藏"),
-        "dairy_products" to FoodCategory("dairy_products", "乳製品", 7, 10, "依鮮奶或起司種類而異，取平均值"),
-        "tofu_products" to FoodCategory("tofu_products", "豆腐製品", 3, 5, "需泡水冷藏並勤換水"),
-        "grains_dry_goods" to FoodCategory("grains_dry_goods", "穀物乾貨", 90, 180, "建議密封常溫或冷藏防蟲"),
-        "others" to FoodCategory("others", "其他", 0, 0, "提示用戶手動輸入或使用「Ask AI」進一步分析")
+        "leafy_vegetables" to FoodCategory("leafy_vegetables", "Leafy Vegetables", 3, 5, "Loses moisture quickly; consume soon"),
+        "root_vegetables" to FoodCategory("root_vegetables", "Root Vegetables", 14, 30, "e.g. carrots, potatoes (room temp or refrigerated)"),
+        "gourd_fruit_vegetables" to FoodCategory("gourd_fruit_vegetables", "Gourd & Fruit Vegetables", 5, 7, "e.g. cucumber, tomato, pumpkin"),
+        "hard_fruits" to FoodCategory("hard_fruits", "Hard Fruits", 10, 14, "e.g. apples, guava"),
+        "soft_fruits" to FoodCategory("soft_fruits", "Soft Fruits", 3, 5, "e.g. strawberries, grapes, peaches"),
+        "tropical_fruits" to FoodCategory("tropical_fruits", "Tropical Fruits", 5, 7, "e.g. bananas, mangoes (ripen at room temp, then refrigerate)"),
+        "fresh_meat" to FoodCategory("fresh_meat", "Fresh Meat", 2, 3, "Frozen storage lasts months; this is the refrigerated standard"),
+        "processed_meat" to FoodCategory("processed_meat", "Processed Meat", 7, 14, "e.g. sausages, bacon (unopened)"),
+        "seafood" to FoodCategory("seafood", "Seafood", 1, 2, "Highly perishable; consume or freeze promptly"),
+        "eggs" to FoodCategory("eggs", "Eggs", 21, 30, "Store deep inside the refrigerator"),
+        "dairy_products" to FoodCategory("dairy_products", "Dairy Products", 7, 10, "Varies by milk or cheese type; average value"),
+        "tofu_products" to FoodCategory("tofu_products", "Tofu Products", 3, 5, "Keep submerged in water and refrigerate; change water frequently"),
+        "grains_dry_goods" to FoodCategory("grains_dry_goods", "Grains & Dry Goods", 90, 180, "Seal and store at room temp or refrigerate to prevent pests"),
+        "others" to FoodCategory("others", "Others", 0, 0, "Enter manually or use 'Ask AI' for further analysis")
     )
 
     // Example mapping order based on sorted folder names. 
